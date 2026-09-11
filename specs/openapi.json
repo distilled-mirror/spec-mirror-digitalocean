@@ -8964,7 +8964,7 @@
         "security": [
           {
             "bearer_auth": [
-              "database:write"
+              "database:update"
             ]
           }
         ]
@@ -9082,7 +9082,7 @@
         "security": [
           {
             "bearer_auth": [
-              "database:write"
+              "database:update"
             ]
           }
         ]
@@ -9809,7 +9809,7 @@
         "security": [
           {
             "bearer_auth": [
-              "dedicated_inference_tokens:read"
+              "dedicated_inference_token:read"
             ]
           }
         ]
@@ -9865,7 +9865,7 @@
         "security": [
           {
             "bearer_auth": [
-              "dedicated_inference_tokens:create"
+              "dedicated_inference_token:create"
             ]
           }
         ]
@@ -9927,7 +9927,7 @@
         "security": [
           {
             "bearer_auth": [
-              "dedicated_inference_tokens:delete"
+              "dedicated_inference_token:delete"
             ]
           }
         ]
@@ -21884,7 +21884,7 @@
         "security": [
           {
             "bearer_auth": [
-              "nfs:list"
+              "nfs:read"
             ]
           }
         ]
@@ -22124,7 +22124,7 @@
         "security": [
           {
             "bearer_auth": [
-              "nfs:list"
+              "nfs:read"
             ]
           }
         ]
@@ -22372,7 +22372,7 @@
         "security": [
           {
             "bearer_auth": [
-              "nfs:list"
+              "nfs:read"
             ]
           }
         ]
@@ -22596,7 +22596,7 @@
         "security": [
           {
             "bearer_auth": [
-              "organization:read"
+              "organization_membership:read_teams"
             ]
           }
         ]
@@ -23109,7 +23109,7 @@
         "security": [
           {
             "bearer_auth": [
-              "partner_network_connect:write"
+              "partner_network_connect:update"
             ]
           }
         ]
@@ -27212,7 +27212,7 @@
         "security": [
           {
             "bearer_auth": [
-              "byoip_prefix:write"
+              "byoip_prefix:update"
             ]
           }
         ]
@@ -35551,7 +35551,7 @@
         "security": [
           {
             "bearer_auth": [
-              "genai:default"
+              "genai:update"
             ]
           }
         ],
