@@ -12706,6 +12706,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "sources": {
                       "load_balancer_uids": [
                         "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -12715,6 +12716,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "22",
+                    "action": "allow",
                     "sources": {
                       "tags": [
                         "gateway"
@@ -12729,6 +12731,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "destinations": {
                       "addresses": [
                         "0.0.0.0/0",
@@ -12767,19 +12770,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"firewall\",\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"80\",\"sources\":{\"load_balancer_uids\": [\"4de7ac8b-495b-4884-9a69-1050c6793cd6\"]}},{\"protocol\": \"tcp\",\"ports\": \"22\",\"sources\":{\"tags\": [\"gateway\"],\"addresses\": [\"18.0.0.0/8\"]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"80\",\"destinations\":{\"addresses\":[\"0.0.0.0/0\",\"::/0\"]}}],\"droplet_ids\":[8043964]}' \\\n  \"https://api.digitalocean.com/v2/firewalls\""
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"firewall\",\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"80\",\"action\":\"allow\",\"sources\":{\"load_balancer_uids\": [\"4de7ac8b-495b-4884-9a69-1050c6793cd6\"]}},{\"protocol\": \"tcp\",\"ports\": \"22\",\"action\":\"allow\",\"sources\":{\"tags\": [\"gateway\"],\"addresses\": [\"18.0.0.0/8\"]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"80\",\"action\":\"allow\",\"destinations\":{\"addresses\":[\"0.0.0.0/0\",\"::/0\"]}}],\"droplet_ids\":[8043964]}' \\\n  \"https://api.digitalocean.com/v2/firewalls\""
           },
           {
             "lang": "Go",
-            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    createRequest := &godo.FirewallRequest{\n        Name: 'firewall',\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '80',\n                Sources: &godo.Sources{\n                    LoadBalancerUIDs: []string{'4de7ac8b-495b-4884-9a69-1050c6793cd6'},\n                },\n            },\n            {\n                Protocol:  'tcp',\n                PortRange: '22',\n                Sources: &godo.Sources{\n                    Addresses: []string{'18.0.0.0/8'},\n                    Tags: []string{'gateway'},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '80',\n                Destinations: &godo.Destinations{\n                    Addresses: []string{'0.0.0.0/0', '::/0'},\n                },\n            },\n        },\n        DropletIDs: []int{8043964},\n    }\n\n    firewall, req, err := client.Firewalls.Create(ctx, createRequest)\n}"
+            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    createRequest := &godo.FirewallRequest{\n        Name: 'firewall',\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '80',\n                Action:   'allow',\n                Sources: &godo.Sources{\n                    LoadBalancerUIDs: []string{'4de7ac8b-495b-4884-9a69-1050c6793cd6'},\n                },\n            },\n            {\n                Protocol:  'tcp',\n                PortRange: '22',\n                Action:    'allow',\n                Sources: &godo.Sources{\n                    Addresses: []string{'18.0.0.0/8'},\n                    Tags: []string{'gateway'},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '80',\n                Action:   'allow',\n                Destinations: &godo.Destinations{\n                    Addresses: []string{'0.0.0.0/0', '::/0'},\n                },\n            },\n        },\n        DropletIDs: []int{8043964},\n    }\n\n    firewall, req, err := client.Firewalls.Create(ctx, createRequest)\n}"
           },
           {
             "lang": "Ruby",
-            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\nfirewall = DropletKit::Firewall.new(\n  name: 'firewall',\n  inbound_rules: [\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '80',\n      sources: {\n        load_balancer_uids: ['4de7ac8b-495b-4884-9a69-1050c6793cd6']\n      }\n    ),\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '22',\n      sources: {\n        tags: ['gateway'],\n        addresses: ['18.0.0.0/8']\n      }\n    )\n  ],\n  outbound_rules: [\n    DropletKit::FirewallOutboundRule.new(\n      protocol: 'tcp',\n      ports: '80',\n      destinations: {\n        addresses: ['0.0.0.0/0', '::/0'],\n      }\n    )\n  ],\n  droplet_ids: [8043964]\n)\n\nclient.firewalls.create(firewall)"
+            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\nfirewall = DropletKit::Firewall.new(\n  name: 'firewall',\n  inbound_rules: [\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '80',\n      action: 'allow',\n      sources: {\n        load_balancer_uids: ['4de7ac8b-495b-4884-9a69-1050c6793cd6']\n      }\n    ),\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '22',\n      action: 'allow',\n      sources: {\n        tags: ['gateway'],\n        addresses: ['18.0.0.0/8']\n      }\n    )\n  ],\n  outbound_rules: [\n    DropletKit::FirewallOutboundRule.new(\n      protocol: 'tcp',\n      ports: '80',\n      action: 'allow',\n      destinations: {\n        addresses: ['0.0.0.0/0', '::/0'],\n      }\n    )\n  ],\n  droplet_ids: [8043964]\n)\n\nclient.firewalls.create(firewall)"
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"firewall\",\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"80\",\n      \"sources\": {\n        \"load_balancer_uids\": [\n          \"4de7ac8b-495b-4884-9a69-1050c6793cd6\"\n        ]\n      }\n    },\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"22\",\n      \"sources\": {\n        \"tags\": [\n          \"gateway\"\n        ],\n        \"addresses\": [\n          \"18.0.0.0/8\"\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"80\",\n      \"destinations\": {\n        \"addresses\": [\n          \"0.0.0.0/0\",\n          \"::/0\"\n        ]\n      }\n    }\n  ],\n  \"droplet_ids\": [\n    8043964\n  ]\n}\n\nresp = client.firewalls.create(body=req)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"firewall\",\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"80\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"load_balancer_uids\": [\n          \"4de7ac8b-495b-4884-9a69-1050c6793cd6\"\n        ]\n      }\n    },\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"22\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"tags\": [\n          \"gateway\"\n        ],\n        \"addresses\": [\n          \"18.0.0.0/8\"\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"80\",\n      \"action\": \"allow\",\n      \"destinations\": {\n        \"addresses\": [\n          \"0.0.0.0/0\",\n          \"::/0\"\n        ]\n      }\n    }\n  ],\n  \"droplet_ids\": [\n    8043964\n  ]\n}\n\nresp = client.firewalls.create(body=req)"
           }
         ],
         "security": [
@@ -12897,6 +12900,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "8080",
+                    "action": "allow",
                     "sources": {
                       "load_balancer_uids": [
                         "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -12906,6 +12910,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "22",
+                    "action": "allow",
                     "sources": {
                       "tags": [
                         "gateway"
@@ -12920,6 +12925,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "8080",
+                    "action": "allow",
                     "destinations": {
                       "addresses": [
                         "0.0.0.0/0",
@@ -12964,19 +12970,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"firewall\",\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"8080\",\"sources\":{\"load_balancer_uids\": [\"4de7ac8b-495b-4884-9a69-1050c6793cd6\"]}},{\"protocol\": \"tcp\",\"ports\": \"22\",\"sources\":{\"tags\": [\"gateway\"],\"addresses\": [\"18.0.0.0/8\"]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"8080\",\"destinations\":{\"addresses\":[\"0.0.0.0/0\",\"::/0\"]}}],\"droplet_ids\":[8043964],\"tags\":[\"frontend\"]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c\""
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"firewall\",\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"8080\",\"action\":\"allow\",\"sources\":{\"load_balancer_uids\": [\"4de7ac8b-495b-4884-9a69-1050c6793cd6\"]}},{\"protocol\": \"tcp\",\"ports\": \"22\",\"action\":\"allow\",\"sources\":{\"tags\": [\"gateway\"],\"addresses\": [\"18.0.0.0/8\"]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"8080\",\"action\":\"allow\",\"destinations\":{\"addresses\":[\"0.0.0.0/0\",\"::/0\"]}}],\"droplet_ids\":[8043964],\"tags\":[\"frontend\"]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c\""
           },
           {
             "lang": "Go",
-            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    updateRequest := &godo.FirewallRequest{\n        Name: 'firewall',\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '8080',\n                Sources: &godo.Sources{\n                    LoadBalancerUIDs: []string{'4de7ac8b-495b-4884-9a69-1050c6793cd6'},\n                },\n            },\n            {\n                Protocol:  'tcp',\n                PortRange: '22',\n                Sources: &godo.Sources{\n                    Addresses: []string{'18.0.0.0/8'},\n                    Tags: []string{'gateway'},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '8080',\n                Destinations: &godo.Destinations{\n                    Addresses: []string{'0.0.0.0/0', '::/0'},\n                },\n            },\n        },\n        DropletIDs: []int{8043964},\n        Tags: []string{'frontend'}\n    }\n\n    firewall, req, err := client.Firewalls.Create(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', updateRequest)\n}"
+            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    updateRequest := &godo.FirewallRequest{\n        Name: 'firewall',\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '8080',\n                Action:   'allow',\n                Sources: &godo.Sources{\n                    LoadBalancerUIDs: []string{'4de7ac8b-495b-4884-9a69-1050c6793cd6'},\n                },\n            },\n            {\n                Protocol:  'tcp',\n                PortRange: '22',\n                Action:    'allow',\n                Sources: &godo.Sources{\n                    Addresses: []string{'18.0.0.0/8'},\n                    Tags: []string{'gateway'},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol: 'tcp',\n                PortRange: '8080',\n                Action:   'allow',\n                Destinations: &godo.Destinations{\n                    Addresses: []string{'0.0.0.0/0', '::/0'},\n                },\n            },\n        },\n        DropletIDs: []int{8043964},\n        Tags: []string{'frontend'}\n    }\n\n    firewall, req, err := client.Firewalls.Create(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', updateRequest)\n}"
           },
           {
             "lang": "Ruby",
-            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\nfirewall = DropletKit::Firewall.new(\n  name: 'firewall',\n  inbound_rules: [\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '8080',\n      sources: {\n        load_balancer_uids: ['4de7ac8b-495b-4884-9a69-1050c6793cd6']\n      }\n    ),\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '22',\n      sources: {\n        tags: ['gateway'],\n        addresses: ['18.0.0.0/8']\n      }\n    )\n  ],\n  outbound_rules: [\n    DropletKit::FirewallOutboundRule.new(\n      protocol: 'tcp',\n      ports: '8080',\n      destinations: {\n        addresses: ['0.0.0.0/0', '::/0'],\n      }\n    )\n  ],\n  droplet_ids: [8043964],\n  tags: ['frontend']\n)\n\nclient.firewalls.update(firewall, id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
+            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\nfirewall = DropletKit::Firewall.new(\n  name: 'firewall',\n  inbound_rules: [\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '8080',\n      action: 'allow',\n      sources: {\n        load_balancer_uids: ['4de7ac8b-495b-4884-9a69-1050c6793cd6']\n      }\n    ),\n    DropletKit::FirewallInboundRule.new(\n      protocol: 'tcp',\n      ports: '22',\n      action: 'allow',\n      sources: {\n        tags: ['gateway'],\n        addresses: ['18.0.0.0/8']\n      }\n    )\n  ],\n  outbound_rules: [\n    DropletKit::FirewallOutboundRule.new(\n      protocol: 'tcp',\n      ports: '8080',\n      action: 'allow',\n      destinations: {\n        addresses: ['0.0.0.0/0', '::/0'],\n      }\n    )\n  ],\n  droplet_ids: [8043964],\n  tags: ['frontend']\n)\n\nclient.firewalls.update(firewall, id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"frontend-firewall\",\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"8080\",\n      \"sources\": {\n        \"load_balancer_uids\": [\n          \"4de7ac8b-495b-4884-9a69-1050c6793cd6\"\n        ]\n      }\n    },\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"22\",\n      \"sources\": {\n        \"tags\": [\n          \"gateway\"\n        ],\n        \"addresses\": [\n          \"18.0.0.0/8\"\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"8080\",\n      \"destinations\": {\n        \"addresses\": [\n          \"0.0.0.0/0\",\n          \"::/0\"\n        ]\n      }\n    }\n  ],\n  \"droplet_ids\": [\n    8043964\n  ],\n  \"tags\": [\n    \"frontend\"\n  ]\n}\n\nresp = client.firewalls.update(firewall_id=\"3afda9\", body=req)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"frontend-firewall\",\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"8080\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"load_balancer_uids\": [\n          \"4de7ac8b-495b-4884-9a69-1050c6793cd6\"\n        ]\n      }\n    },\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"22\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"tags\": [\n          \"gateway\"\n        ],\n        \"addresses\": [\n          \"18.0.0.0/8\"\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"8080\",\n      \"action\": \"allow\",\n      \"destinations\": {\n        \"addresses\": [\n          \"0.0.0.0/0\",\n          \"::/0\"\n        ]\n      }\n    }\n  ],\n  \"droplet_ids\": [\n    8043964\n  ],\n  \"tags\": [\n    \"frontend\"\n  ]\n}\n\nresp = client.firewalls.update(firewall_id=\"3afda9\", body=req)"
           }
         ],
         "security": [
@@ -13450,6 +13456,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "3306",
+                    "action": "allow",
                     "sources": {
                       "droplet_ids": [
                         49696269
@@ -13461,6 +13468,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "3306",
+                    "action": "allow",
                     "destinations": {
                       "droplet_ids": [
                         49696269
@@ -13498,19 +13506,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"sources\":{\"droplet_ids\":[49696269]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"destinations\":{\"droplet_ids\":[49696269]}}]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c/rules\" "
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"action\":\"allow\",\"sources\":{\"droplet_ids\":[49696269]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"action\":\"allow\",\"destinations\":{\"droplet_ids\":[49696269]}}]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c/rules\" "
           },
           {
             "lang": "Go",
-            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\nruleRequest := &godo.FirewallRulesRequest{\n    InboundRules: []godo.InboundRule{\n        {\n            Protocol:      'tcp',\n            PortRange:     '3306',\n            Sources: &godo.Sources{\n                DropletIDs: []int{49696269},\n            },\n        },\n    },\n    OutboundRules: []godo.OutboundRule{\n        {\n            Protocol:      'tcp',\n            PortRange:     '3306',\n            Destinations: &godo.Destinations{\n                DropletIDs: []int{49696269},\n            },\n        },\n    },\n}\n\n_, err := c.Firewalls.AddRules(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', ruleRequest)\n}"
+            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\nruleRequest := &godo.FirewallRulesRequest{\n    InboundRules: []godo.InboundRule{\n        {\n            Protocol:      'tcp',\n            PortRange:     '3306',\n            Action:        'allow',\n            Sources: &godo.Sources{\n                DropletIDs: []int{49696269},\n            },\n        },\n    },\n    OutboundRules: []godo.OutboundRule{\n        {\n            Protocol:      'tcp',\n            PortRange:     '3306',\n            Action:        'allow',\n            Destinations: &godo.Destinations{\n                DropletIDs: []int{49696269},\n            },\n        },\n    },\n}\n\n_, err := c.Firewalls.AddRules(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', ruleRequest)\n}"
           },
           {
             "lang": "Ruby",
-            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ninbound_rule = DropletKit::FirewallInboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  sources: {\n    droplet_ids: [49696269]\n  }\n)\n\noutbound_rule = DropletKit::FirewallOutboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  destinations: {\n    droplet_ids: [49696269]\n  }\n)\n\nclient.firewalls.add_rules(inbound_rules: [inbound_rule], outbound_rules: [outbound_rule], id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
+            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ninbound_rule = DropletKit::FirewallInboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  action: 'allow',\n  sources: {\n    droplet_ids: [49696269]\n  }\n)\n\noutbound_rule = DropletKit::FirewallOutboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  action: 'allow',\n  destinations: {\n    droplet_ids: [49696269]\n  }\n)\n\nclient.firewalls.add_rules(inbound_rules: [inbound_rule], outbound_rules: [outbound_rule], id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"sources\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"destinations\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ]\n}\n\nresp = client.firewalls.add_rules(firewall_id=\"39fa4gz\", body=req)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"action\": \"allow\",\n      \"destinations\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ]\n}\n\nresp = client.firewalls.add_rules(firewall_id=\"39fa4gz\", body=req)"
           }
         ],
         "security": [
@@ -13564,6 +13572,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "3306",
+                    "action": "allow",
                     "sources": {
                       "droplet_ids": [
                         49696269
@@ -13575,6 +13584,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "3306",
+                    "action": "allow",
                     "destinations": {
                       "droplet_ids": [
                         49696269
@@ -13612,19 +13622,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"sources\":{\"droplet_ids\":[49696269]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"destinations\":{\"droplet_ids\":[49696269]}}]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c/rules\""
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"inbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"action\":\"allow\",\"sources\":{\"droplet_ids\":[49696269]}}],\"outbound_rules\":[{\"protocol\":\"tcp\",\"ports\":\"3306\",\"action\":\"allow\",\"destinations\":{\"droplet_ids\":[49696269]}}]}' \\\n  \"https://api.digitalocean.com/v2/firewalls/bb4b2611-3d72-467b-8602-280330ecd65c/rules\""
           },
           {
             "lang": "Go",
-            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    ruleRequest := &godo.FirewallRulesRequest{\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol:      'tcp',\n                PortRange:     '3306',\n                Sources: &godo.Sources{\n                    DropletIDs: []int{49696269},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol:      'tcp',\n                PortRange:     '3306',\n                Destinations: &godo.Destinations{\n                    DropletIDs: []int{49696269},\n                },\n            },\n        },\n    }\n\n    _, err := c.Firewalls.RemoveRules(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', ruleRequest)\n\n}"
+            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    ruleRequest := &godo.FirewallRulesRequest{\n        InboundRules: []godo.InboundRule{\n            {\n                Protocol:      'tcp',\n                PortRange:     '3306',\n                Action:        'allow',\n                Sources: &godo.Sources{\n                    DropletIDs: []int{49696269},\n                },\n            },\n        },\n        OutboundRules: []godo.OutboundRule{\n            {\n                Protocol:      'tcp',\n                PortRange:     '3306',\n                Action:        'allow',\n                Destinations: &godo.Destinations{\n                    DropletIDs: []int{49696269},\n                },\n            },\n        },\n    }\n\n    _, err := c.Firewalls.RemoveRules(ctx, 'bb4b2611-3d72-467b-8602-280330ecd65c', ruleRequest)\n\n}"
           },
           {
             "lang": "Ruby",
-            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ninbound_rule = DropletKit::FirewallInboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  sources: {\n    droplet_ids: [49696269]\n  }\n)\n\noutbound_rule = DropletKit::FirewallOutboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  destinations: {\n    droplet_ids: [49696269]\n  }\n)\n\nclient.firewalls.remove_rules(inbound_rules: [inbound_rule], outbound_rules: [outbound_rule], id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
+            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ninbound_rule = DropletKit::FirewallInboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  action: 'allow',\n  sources: {\n    droplet_ids: [49696269]\n  }\n)\n\noutbound_rule = DropletKit::FirewallOutboundRule.new(\n  protocol: 'tcp',\n  ports: '3306',\n  action: 'allow',\n  destinations: {\n    droplet_ids: [49696269]\n  }\n)\n\nclient.firewalls.remove_rules(inbound_rules: [inbound_rule], outbound_rules: [outbound_rule], id: 'bb4b2611-3d72-467b-8602-280330ecd65c')"
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"sources\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"destinations\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ]\n}\n\nresp = client.firewalls.delete_rules(firewall_id=\"39fa4gz\", body=req)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"inbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"action\": \"allow\",\n      \"sources\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ],\n  \"outbound_rules\": [\n    {\n      \"protocol\": \"tcp\",\n      \"ports\": \"3306\",\n      \"action\": \"allow\",\n      \"destinations\": {\n        \"droplet_ids\": [\n          49696269\n        ]\n      }\n    }\n  ]\n}\n\nresp = client.firewalls.delete_rules(firewall_id=\"39fa4gz\", body=req)"
           }
         ],
         "security": [
@@ -41209,6 +41219,1231 @@
         ]
       }
     },
+    "/v2/gen-ai/scenario_library": {
+      "get": {
+        "description": "To list the platform-curated Common Scenario & Goal Library, send a GET request to `/v2/gen-ai/scenario_library`.",
+        "operationId": "genai_list_scenario_library",
+        "parameters": [
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by category (exact match). Empty means no category filter.",
+            "example": "example string",
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Free-text search across name, description, and goal_description\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to name when unspecified.\n\n - SCENARIO_LIBRARY_SORT_FIELD_NAME: Sort by customer-facing name (case-insensitive). Default.\n - SCENARIO_LIBRARY_SORT_FIELD_CREATED_AT: Sort by creation date.",
+            "example": "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+                "SCENARIO_LIBRARY_SORT_FIELD_NAME",
+                "SCENARIO_LIBRARY_SORT_FIELD_CREATED_AT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to ascending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListScenarioLibraryOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Common Scenario & Goal Library",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_library\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_library/{library_scenario_uuid}/create_scenario_set": {
+      "post": {
+        "description": "To create a scenario set from a Common Scenario & Goal Library entry, send a POST request to `/v2/gen-ai/scenario_library/{library_scenario_uuid}/create_scenario_set`. The library scenarios are copied into a new scenario set owned by the calling team. The new set is ready to use when creating a simulation run.",
+        "operationId": "genai_create_scenario_set_from_library",
+        "parameters": [
+          {
+            "description": "UUID of the library entry to copy.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "library_scenario_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiCreateScenarioSetFromLibraryInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiCreateScenarioSetFromLibraryOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Create Scenario Set From Library",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_library/12345678-1234-1234-1234-123456789012/create_scenario_set\" \\\n  -d '{\n    \"library_scenario_uuid\": \"12345678-1234-1234-1234-123456789012\",\n    \"name\": \"Billing Refund Escalation\"\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_library/{library_scenario_uuid}/scenarios": {
+      "get": {
+        "description": "To list the scenarios inside a Common Scenario & Goal Library entry without creating a team-owned scenario set, send a GET request to `/v2/gen-ai/scenario_library/{library_scenario_uuid}/scenarios`.",
+        "operationId": "genai_list_scenario_library_scenarios",
+        "parameters": [
+          {
+            "description": "UUID of the library entry to read.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "library_scenario_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Free-text search across name, description, and user_persona\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to original file order when unspecified.\n\n - SCENARIO_SORT_FIELD_FILE_ORDER: Preserve original file order. Default.\n - SCENARIO_SORT_FIELD_NAME: Sort by scenario name (case-insensitive). Empty names sort last.\n - SCENARIO_SORT_FIELD_DESCRIPTION: Sort by scenario description (case-insensitive).",
+            "example": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SCENARIO_SORT_FIELD_UNSPECIFIED",
+                "SCENARIO_SORT_FIELD_FILE_ORDER",
+                "SCENARIO_SORT_FIELD_NAME",
+                "SCENARIO_SORT_FIELD_DESCRIPTION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to ascending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListScenariosOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Scenarios In Library Entry",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_library/12345678-1234-1234-1234-123456789012/scenarios\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets": {
+      "get": {
+        "description": "To list scenario sets, send a GET request to `/v2/gen-ai/scenario_sets`.",
+        "operationId": "genai_list_scenario_sets",
+        "parameters": [
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SCENARIO_SET_STATUS_GENERATING: Generation is in progress. The scenarios are not ready yet.\n - SCENARIO_SET_STATUS_READY: The scenario set is ready to use.\n - SCENARIO_SET_STATUS_FAILED: Generation failed. The scenario set has no readable scenarios.\n - SCENARIO_SET_STATUS_CANCELLED: Generation was cancelled before completion.",
+            "example": [
+              "SCENARIO_SET_STATUS_READY"
+            ],
+            "in": "query",
+            "name": "statuses",
+            "schema": {
+              "items": {
+                "enum": [
+                  "SCENARIO_SET_STATUS_UNSPECIFIED",
+                  "SCENARIO_SET_STATUS_GENERATING",
+                  "SCENARIO_SET_STATUS_READY",
+                  "SCENARIO_SET_STATUS_FAILED",
+                  "SCENARIO_SET_STATUS_CANCELLED"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Filter by one or more source kinds. Empty means no source-kind filter.\n\n - SCENARIO_SET_SOURCE_KIND_USER_UPLOAD: Created from uploaded or inline scenarios.\n - SCENARIO_SET_SOURCE_KIND_GOAL_GENERATED: Produced by goal-driven generation.\n - SCENARIO_SET_SOURCE_KIND_LIBRARY: Copied from a platform-curated library entry.\n - SCENARIO_SET_SOURCE_KIND_SIGNAL_GENERATED: Produced from a completed Signals export.",
+            "example": [
+              "SCENARIO_SET_SOURCE_KIND_USER_UPLOAD"
+            ],
+            "in": "query",
+            "name": "source_kinds",
+            "schema": {
+              "items": {
+                "enum": [
+                  "SCENARIO_SET_SOURCE_KIND_UNSPECIFIED",
+                  "SCENARIO_SET_SOURCE_KIND_USER_UPLOAD",
+                  "SCENARIO_SET_SOURCE_KIND_GOAL_GENERATED",
+                  "SCENARIO_SET_SOURCE_KIND_LIBRARY",
+                  "SCENARIO_SET_SOURCE_KIND_SIGNAL_GENERATED"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Free-text search across name and description\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to creation date when unspecified.\n\n - SCENARIO_SET_SORT_FIELD_CREATED_AT: Sort by creation date. Default.\n - SCENARIO_SET_SORT_FIELD_NAME: Sort by customer-supplied name (case-insensitive).\n - SCENARIO_SET_SORT_FIELD_STATUS: Sort by status using lifecycle order (generating → ready → terminal).\n - SCENARIO_SET_SORT_FIELD_SCENARIO_COUNT: Sort by scenario_count.\n - SCENARIO_SET_SORT_FIELD_UPDATED_AT: Sort by last update date.",
+            "example": "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+                "SCENARIO_SET_SORT_FIELD_CREATED_AT",
+                "SCENARIO_SET_SORT_FIELD_NAME",
+                "SCENARIO_SET_SORT_FIELD_STATUS",
+                "SCENARIO_SET_SORT_FIELD_SCENARIO_COUNT",
+                "SCENARIO_SET_SORT_FIELD_UPDATED_AT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to descending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListScenarioSetsOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Scenario Sets",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets\""
+          }
+        ]
+      },
+      "post": {
+        "description": "To create a scenario set, send a POST request to `/v2/gen-ai/scenario_sets`. Provide exactly one of `scenarios` or `file_upload_scenario_set`. The set is created in the ready state.",
+        "operationId": "genai_create_scenario_set",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiCreateScenarioSetInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiCreateScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Create Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets\" \\\n  -d '{\n    \"name\": \"support-agent-scenarios\",\n    \"scenarios\": [\n      {\n        \"name\": \"Refund request\",\n        \"description\": \"The user wants a refund for a delayed order\",\n        \"user_persona\": \"Frustrated customer\",\n        \"stopping_criteria\": [\"Refund is approved or a next step is clearly offered\"],\n        \"max_turns\": 8\n      }\n    ]\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/file_upload_presigned_urls": {
+      "post": {
+        "description": "To create presigned URLs for uploading a scenario set file, send a POST request to `/v2/gen-ai/scenario_sets/file_upload_presigned_urls`. After uploading, pass the stored object in Create Scenario Set as `file_upload_scenario_set`.",
+        "operationId": "genai_create_scenario_set_upload_presigned_urls",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiCreateScenarioSetUploadPresignedUrlsInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiCreateDataSourceFileUploadPresignedUrlsOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Create Presigned URLs for Scenario Set File Upload",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/file_upload_presigned_urls\" \\\n  -d '{\n    \"files\": [{\n      \"file_name\": \"scenarios.jsonl\",\n      \"file_size\": 2048\n    }]\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/generate": {
+      "post": {
+        "description": "To dispatch goal-driven scenario generation, send a POST request to `/v2/gen-ai/scenario_sets/generate`. The scenario set is returned in the generating state. Poll the retrieve scenario set endpoint until the set reaches a ready, failed, or cancelled status.",
+        "operationId": "genai_create_generated_scenario_set",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiGenerateScenarioSetInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGenerateScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Generate Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/generate\" \\\n  -d '{\n    \"name\": \"billing-support-generated\",\n    \"goal_description\": \"Test how the agent handles refund requests\",\n    \"num_scenarios\": 4\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/{scenario_set_uuid}": {
+      "get": {
+        "description": "To retrieve a scenario set, send a GET request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}`.",
+        "operationId": "genai_get_scenario_set",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      },
+      "put": {
+        "description": "To update a scenario set in place, send a PUT request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}`. Provide a new `name` and/or replacement `scenarios`. At least one is required. Replacing contents keeps the same scenario set UUID, remints scenario UUIDs, and is rejected unless the set is ready and no simulation run references it. There is no file-upload path on update.",
+        "operationId": "genai_update_scenario_set",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set to update. Returned by `CreateScenarioSet`\nand listed via `ListScenarioSets`.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiUpdateScenarioSetInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiUpdateScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:update"
+            ]
+          }
+        ],
+        "summary": "Update Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/12345678-1234-1234-1234-123456789012\" \\\n  -d '{\n    \"name\": \"My new scenario set name\"\n  }'"
+          }
+        ]
+      },
+      "delete": {
+        "description": "To delete a scenario set, send a DELETE request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}`. A scenario set that is referenced by a simulation run cannot be deleted.",
+        "operationId": "genai_delete_scenario_set",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set to delete. Returned by `CreateScenarioSet`\nand listed via `ListScenarioSets`. A set still referenced by a\nsimulation run cannot be deleted.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiDeleteScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "summary": "Delete Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/12345678-1234-1234-1234-123456789012\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/{scenario_set_uuid}/download_url": {
+      "get": {
+        "description": "To retrieve a presigned download URL for a scenario set file, send a GET request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}/download_url`.",
+        "operationId": "genai_get_scenario_set_download_url",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetScenarioSetDownloadURLOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Scenario Set Download URL",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/12345678-1234-1234-1234-123456789012/download_url\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/{scenario_set_uuid}/duplicate": {
+      "post": {
+        "description": "To duplicate a scenario set, send a POST request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}/duplicate`. The source set must be ready. The new set is named `{original name} duplicate` and contains a copy of the source scenarios.",
+        "operationId": "genai_create_duplicate_scenario_set",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set to duplicate.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiDuplicateScenarioSetInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiDuplicateScenarioSetOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Duplicate Scenario Set",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/12345678-1234-1234-1234-123456789012/duplicate\" \\\n  -d '{\n    \"scenario_set_uuid\": \"12345678-1234-1234-1234-123456789012\"\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/scenario_sets/{scenario_set_uuid}/scenarios": {
+      "get": {
+        "description": "To list the scenarios in a scenario set, send a GET request to `/v2/gen-ai/scenario_sets/{scenario_set_uuid}/scenarios`.",
+        "operationId": "genai_list_scenarios",
+        "parameters": [
+          {
+            "description": "UUID of the scenario set to read.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "scenario_set_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Free-text search across name, description, and user_persona\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to original file order when unspecified.\n\n - SCENARIO_SORT_FIELD_FILE_ORDER: Preserve original file order. Default.\n - SCENARIO_SORT_FIELD_NAME: Sort by scenario name (case-insensitive). Empty names sort last.\n - SCENARIO_SORT_FIELD_DESCRIPTION: Sort by scenario description (case-insensitive).",
+            "example": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SCENARIO_SORT_FIELD_UNSPECIFIED",
+                "SCENARIO_SORT_FIELD_FILE_ORDER",
+                "SCENARIO_SORT_FIELD_NAME",
+                "SCENARIO_SORT_FIELD_DESCRIPTION"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to ascending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListScenariosOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Scenarios",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/scenario_sets/12345678-1234-1234-1234-123456789012/scenarios\""
+          }
+        ]
+      }
+    },
     "/v2/gen-ai/scheduled-indexing": {
       "post": {
         "description": "To create scheduled indexing for a knowledge base, send a POST request to `/v2/gen-ai/scheduled-indexing`.",
@@ -41421,6 +42656,966 @@
           {
             "lang": "cURL",
             "source": "curl --location --request DELETE 'https://api.digitalocean.com/v2/gen-ai/scheduled-indexing/{scheduled_indexing_id}' \\\n  --header 'Authorization: Bearer $DIGITALOCEAN_TOKEN'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs": {
+      "get": {
+        "description": "To list simulation runs, send a GET request to `/v2/gen-ai/simulation_runs`.",
+        "operationId": "genai_list_simulation_runs",
+        "parameters": [
+          {
+            "description": "Optional filter by scenario set.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "in": "query",
+            "name": "scenario_set_uuid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Journeys are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All journeys finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Journeys finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
+            "example": [
+              "SIMULATION_RUN_STATUS_RUNNING"
+            ],
+            "in": "query",
+            "name": "statuses",
+            "schema": {
+              "items": {
+                "enum": [
+                  "SIMULATION_RUN_STATUS_UNSPECIFIED",
+                  "SIMULATION_RUN_STATUS_PENDING",
+                  "SIMULATION_RUN_STATUS_RUNNING",
+                  "SIMULATION_RUN_STATUS_SUCCEEDED",
+                  "SIMULATION_RUN_STATUS_FAILED",
+                  "SIMULATION_RUN_STATUS_CANCELLED",
+                  "SIMULATION_RUN_STATUS_EVALUATING",
+                  "SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Free-text search across the run name and scenario set name\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to creation date when unspecified.\n\n - SIMULATION_RUN_SORT_FIELD_CREATED_AT: Sort by creation date. Default.\n - SIMULATION_RUN_SORT_FIELD_NAME: Sort by customer-supplied run name (case-insensitive).\n - SIMULATION_RUN_SORT_FIELD_STATUS: Sort by status using lifecycle order (pending → running → terminal).\n - SIMULATION_RUN_SORT_FIELD_UPDATED_AT: Sort by last update date.",
+            "example": "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+                "SIMULATION_RUN_SORT_FIELD_CREATED_AT",
+                "SIMULATION_RUN_SORT_FIELD_NAME",
+                "SIMULATION_RUN_SORT_FIELD_STATUS",
+                "SIMULATION_RUN_SORT_FIELD_UPDATED_AT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to descending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListSimulationRunsOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Simulation Runs",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs\""
+          }
+        ]
+      },
+      "post": {
+        "description": "To create a simulation run, send a POST request to `/v2/gen-ai/simulation_runs`. The scenario set must be ready. Judge and user simulator models are optional and use platform defaults when omitted. The run is returned in the pending state.",
+        "operationId": "genai_create_simulation_run",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiCreateSimulationRunInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiCreateSimulationRunOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "summary": "Create Simulation Run",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs\" \\\n  -d '{\n    \"name\": \"my-simulation-run\",\n    \"scenario_set_uuid\": \"12345678-1234-1234-1234-123456789012\",\n    \"agent_config\": {\n      \"agent_uuid\": \"223e4567-e89b-12d3-a456-426614174001\",\n      \"name\": \"support-agent\"\n    },\n    \"judge_model_uuid\": \"323e4567-e89b-12d3-a456-426614174002\",\n    \"user_simulator_model_uuid\": \"423e4567-e89b-12d3-a456-426614174003\",\n    \"evaluation_config\": {\n      \"metric_uuids\": [\n        \"523e4567-e89b-12d3-a456-426614174004\"\n      ],\n      \"star_metric\": {\n        \"metric_uuid\": \"523e4567-e89b-12d3-a456-426614174004\",\n        \"success_threshold\": 80\n      }\n    }\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}": {
+      "get": {
+        "description": "To retrieve a simulation run, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}`.",
+        "operationId": "genai_get_simulation_run",
+        "parameters": [
+          {
+            "description": "UUID of the simulation run.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetSimulationRunOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Simulation Run",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      },
+      "put": {
+        "description": "To update a simulation run's display name, send a PUT request to `/v2/gen-ai/simulation_runs/{run_uuid}`. Only the name is mutable; run configuration and results are immutable.",
+        "operationId": "genai_update_simulation_run",
+        "parameters": [
+          {
+            "description": "UUID of the simulation run to update. Returned by `CreateSimulationRun`\nand listed via `ListSimulationRuns`.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiUpdateSimulationRunInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiUpdateSimulationRunOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:update"
+            ]
+          }
+        ],
+        "summary": "Update Simulation Run",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012\" \\\n  -d '{\n    \"name\": \"My new simulation name\"\n  }'"
+          }
+        ]
+      },
+      "delete": {
+        "description": "To delete a simulation run, send a DELETE request to `/v2/gen-ai/simulation_runs/{run_uuid}`. The run must be in a terminal status (`SIMULATION_RUN_STATUS_SUCCEEDED`, `SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL`, `SIMULATION_RUN_STATUS_FAILED`, or `SIMULATION_RUN_STATUS_CANCELLED`). For runs still in progress, cancel the run first, then retry the delete.",
+        "operationId": "genai_delete_simulation_run",
+        "parameters": [
+          {
+            "description": "UUID of the simulation run to delete. The run must be in a terminal\nstatus. For runs still in progress, cancel the run first, then retry\nthe delete.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiDeleteSimulationRunOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "summary": "Delete Simulation Run",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}/cancel": {
+      "patch": {
+        "description": "To cancel an in-progress simulation run, send a PATCH request to `/v2/gen-ai/simulation_runs/{run_uuid}/cancel`.",
+        "operationId": "genai_patch_cancel_simulation_run",
+        "parameters": [
+          {
+            "description": "UUID of the simulation run to cancel. Returned by `CreateSimulationRun`\nand listed via `ListSimulationRuns`. The run must be in a non-terminal\nstatus; already-terminal runs return an error.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/apiCancelSimulationRunInputPublic"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiCancelSimulationRunOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:update"
+            ]
+          }
+        ],
+        "summary": "Cancel Simulation Run",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/cancel\" \\\n  -d '{\n    \"run_uuid\": \"12345678-1234-1234-1234-123456789012\"\n  }'"
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys": {
+      "get": {
+        "description": "To list the journeys within a simulation run, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys`.",
+        "operationId": "genai_list_simulation_journeys",
+        "parameters": [
+          {
+            "description": "UUID of the run whose journeys to list.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Optional filter by scenario.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "in": "query",
+            "name": "scenario_uuid",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page number.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_JOURNEY_STATUS_RUNNING: The journey is executing and a trajectory is available to retrieve.\n - SIMULATION_JOURNEY_STATUS_FINISHED: The journey reached a stop condition and produced a verdict.\n - SIMULATION_JOURNEY_STATUS_FAILED: The journey failed because of a cancel, timeout, or error.\n - SIMULATION_JOURNEY_STATUS_PREPARING: The journey is allocated but its trajectory is not available yet.",
+            "example": [
+              "SIMULATION_JOURNEY_STATUS_FINISHED"
+            ],
+            "in": "query",
+            "name": "statuses",
+            "schema": {
+              "items": {
+                "enum": [
+                  "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
+                  "SIMULATION_JOURNEY_STATUS_RUNNING",
+                  "SIMULATION_JOURNEY_STATUS_FINISHED",
+                  "SIMULATION_JOURNEY_STATUS_FAILED",
+                  "SIMULATION_JOURNEY_STATUS_PREPARING"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Filter by one or more verdicts. Empty means no verdict filter.\n\n - SIMULATION_JOURNEY_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
+            "example": [
+              "SIMULATION_JOURNEY_VERDICT_SUCCESS"
+            ],
+            "in": "query",
+            "name": "verdicts",
+            "schema": {
+              "items": {
+                "enum": [
+                  "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
+                  "SIMULATION_JOURNEY_VERDICT_SUCCESS",
+                  "SIMULATION_JOURNEY_VERDICT_FAILURE",
+                  "SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Free-text search across scenario_uuid and session_id\n(case-insensitive substring match). Empty means no search.",
+            "example": "example string",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Field to sort by. Defaults to scenario ordering when unspecified.\n\n - SIMULATION_JOURNEY_SORT_FIELD_SCENARIO: Sort by scenario_uuid then journey_index. Default.\n - SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_JOURNEY_SORT_FIELD_STATUS: Sort by journey status using lifecycle order.\n - SIMULATION_JOURNEY_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
+            "example": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+              "enum": [
+                "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+                "SIMULATION_JOURNEY_SORT_FIELD_SCENARIO",
+                "SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT",
+                "SIMULATION_JOURNEY_SORT_FIELD_STATUS",
+                "SIMULATION_JOURNEY_SORT_FIELD_VERDICT"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to ascending when unspecified.",
+            "example": "SORT_DIRECTION_UNSPECIFIED",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListSimulationJourneysOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Simulation Journeys",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}": {
+      "get": {
+        "description": "To retrieve a single journey, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}`.",
+        "operationId": "genai_get_simulation_journey",
+        "parameters": [
+          {
+            "description": "UUID of the run the journey belongs to.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UUID of the journey.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "journey_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetSimulationJourneyOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Simulation Journey",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory": {
+      "get": {
+        "description": "To retrieve a journey's live trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory`. Poll while the journey is running to watch turn-by-turn progress.",
+        "operationId": "genai_get_simulation_journey_trajectory",
+        "parameters": [
+          {
+            "description": "UUID of the run the journey belongs to.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UUID of the journey.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "journey_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetSimulationJourneyTrajectoryOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Journey Trajectory",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789/trajectory\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory_url": {
+      "get": {
+        "description": "To retrieve a presigned download URL for a journey's trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory_url`.",
+        "operationId": "genai_get_simulation_journey_trajectory_url",
+        "parameters": [
+          {
+            "description": "UUID of the run the journey belongs to.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "run_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "UUID of the journey.",
+            "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
+            "in": "path",
+            "name": "journey_uuid",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetSimulationJourneyTrajectoryURLOutput"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Retrieve Journey Trajectory Download URL",
+        "tags": [
+          "GradientAI Platform"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789/trajectory_url\""
           }
         ]
       }
@@ -56426,6 +58621,16 @@
             "type": "string",
             "description": "The ports on which traffic will be allowed specified as a string containing a single port, a range (e.g. \"8000-9000\"), or \"0\" when all ports are open for a protocol. For ICMP rules this parameter will always return \"0\".",
             "example": "8000"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "allow",
+              "deny"
+            ],
+            "default": "allow",
+            "description": "The action to be taken when traffic matches the rule. This may be one of `allow` or `deny`. For backward compatibility, this field is optional. When not set, it defaults to `allow`.",
+            "example": "allow"
           }
         },
         "required": [
@@ -72943,6 +75148,599 @@
         },
         "type": "object"
       },
+      "apiScenarioLibrarySortField": {
+        "default": "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing the scenario library.\n\n - SCENARIO_LIBRARY_SORT_FIELD_NAME: Sort by customer-facing name (case-insensitive). Default.\n - SCENARIO_LIBRARY_SORT_FIELD_CREATED_AT: Sort by creation date.",
+        "enum": [
+          "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+          "SCENARIO_LIBRARY_SORT_FIELD_NAME",
+          "SCENARIO_LIBRARY_SORT_FIELD_CREATED_AT"
+        ],
+        "example": "SCENARIO_LIBRARY_SORT_FIELD_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiScenarioLibraryEntryStatus": {
+        "default": "SCENARIO_LIBRARY_ENTRY_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of a Common Scenario & Goal Library entry.\n\n - SCENARIO_LIBRARY_ENTRY_STATUS_ACTIVE: Visible in the library and available to copy into a scenario set.\n - SCENARIO_LIBRARY_ENTRY_STATUS_ARCHIVED: Hidden from the library catalog. Existing scenario sets created from\nthis entry keep their provenance.",
+        "enum": [
+          "SCENARIO_LIBRARY_ENTRY_STATUS_UNSPECIFIED",
+          "SCENARIO_LIBRARY_ENTRY_STATUS_ACTIVE",
+          "SCENARIO_LIBRARY_ENTRY_STATUS_ARCHIVED"
+        ],
+        "example": "SCENARIO_LIBRARY_ENTRY_STATUS_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiScenarioLibraryEntry": {
+        "description": "A platform-curated, ready-to-run scenario set that any team can pick from.",
+        "properties": {
+          "category": {
+            "description": "Optional grouping for catalog browsing (e.g. \"Billing\", \"Onboarding\").\nEmpty when uncategorized.",
+            "example": "example string",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Time created at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Curated description.",
+            "example": "example string",
+            "type": "string"
+          },
+          "goal_description": {
+            "description": "The goal this scenario set demonstrates, shown as context alongside\ngoal-driven generation.",
+            "example": "example string",
+            "type": "string"
+          },
+          "library_scenario_uuid": {
+            "description": "UUID of the library entry.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "name": {
+            "description": "Curated display name.",
+            "example": "example name",
+            "type": "string"
+          },
+          "scenario_count": {
+            "description": "Number of scenarios in the library entry.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/apiScenarioLibraryEntryStatus"
+          },
+          "updated_at": {
+            "description": "Time last updated at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiListScenarioLibraryOutput": {
+        "description": "Output for listing the Common Scenario & Goal Library.",
+        "properties": {
+          "available_categories": {
+            "description": "Categories currently in use, for filtering library results.",
+            "example": [
+              "example string"
+            ],
+            "items": {
+              "example": "example string",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "available_sort_by": {
+            "description": "Sort-by values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioLibrarySortField"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort-direction values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          },
+          "scenarios": {
+            "description": "The library entries for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioLibraryEntry"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateScenarioSetFromLibraryInputPublic": {
+        "description": "Public parameters for creating a scenario set from a Common Scenario & Goal Library entry.",
+        "properties": {
+          "library_scenario_uuid": {
+            "description": "UUID of the library entry to copy.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "name": {
+            "description": "Optional name for the new scenario set. Defaults to the library entry's\nname when unset.",
+            "example": "example name",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiScenarioSetSourceKind": {
+        "default": "SCENARIO_SET_SOURCE_KIND_UNSPECIFIED",
+        "description": "How a scenario set was created.\n\n - SCENARIO_SET_SOURCE_KIND_USER_UPLOAD: Created from uploaded or inline scenarios.\n - SCENARIO_SET_SOURCE_KIND_GOAL_GENERATED: Produced by goal-driven generation.\n - SCENARIO_SET_SOURCE_KIND_LIBRARY: Copied from a platform-curated library entry.\n - SCENARIO_SET_SOURCE_KIND_SIGNAL_GENERATED: Produced from a completed Signals export.",
+        "enum": [
+          "SCENARIO_SET_SOURCE_KIND_UNSPECIFIED",
+          "SCENARIO_SET_SOURCE_KIND_USER_UPLOAD",
+          "SCENARIO_SET_SOURCE_KIND_GOAL_GENERATED",
+          "SCENARIO_SET_SOURCE_KIND_LIBRARY",
+          "SCENARIO_SET_SOURCE_KIND_SIGNAL_GENERATED"
+        ],
+        "example": "SCENARIO_SET_SOURCE_KIND_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiScenarioSetStatus": {
+        "default": "SCENARIO_SET_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of a scenario set. Uploaded sets are created as ready.\nGenerated sets start as generating and then become ready, failed, or\ncancelled.\n\n - SCENARIO_SET_STATUS_GENERATING: Generation is in progress. The scenarios are not ready yet.\n - SCENARIO_SET_STATUS_READY: The scenario set is ready to use.\n - SCENARIO_SET_STATUS_FAILED: Generation failed. The scenario set has no readable scenarios.\n - SCENARIO_SET_STATUS_CANCELLED: Generation was cancelled before completion.",
+        "enum": [
+          "SCENARIO_SET_STATUS_UNSPECIFIED",
+          "SCENARIO_SET_STATUS_GENERATING",
+          "SCENARIO_SET_STATUS_READY",
+          "SCENARIO_SET_STATUS_FAILED",
+          "SCENARIO_SET_STATUS_CANCELLED"
+        ],
+        "example": "SCENARIO_SET_STATUS_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiScenarioSet": {
+        "description": "A team-owned collection of scenarios.",
+        "properties": {
+          "bucket_name": {
+            "description": "Object storage bucket holding the scenario file. Unset while status is generating.",
+            "example": "example name",
+            "type": "string"
+          },
+          "bucket_region": {
+            "description": "Object storage bucket region. Unset while status is generating.",
+            "example": "example string",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "Time created at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deleted_at": {
+            "description": "Time deleted at. Unset unless the scenario set has been deleted.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "description": "Customer-supplied description.",
+            "example": "example string",
+            "type": "string"
+          },
+          "failure_reason": {
+            "description": "Human-readable explanation of a terminal FAILED status. Empty otherwise.",
+            "example": "example string",
+            "type": "string"
+          },
+          "generator_model_uuid": {
+            "description": "Model that produced the scenarios. Only set for goal-generated scenario sets.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "library_scenario_uuid": {
+            "description": "UUID of the source library entry. Only set for library scenario sets\n(`source_kind=SCENARIO_SET_SOURCE_KIND_LIBRARY`).",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "name": {
+            "description": "Customer-supplied name.",
+            "example": "example name",
+            "type": "string"
+          },
+          "scenario_count": {
+            "description": "Number of scenarios in the set. Unset while status is generating.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "scenario_set_uuid": {
+            "description": "UUID of the scenario set.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "source_export_id": {
+            "description": "Signals export UUID that produced this set. Only set for signal-generated\nscenario sets (`source_kind=SCENARIO_SET_SOURCE_KIND_SIGNAL_GENERATED`).",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "source_goal_description": {
+            "description": "The goal that drove generation. Only set for goal_generated scenario sets.",
+            "example": "example string",
+            "type": "string"
+          },
+          "source_kind": {
+            "$ref": "#/components/schemas/apiScenarioSetSourceKind"
+          },
+          "spaces_key": {
+            "description": "Object storage key for the scenario file. Unset while status is generating.",
+            "example": "example string",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/apiScenarioSetStatus"
+          },
+          "updated_at": {
+            "description": "Time last updated at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "workflow_uuid": {
+            "description": "Identifier of the generation workflow. Only set for goal-generated scenario sets.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateScenarioSetFromLibraryOutput": {
+        "description": "Output for creating a scenario set from a Common Scenario & Goal Library entry.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
+      "apiScenarioSortField": {
+        "default": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing scenarios.\n\n - SCENARIO_SORT_FIELD_FILE_ORDER: Preserve original file order. Default.\n - SCENARIO_SORT_FIELD_NAME: Sort by scenario name (case-insensitive). Empty names sort last.\n - SCENARIO_SORT_FIELD_DESCRIPTION: Sort by scenario description (case-insensitive).",
+        "enum": [
+          "SCENARIO_SORT_FIELD_UNSPECIFIED",
+          "SCENARIO_SORT_FIELD_FILE_ORDER",
+          "SCENARIO_SORT_FIELD_NAME",
+          "SCENARIO_SORT_FIELD_DESCRIPTION"
+        ],
+        "example": "SCENARIO_SORT_FIELD_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiScenario": {
+        "description": "A single test case in a scenario set.",
+        "properties": {
+          "description": {
+            "description": "What the user tries to accomplish. Required.",
+            "example": "example string",
+            "type": "string"
+          },
+          "exploration_budget": {
+            "description": "Number of journeys to explore for this scenario. Defaults to 1 if unset.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "max_turns": {
+            "description": "Turn budget for the scenario. Falls back to the run-level default if unset.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Human-readable name for the scenario. Optional.",
+            "example": "example name",
+            "type": "string"
+          },
+          "scenario_uuid": {
+            "description": "Unique id for the scenario. Always generated by the API; any\ncustomer-supplied value is ignored and overwritten.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "stopping_criteria": {
+            "description": "Judge stopping criteria. Required; must contain at least one entry.",
+            "example": [
+              "example string"
+            ],
+            "items": {
+              "example": "example string",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "user_persona": {
+            "description": "How the user communicates (tone, role). Optional.",
+            "example": "example string",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiListScenariosOutput": {
+        "description": "Output for listing the scenarios in a scenario set.",
+        "properties": {
+          "available_sort_by": {
+            "description": "Sort-by values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioSortField"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort-direction values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          },
+          "scenarios": {
+            "description": "The scenarios for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenario"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiScenarioSetSortField": {
+        "default": "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing scenario sets.\n\n - SCENARIO_SET_SORT_FIELD_CREATED_AT: Sort by creation date. Default.\n - SCENARIO_SET_SORT_FIELD_NAME: Sort by customer-supplied name (case-insensitive).\n - SCENARIO_SET_SORT_FIELD_STATUS: Sort by status using lifecycle order (generating → ready → terminal).\n - SCENARIO_SET_SORT_FIELD_SCENARIO_COUNT: Sort by scenario_count.\n - SCENARIO_SET_SORT_FIELD_UPDATED_AT: Sort by last update date.",
+        "enum": [
+          "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+          "SCENARIO_SET_SORT_FIELD_CREATED_AT",
+          "SCENARIO_SET_SORT_FIELD_NAME",
+          "SCENARIO_SET_SORT_FIELD_STATUS",
+          "SCENARIO_SET_SORT_FIELD_SCENARIO_COUNT",
+          "SCENARIO_SET_SORT_FIELD_UPDATED_AT"
+        ],
+        "example": "SCENARIO_SET_SORT_FIELD_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiListScenarioSetsOutput": {
+        "description": "Output for listing scenario sets.",
+        "properties": {
+          "available_sort_by": {
+            "description": "Sort-by values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioSetSortField"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort-direction values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "available_source_kinds": {
+            "description": "Source kinds available for filtering this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioSetSourceKind"
+            },
+            "type": "array"
+          },
+          "available_statuses": {
+            "description": "Statuses available for filtering this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioSetStatus"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          },
+          "scenario_sets": {
+            "description": "The scenario sets for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenarioSet"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateScenarioSetInputPublic": {
+        "description": "Public parameters for creating a scenario set.",
+        "properties": {
+          "file_upload_scenario_set": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/apiFileUploadDataSource"
+              }
+            ],
+            "description": "Uploaded scenario file to ingest. Provide this or `scenarios`, not both."
+          },
+          "name": {
+            "description": "The name of the scenario set.",
+            "example": "support-agent-scenarios",
+            "type": "string"
+          },
+          "scenarios": {
+            "description": "Inline scenarios. Provide this or `file_upload_scenario_set`, not both.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenario"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateScenarioSetOutput": {
+        "description": "Output for creating a scenario set.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateScenarioSetUploadPresignedUrlsInputPublic": {
+        "description": "Public parameters for requesting scenario set upload presigned URLs.",
+        "properties": {
+          "files": {
+            "description": "A list of files to generate presigned URLs for.",
+            "items": {
+              "$ref": "#/components/schemas/apiPresignedUrlFile"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiGenerateScenarioSetInputPublic": {
+        "description": "Public parameters for dispatching goal-driven scenario generation.",
+        "properties": {
+          "generator_model_uuid": {
+            "description": "Optional model to use for generation. Platform default when unset.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "goal_description": {
+            "description": "The goal that drives scenario generation.",
+            "example": "Test how the agent handles refund requests",
+            "type": "string"
+          },
+          "name": {
+            "description": "The name of the scenario set to create.",
+            "example": "billing-support-generated",
+            "type": "string"
+          },
+          "num_scenarios": {
+            "description": "Number of scenarios to generate. Defaults to 1 if unset.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiGenerateScenarioSetOutput": {
+        "description": "Output for dispatching goal-driven scenario generation.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetScenarioSetOutput": {
+        "description": "Output for getting a scenario set.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
+      "apiUpdateScenarioSetInputPublic": {
+        "description": "Public parameters for updating a scenario set.",
+        "properties": {
+          "name": {
+            "description": "Optional new name. When set, must be non-empty and at most 255 characters.",
+            "example": "example name",
+            "type": "string"
+          },
+          "scenario_set_uuid": {
+            "description": "UUID of the scenario set to update.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "scenarios": {
+            "description": "Optional inline scenarios to replace the set contents. At least one of\nname or scenarios is required.",
+            "items": {
+              "$ref": "#/components/schemas/apiScenario"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiUpdateScenarioSetOutput": {
+        "description": "Output for updating a scenario set.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
+      "apiDeleteScenarioSetOutput": {
+        "description": "Output for deleting a scenario set.",
+        "properties": {
+          "scenario_set_uuid": {
+            "description": "UUID of the deleted scenario set.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetScenarioSetDownloadURLOutput": {
+        "description": "Output containing a presigned download URL for a scenario set.",
+        "properties": {
+          "download_url": {
+            "description": "The presigned URL to download the scenario set file.",
+            "example": "example string",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "The time the URL expires at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiDuplicateScenarioSetInputPublic": {
+        "description": "Public parameters for duplicating a scenario set.",
+        "properties": {
+          "scenario_set_uuid": {
+            "description": "UUID of the scenario set to duplicate.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiDuplicateScenarioSetOutput": {
+        "description": "Output for duplicating a scenario set.",
+        "properties": {
+          "scenario_set": {
+            "$ref": "#/components/schemas/apiScenarioSet"
+          }
+        },
+        "type": "object"
+      },
       "apiCreateScheduledIndexingInputPublic": {
         "properties": {
           "days": {
@@ -73052,6 +75850,902 @@
         "properties": {
           "indexing_info": {
             "$ref": "#/components/schemas/apiScheduledIndexingInfo"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationRunSortField": {
+        "default": "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing simulation runs.\n\n - SIMULATION_RUN_SORT_FIELD_CREATED_AT: Sort by creation date. Default.\n - SIMULATION_RUN_SORT_FIELD_NAME: Sort by customer-supplied run name (case-insensitive).\n - SIMULATION_RUN_SORT_FIELD_STATUS: Sort by status using lifecycle order (pending → running → terminal).\n - SIMULATION_RUN_SORT_FIELD_UPDATED_AT: Sort by last update date.",
+        "enum": [
+          "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+          "SIMULATION_RUN_SORT_FIELD_CREATED_AT",
+          "SIMULATION_RUN_SORT_FIELD_NAME",
+          "SIMULATION_RUN_SORT_FIELD_STATUS",
+          "SIMULATION_RUN_SORT_FIELD_UPDATED_AT"
+        ],
+        "example": "SIMULATION_RUN_SORT_FIELD_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiSimulationRunStatus": {
+        "default": "SIMULATION_RUN_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of a simulation run.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Journeys are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All journeys finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Journeys finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
+        "enum": [
+          "SIMULATION_RUN_STATUS_UNSPECIFIED",
+          "SIMULATION_RUN_STATUS_PENDING",
+          "SIMULATION_RUN_STATUS_RUNNING",
+          "SIMULATION_RUN_STATUS_SUCCEEDED",
+          "SIMULATION_RUN_STATUS_FAILED",
+          "SIMULATION_RUN_STATUS_CANCELLED",
+          "SIMULATION_RUN_STATUS_EVALUATING",
+          "SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL"
+        ],
+        "example": "SIMULATION_RUN_STATUS_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiCandidateAgentConfig": {
+        "description": "Configuration of the candidate agent under test for a simulation run.",
+        "properties": {
+          "agent_deployment_uuid": {
+            "description": "Optional agent deployment to run. Defaults to the agent's current deployment when unset.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "agent_uuid": {
+            "description": "UUID of the agent to exercise as the candidate.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name of the candidate agent. Persisted with the run.",
+            "example": "example name",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTokenUsage": {
+        "description": "Per-actor token accounting for a run or journey.",
+        "properties": {
+          "candidate_agent_tokens": {
+            "description": "Tokens consumed by the candidate agent.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "generator_tokens": {
+            "description": "Tokens consumed by the scenario generator.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "judge_tokens": {
+            "description": "Tokens consumed by the judge.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "simulator_tokens": {
+            "description": "Tokens consumed by the user simulator.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "total_tokens": {
+            "description": "Total tokens across all actors.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationJourneyCounts": {
+        "description": "Breakdown of journey outcomes by judge verdict. Reused wherever a\nsuccess / failure / inconclusive tally is reported (run row, result summary,\nper-scenario rollup).",
+        "properties": {
+          "failure_count": {
+            "description": "Number of journeys with a FAILURE verdict.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "inconclusive_count": {
+            "description": "Number of journeys with an INCONCLUSIVE verdict.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "success_count": {
+            "description": "Number of journeys with a SUCCESS verdict.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationRunResultSummary": {
+        "description": "Aggregated final result of a simulation run: verdict counts plus token and\nduration totals.",
+        "properties": {
+          "token_usage": {
+            "$ref": "#/components/schemas/apiSimulationTokenUsage"
+          },
+          "total_duration_sec": {
+            "description": "Total wall-clock duration across the run, in seconds.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "verdict_counts": {
+            "$ref": "#/components/schemas/apiSimulationJourneyCounts"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationRun": {
+        "description": "One execution of a scenario set against a candidate agent.",
+        "properties": {
+          "agent_config": {
+            "$ref": "#/components/schemas/apiCandidateAgentConfig"
+          },
+          "created_at": {
+            "description": "Time created at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "created_by_user_email": {
+            "description": "Email of the user who triggered this run.",
+            "example": "example@example.com",
+            "type": "string"
+          },
+          "created_by_user_id": {
+            "description": "User id of the actor who triggered this run.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "deleted_at": {
+            "description": "Time deleted at. Unset unless the run has been deleted.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "evaluation_run_uuid": {
+            "description": "UUID of the evaluation run reserved for this simulation, when the create\nrequest included evaluation_config. Empty when no evaluation is attached.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "exploration_budget": {
+            "description": "Optional run-level journeys-per-scenario override. When set, overrides each scenario's exploration_budget.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "failure_reason": {
+            "description": "Human-readable explanation of a terminal FAILED status. Empty otherwise.",
+            "example": "example string",
+            "type": "string"
+          },
+          "journeys_finished": {
+            "description": "Number of journeys that have finished (successfully or not).",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "judge_model_name": {
+            "description": "Display name of the judge model (from the model catalog).",
+            "example": "example name",
+            "type": "string"
+          },
+          "judge_model_uuid": {
+            "description": "Model used by the judge.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "max_turns": {
+            "description": "Optional run-level turn budget. When set, overrides each scenario's max_turns.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Optional run name.",
+            "example": "example name",
+            "type": "string"
+          },
+          "result_summary": {
+            "$ref": "#/components/schemas/apiSimulationRunResultSummary"
+          },
+          "run_uuid": {
+            "description": "UUID of the run.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "scenario_count": {
+            "description": "Number of scenarios in the scenario set for this run.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "scenario_set_uuid": {
+            "description": "UUID of the scenario set being executed (must exist at run create).",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/apiSimulationRunStatus"
+          },
+          "total_journeys": {
+            "description": "Total number of journeys (sum of exploration budgets).",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "updated_at": {
+            "description": "Time last updated at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "user_simulator_config": {
+            "description": "Optional user simulator model settings such as temperature and max_tokens.",
+            "type": "object"
+          },
+          "user_simulator_model_name": {
+            "description": "Display name of the user simulator model (from the model catalog).",
+            "example": "example name",
+            "type": "string"
+          },
+          "user_simulator_model_uuid": {
+            "description": "Model used by the user simulator.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "workflow_uuid": {
+            "description": "Identifier of the workflow executing this run.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiListSimulationRunsOutput": {
+        "description": "Output for listing simulation runs.",
+        "properties": {
+          "available_sort_by": {
+            "description": "Sort-by values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationRunSortField"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort-direction values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "available_statuses": {
+            "description": "Statuses available for filtering this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationRunStatus"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          },
+          "simulation_runs": {
+            "description": "The simulation runs for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationRun"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationEvaluationConfig": {
+        "description": "Optional configuration that opts a simulation run into an evaluation. When\nincluded on the create-run request, the platform reserves a\nmodel_evaluation_run linked to this simulation run and dispatches the\nevaluation automatically after the simulation finishes. The evaluation\nreuses the simulation run's judge_model_uuid.",
+        "properties": {
+          "metric_uuids": {
+            "description": "Evaluation metric UUIDs (from the evaluation metrics catalog). Must be\nsimulation-eligible (multi-turn) metrics; the create request is rejected\nif any UUID is unknown or ineligible.",
+            "example": [
+              "example string"
+            ],
+            "items": {
+              "example": "example string",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "star_metric": {
+            "$ref": "#/components/schemas/apiStarMetric"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateSimulationRunInputPublic": {
+        "description": "Public parameters for creating a simulation run.",
+        "properties": {
+          "agent_config": {
+            "$ref": "#/components/schemas/apiCandidateAgentConfig"
+          },
+          "evaluation_config": {
+            "$ref": "#/components/schemas/apiSimulationEvaluationConfig"
+          },
+          "exploration_budget": {
+            "description": "Optional run-level journeys-per-scenario override. When set, overrides each scenario's exploration_budget.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "judge_model_uuid": {
+            "description": "Optional model override for the judge. Platform default when unset.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "max_turns": {
+            "description": "Optional run-level turn budget. When set, overrides each scenario's max_turns.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "description": "Optional run name.",
+            "example": "example name",
+            "type": "string"
+          },
+          "scenario_set_uuid": {
+            "description": "UUID of the existing scenario set to execute. The set must be ready.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "user_simulator_config": {
+            "description": "Optional user simulator model settings such as temperature and max_tokens.",
+            "type": "object"
+          },
+          "user_simulator_model_uuid": {
+            "description": "Optional model override for the user simulator. Platform default when unset.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiCreateSimulationRunOutput": {
+        "description": "Output for creating a simulation run.",
+        "properties": {
+          "simulation_run": {
+            "$ref": "#/components/schemas/apiSimulationRun"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationScenarioResult": {
+        "description": "Per-scenario rollup of journey outcomes within a run, aggregated from the\nrun's journey rows.",
+        "properties": {
+          "journeys_finished": {
+            "description": "Journeys that have finished (successfully or not).",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "scenario_uuid": {
+            "description": "UUID of the scenario.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "total_journeys": {
+            "description": "Total journeys for this scenario (its exploration budget).",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "verdict_counts": {
+            "$ref": "#/components/schemas/apiSimulationJourneyCounts"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetSimulationRunOutput": {
+        "description": "Output for getting a simulation run.",
+        "properties": {
+          "scenario_results": {
+            "description": "Per-scenario breakdown of journey outcomes, aggregated from journey rows.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationScenarioResult"
+            },
+            "type": "array"
+          },
+          "simulation_run": {
+            "$ref": "#/components/schemas/apiSimulationRun"
+          }
+        },
+        "type": "object"
+      },
+      "apiUpdateSimulationRunInputPublic": {
+        "description": "Public parameters for updating a simulation run.",
+        "properties": {
+          "name": {
+            "description": "The new name of the run.",
+            "example": "example name",
+            "type": "string"
+          },
+          "run_uuid": {
+            "description": "UUID of the run to update.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiUpdateSimulationRunOutput": {
+        "description": "Output for updating a simulation run.",
+        "properties": {
+          "simulation_run": {
+            "$ref": "#/components/schemas/apiSimulationRun"
+          }
+        },
+        "type": "object"
+      },
+      "apiDeleteSimulationRunOutput": {
+        "description": "Output for deleting a simulation run.",
+        "properties": {
+          "run_uuid": {
+            "description": "UUID of the deleted run.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiCancelSimulationRunInputPublic": {
+        "description": "Public parameters for cancelling a simulation run.",
+        "properties": {
+          "run_uuid": {
+            "description": "UUID of the run to cancel.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiCancelSimulationRunOutput": {
+        "description": "Output for cancelling a simulation run.",
+        "properties": {
+          "simulation_run": {
+            "$ref": "#/components/schemas/apiSimulationRun"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationJourneySortField": {
+        "default": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing simulation journeys.\n\n - SIMULATION_JOURNEY_SORT_FIELD_SCENARIO: Sort by scenario_uuid then journey_index. Default.\n - SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_JOURNEY_SORT_FIELD_STATUS: Sort by journey status using lifecycle order.\n - SIMULATION_JOURNEY_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
+        "enum": [
+          "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+          "SIMULATION_JOURNEY_SORT_FIELD_SCENARIO",
+          "SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT",
+          "SIMULATION_JOURNEY_SORT_FIELD_STATUS",
+          "SIMULATION_JOURNEY_SORT_FIELD_VERDICT"
+        ],
+        "example": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiSimulationJourneyStatus": {
+        "default": "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of a single journey.\n\n - SIMULATION_JOURNEY_STATUS_RUNNING: The journey is executing and a trajectory is available to retrieve.\n - SIMULATION_JOURNEY_STATUS_FINISHED: The journey reached a stop condition and produced a verdict.\n - SIMULATION_JOURNEY_STATUS_FAILED: The journey failed because of a cancel, timeout, or error.\n - SIMULATION_JOURNEY_STATUS_PREPARING: The journey is allocated but its trajectory is not available yet.",
+        "enum": [
+          "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
+          "SIMULATION_JOURNEY_STATUS_RUNNING",
+          "SIMULATION_JOURNEY_STATUS_FINISHED",
+          "SIMULATION_JOURNEY_STATUS_FAILED",
+          "SIMULATION_JOURNEY_STATUS_PREPARING"
+        ],
+        "example": "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiSimulationJourneyVerdict": {
+        "default": "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
+        "description": "The judge's verdict for a journey.\n\n - SIMULATION_JOURNEY_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
+        "enum": [
+          "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
+          "SIMULATION_JOURNEY_VERDICT_SUCCESS",
+          "SIMULATION_JOURNEY_VERDICT_FAILURE",
+          "SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE"
+        ],
+        "example": "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiSimulationJourney": {
+        "description": "One independent execution within a simulation run, including its trajectory and verdict.",
+        "properties": {
+          "created_at": {
+            "description": "Time created at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "duration_sec": {
+            "description": "Wall-clock time taken for the journey to complete, in seconds.",
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "failure_reason": {
+            "description": "Human-readable explanation of a terminal FAILED status. Empty otherwise.",
+            "example": "example string",
+            "type": "string"
+          },
+          "journey_index": {
+            "description": "Zero-based index of this journey within its scenario's exploration budget.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "journey_uuid": {
+            "description": "UUID of the journey.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "judge_reasoning": {
+            "description": "Optional judge reasoning for the verdict.",
+            "example": "example string",
+            "type": "string"
+          },
+          "run_uuid": {
+            "description": "UUID of the run this journey belongs to.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "scenario_uuid": {
+            "description": "UUID of the scenario this journey executed.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "session_id": {
+            "description": "Session identifier for this journey.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/apiSimulationJourneyStatus"
+          },
+          "token_usage": {
+            "$ref": "#/components/schemas/apiSimulationTokenUsage"
+          },
+          "trajectory_bucket_name": {
+            "description": "Object storage bucket holding the trajectory JSON. Set when the journey finishes.",
+            "example": "example name",
+            "type": "string"
+          },
+          "trajectory_bucket_region": {
+            "description": "Object storage bucket region for the trajectory JSON. Set when the journey finishes.",
+            "example": "example string",
+            "type": "string"
+          },
+          "trajectory_spaces_key": {
+            "description": "Object storage key for the trajectory JSON. Set when the journey finishes.",
+            "example": "example string",
+            "type": "string"
+          },
+          "updated_at": {
+            "description": "Time last updated at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+          }
+        },
+        "type": "object"
+      },
+      "apiListSimulationJourneysOutput": {
+        "description": "Output for listing the journeys within a simulation run.",
+        "properties": {
+          "available_sort_by": {
+            "description": "Sort-by values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationJourneySortField"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort-direction values available for this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "available_statuses": {
+            "description": "Statuses available for filtering this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationJourneyStatus"
+            },
+            "type": "array"
+          },
+          "available_verdicts": {
+            "description": "Verdicts available for filtering this list request.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+            },
+            "type": "array"
+          },
+          "journeys": {
+            "description": "The journeys for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationJourney"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetSimulationJourneyOutput": {
+        "description": "Output for getting a single journey.",
+        "properties": {
+          "journey": {
+            "$ref": "#/components/schemas/apiSimulationJourney"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryJudgeCriterion": {
+        "description": "Per-criterion judge evaluation recorded in the trajectory JSON.",
+        "properties": {
+          "criterion": {
+            "example": "example string",
+            "type": "string"
+          },
+          "passed": {
+            "example": true,
+            "type": "boolean"
+          },
+          "reasoning": {
+            "example": "example string",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryJudgeResult": {
+        "description": "Judge output embedded in the trajectory JSON.",
+        "properties": {
+          "criteria_pass_fail": {
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationTrajectoryJudgeCriterion"
+            },
+            "type": "array"
+          },
+          "reasoning": {
+            "example": "example string",
+            "type": "string"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryMessageTokens": {
+        "description": "Token usage for a single assistant message in the trajectory JSON.",
+        "properties": {
+          "input": {
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "output": {
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryToolCall": {
+        "description": "A tool call recorded on an assistant turn in the trajectory JSON.",
+        "properties": {
+          "description": {
+            "example": "example string",
+            "type": "string"
+          },
+          "input_parameters": {
+            "type": "object"
+          },
+          "name": {
+            "example": "example name",
+            "type": "string"
+          },
+          "ok": {
+            "example": true,
+            "type": "boolean"
+          },
+          "output": {
+            "type": "object"
+          },
+          "tool_call_id": {
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryMessage": {
+        "description": "One user or assistant message in the turn-by-turn conversation view.",
+        "properties": {
+          "completed_at": {
+            "description": "ISO-8601 timestamp when the message completed.",
+            "example": "example string",
+            "type": "string"
+          },
+          "content": {
+            "description": "Message body text.",
+            "example": "example string",
+            "type": "string"
+          },
+          "role": {
+            "description": "Message role: \"user\" or \"assistant\".",
+            "example": "example string",
+            "type": "string"
+          },
+          "started_at": {
+            "description": "ISO-8601 timestamp when the message started.",
+            "example": "example string",
+            "type": "string"
+          },
+          "tokens": {
+            "$ref": "#/components/schemas/apiSimulationTrajectoryMessageTokens"
+          },
+          "tool_calls": {
+            "description": "Tool calls on assistant turns.",
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationTrajectoryToolCall"
+            },
+            "type": "array"
+          },
+          "turn_index": {
+            "description": "Zero-based turn index shared by the user and assistant messages in one exchange.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiSimulationTrajectoryStatus": {
+        "default": "SIMULATION_TRAJECTORY_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of the trajectory. Distinct from journey status: the\ntrajectory is updated on every turn while the journey is executing.\n\n - SIMULATION_TRAJECTORY_STATUS_RUNNING: The journey loop is in progress; messages may grow on each poll.\n - SIMULATION_TRAJECTORY_STATUS_COMPLETED: The journey reached a stop condition and the trajectory is complete.\n - SIMULATION_TRAJECTORY_STATUS_FAILED: The journey failed before or during execution.\n - SIMULATION_TRAJECTORY_STATUS_CANCELLED: The journey was cancelled.",
+        "enum": [
+          "SIMULATION_TRAJECTORY_STATUS_UNSPECIFIED",
+          "SIMULATION_TRAJECTORY_STATUS_RUNNING",
+          "SIMULATION_TRAJECTORY_STATUS_COMPLETED",
+          "SIMULATION_TRAJECTORY_STATUS_FAILED",
+          "SIMULATION_TRAJECTORY_STATUS_CANCELLED"
+        ],
+        "example": "SIMULATION_TRAJECTORY_STATUS_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiSimulationTrajectory": {
+        "description": "Turn-by-turn trajectory for one journey. Poll this resource while the journey is running to watch live progress.",
+        "properties": {
+          "agent_id": {
+            "description": "Identifier of the candidate agent under test for this journey.",
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "completed_at": {
+            "example": "example string",
+            "type": "string"
+          },
+          "duration_sec": {
+            "example": "12345",
+            "format": "uint64",
+            "type": "string"
+          },
+          "evaluation_metrics": {
+            "description": "Per-metric scores and judge reasoning for this trajectory. Empty when the\nsimulation run has no associated evaluation.",
+            "items": {
+              "$ref": "#/components/schemas/apiEvaluationMetricResult"
+            },
+            "type": "array"
+          },
+          "failure_reason": {
+            "example": "example string",
+            "type": "string"
+          },
+          "journey_index": {
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "journey_uuid": {
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "judge": {
+            "$ref": "#/components/schemas/apiSimulationTrajectoryJudgeResult"
+          },
+          "max_turns": {
+            "description": "Turn budget configured for this journey (per-scenario max_turns, after\nany run-level override). Compare with turn_count to see how many of the\nbudgeted turns actually ran.",
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/apiSimulationTrajectoryMessage"
+            },
+            "type": "array"
+          },
+          "run_uuid": {
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "scenario_uuid": {
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "session_id": {
+            "example": "123e4567-e89b-12d3-a456-426614174000",
+            "type": "string"
+          },
+          "started_at": {
+            "example": "example string",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/apiSimulationTrajectoryStatus"
+          },
+          "token_usage": {
+            "$ref": "#/components/schemas/apiSimulationTokenUsage"
+          },
+          "turn_count": {
+            "example": 123,
+            "format": "int64",
+            "type": "integer"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetSimulationJourneyTrajectoryOutput": {
+        "description": "Output containing the parsed trajectory JSON.",
+        "properties": {
+          "trajectory": {
+            "$ref": "#/components/schemas/apiSimulationTrajectory"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetSimulationJourneyTrajectoryURLOutput": {
+        "description": "Output containing a presigned download URL for a journey's trajectory JSON.",
+        "properties": {
+          "download_url": {
+            "description": "The presigned URL to download the trajectory JSON file.",
+            "example": "example string",
+            "type": "string"
+          },
+          "expires_at": {
+            "description": "The time the URL expires at.",
+            "example": "2023-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
           }
         },
         "type": "object"
@@ -82460,6 +86154,7 @@
                     {
                       "protocol": "udp",
                       "ports": "8000-9000",
+                      "action": "allow",
                       "sources": {
                         "addresses": [
                           "1.2.3.4",
@@ -82483,6 +86178,7 @@
                     {
                       "protocol": "tcp",
                       "ports": "7000-9000",
+                      "action": "allow",
                       "destinations": {
                         "addresses": [
                           "1.2.3.4",
@@ -82973,6 +86669,7 @@
                     {
                       "protocol": "tcp",
                       "ports": "80",
+                      "action": "allow",
                       "sources": {
                         "load_balancer_uids": [
                           "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -82982,6 +86679,7 @@
                     {
                       "protocol": "tcp",
                       "ports": "22",
+                      "action": "allow",
                       "sources": {
                         "tags": [
                           "gateway"
@@ -82996,6 +86694,7 @@
                     {
                       "protocol": "tcp",
                       "ports": "80",
+                      "action": "allow",
                       "destinations": {
                         "addresses": [
                           "0.0.0.0/0",
@@ -83051,6 +86750,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "sources": {
                       "load_balancer_uids": [
                         "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -83060,6 +86760,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "22",
+                    "action": "allow",
                     "sources": {
                       "tags": [
                         "gateway"
@@ -83074,6 +86775,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "destinations": {
                       "addresses": [
                         "0.0.0.0/0",
@@ -83130,6 +86832,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "sources": {
                       "load_balancer_uids": [
                         "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -83139,6 +86842,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "22",
+                    "action": "allow",
                     "sources": {
                       "tags": [
                         "gateway"
@@ -83153,6 +86857,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "destinations": {
                       "addresses": [
                         "0.0.0.0/0",
@@ -83202,6 +86907,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "sources": {
                       "load_balancer_uids": [
                         "4de7ac8b-495b-4884-9a69-1050c6793cd6"
@@ -83211,6 +86917,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "22",
+                    "action": "allow",
                     "sources": {
                       "tags": [
                         "gateway"
@@ -83225,6 +86932,7 @@
                   {
                     "protocol": "tcp",
                     "ports": "80",
+                    "action": "allow",
                     "destinations": {
                       "addresses": [
                         "0.0.0.0/0",
