@@ -49,7 +49,7 @@
     },
     {
       "name": "Billing",
-      "description": "The billing endpoints allow you to retrieve your account balance, invoices,\nbilling history, and insights.\n\n**Balance:** By sending requests to the `/v2/customers/my/balance` endpoint, you can\nretrieve the balance information for the requested customer account.\n\n**Invoices:** [Invoices](https://docs.digitalocean.com/platform/billing/invoices/)\nare generated on the first of each month for every DigitalOcean\ncustomer. An invoice preview is generated daily, which can be accessed\nwith the `preview` keyword in place of `$INVOICE_UUID`. To interact with\ninvoices, you will generally send requests to the invoices endpoint at\n`/v2/customers/my/invoices`.\n\n**Billing History:** Billing history is a record of billing events for your account.\nFor example, entries may include events like payments made, invoices\nissued, or credits granted. To interact with invoices, you\nwill generally send requests to the invoices endpoint at\n`/v2/customers/my/billing_history`.\n\n**Billing Insights:** Day-over-day changes in billing resource usage based on nightly invoice items,\nincluding total amount, region, SKU, and description for a specified date range.\nIt is important to note that the daily resource usage may not reflect month-end billing totals when totaled for\na given month as nightly invoice items do not necessarily encompass all invoicing factors for the entire month.\n  `v2/billing/{account_urn}/insights/{start_date}/{end_date}` where account_urn is the URN of the customer\naccount, can be a team (do:team:uuid) or an organization (do:teamgroup:uuid). The date range specified by\nstart_date and end_date must be in YYYY-MM-DD format."
+      "description": "The billing endpoints allow you to retrieve your account balance, invoices,\nbilling history, insights, and prepayment information.\n\n**Balance:** By sending requests to the `/v2/customers/my/balance` endpoint, you can\nretrieve the balance information for the requested customer account.\n\n**Prepayment:** By sending requests to the `/v2/customers/my/prepayment_config`\nand `/v2/customers/my/prepayment_status` endpoints, you can retrieve prepayment\ngate configuration and status for the requested customer account.\n\n**Invoices:** [Invoices](https://docs.digitalocean.com/platform/billing/invoices/)\nare generated on the first of each month for every DigitalOcean\ncustomer. An invoice preview is generated daily, which can be accessed\nwith the `preview` keyword in place of `$INVOICE_UUID`. To interact with\ninvoices, you will generally send requests to the invoices endpoint at\n`/v2/customers/my/invoices`.\n\n**Billing History:** Billing history is a record of billing events for your account.\nFor example, entries may include events like payments made, invoices\nissued, or credits granted. To interact with invoices, you\nwill generally send requests to the invoices endpoint at\n`/v2/customers/my/billing_history`.\n\n**Billing Insights:** Day-over-day changes in billing resource usage based on nightly invoice items,\nincluding total amount, region, SKU, and description for a specified date range.\nIt is important to note that the daily resource usage may not reflect month-end billing totals when totaled for\na given month as nightly invoice items do not necessarily encompass all invoicing factors for the entire month.\n  `v2/billing/{account_urn}/insights/{start_date}/{end_date}` where account_urn is the URN of the customer\naccount, can be a team (do:team:uuid) or an organization (do:teamgroup:uuid). The date range specified by\nstart_date and end_date must be in YYYY-MM-DD format."
     },
     {
       "name": "Block Storage",
@@ -4337,6 +4337,100 @@
           {
             "lang": "Python",
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nbalance = client.balance.get()"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "billing:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/customers/my/prepayment_config": {
+      "get": {
+        "operationId": "prepaymentConfig_get",
+        "summary": "Get Customer Prepayment Configuration",
+        "description": "To retrieve the prepayment configuration and current prepayment status for a customer's account, send a GET request to `/v2/customers/my/prepayment_config`.",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prepayment_config"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/customers/my/prepayment_config\""
+          },
+          {
+            "lang": "Python",
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nprepayment_config = client.prepayment_config.get()"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "billing:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/customers/my/prepayment_status": {
+      "get": {
+        "operationId": "prepaymentStatus_get",
+        "summary": "Get Customer Prepayment Status",
+        "description": "To retrieve the prepayment gate status and balances for a customer's account, send a GET request to `/v2/customers/my/prepayment_status`.",
+        "tags": [
+          "Billing"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prepayment_status"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/customers/my/prepayment_status\""
+          },
+          {
+            "lang": "Python",
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nprepayment_status = client.prepayment_status.get()"
           }
         ],
         "security": [
@@ -51878,6 +51972,92 @@
           }
         }
       },
+      "prepayment_config": {
+        "type": "object",
+        "properties": {
+          "spend_limit": {
+            "type": "string",
+            "description": "Maximum spend allowed before the prepayment gate blocks usage. Decimal dollars, e.g. `\"100.00\"`.",
+            "example": "100.00"
+          },
+          "is_auto_prepay_enabled": {
+            "type": "boolean",
+            "description": "Whether automatic prepayment top-up is enabled.",
+            "example": true
+          },
+          "prepay_amount": {
+            "type": "string",
+            "description": "Amount to charge when auto top-up triggers. Decimal dollars, e.g. `\"50.00\"`.",
+            "example": "50.00"
+          },
+          "prepay_threshold": {
+            "type": "string",
+            "description": "Balance threshold that triggers auto top-up. Decimal dollars, e.g. `\"10.00\"`.",
+            "example": "10.00"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time at which the prepayment configuration was created.",
+            "example": "2026-06-22T19:31:51Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time at which the prepayment configuration was last updated.",
+            "example": "2026-06-25T18:40:07Z"
+          }
+        }
+      },
+      "prepayment_status": {
+        "type": "object",
+        "properties": {
+          "balance": {
+            "type": "string",
+            "description": "Current prepayment balance. Decimal dollars, e.g. `\"25.00\"`.",
+            "example": "25.00"
+          },
+          "is_auto_prepay_enabled": {
+            "type": "boolean",
+            "description": "Whether automatic prepayment top-up is enabled.",
+            "example": true
+          },
+          "blocked": {
+            "type": "boolean",
+            "description": "Whether the prepayment gate is currently blocking usage.",
+            "example": true
+          },
+          "eligible": {
+            "type": "boolean",
+            "description": "Whether the account is eligible for the prepayment gate experience.",
+            "example": true
+          },
+          "month_to_date_balance": {
+            "type": "string",
+            "description": "Current account balance including month-to-date usage. Decimal dollars, e.g. `\"75.00\"`.",
+            "example": "75.00"
+          }
+        }
+      },
+      "prepayment_config_response": {
+        "type": "object",
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/prepayment_config"
+          },
+          "status": {
+            "$ref": "#/components/schemas/prepayment_status"
+          }
+        }
+      },
+      "prepayment_status_response": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/prepayment_status"
+          }
+        }
+      },
       "billing_history": {
         "type": "object",
         "properties": {
@@ -81721,6 +81901,74 @@
               "account_balance": "12.23",
               "month_to_date_usage": "11.21",
               "generated_at": "2019-07-09T15:01:12Z"
+            }
+          }
+        }
+      },
+      "prepayment_config": {
+        "description": "The response will be a JSON object with the customer's prepayment configuration and current prepayment status.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prepayment_config_response"
+            },
+            "example": {
+              "config": {
+                "spend_limit": "100.00",
+                "is_auto_prepay_enabled": true,
+                "prepay_amount": "50.00",
+                "prepay_threshold": "10.00",
+                "created_at": "2026-06-22T19:31:51Z",
+                "updated_at": "2026-06-25T18:40:07Z"
+              },
+              "status": {
+                "balance": "25.00",
+                "is_auto_prepay_enabled": true,
+                "blocked": true,
+                "eligible": true,
+                "month_to_date_balance": "75.00"
+              }
+            }
+          }
+        }
+      },
+      "prepayment_status": {
+        "description": "The response will be a JSON object with the customer's prepayment gate status and balances.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prepayment_status_response"
+            },
+            "example": {
+              "status": {
+                "balance": "25.00",
+                "is_auto_prepay_enabled": true,
+                "blocked": true,
+                "eligible": true,
+                "month_to_date_balance": "75.00"
+              }
             }
           }
         }
