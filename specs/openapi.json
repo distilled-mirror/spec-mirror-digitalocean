@@ -61944,6 +61944,12 @@
             "example": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
             "description": "A string specifying the UUID of the VPC to which the load balancer is assigned."
           },
+          "subnet_uuid": {
+            "type": "string",
+            "format": "uuid",
+            "example": "cbd79771-23eb-49be-b5ea-59cc56222622",
+            "description": "A string specifying the UUID of the VPC subnet to which the load balancer is assigned."
+          },
           "disable_lets_encrypt_dns_records": {
             "type": "boolean",
             "example": true,
@@ -66706,8 +66712,15 @@
               "properties": {
                 "vpc_uuid": {
                   "type": "string",
+                  "format": "uuid",
                   "example": "0d3db13e-a604-4944-9827-7ec2642d32ac",
                   "description": "The unique identifier of the VPC to which the NAT gateway is attached."
+                },
+                "subnet_uuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "cbd79771-23eb-49be-b5ea-59cc56222622",
+                  "description": "The unique identifier of the VPC subnet to which the NAT gateway is attached."
                 },
                 "gateway_ip": {
                   "type": "string",
@@ -66819,8 +66832,15 @@
               "properties": {
                 "vpc_uuid": {
                   "type": "string",
+                  "format": "uuid",
                   "example": "0d3db13e-a604-4944-9827-7ec2642d32ac",
                   "description": "The unique identifier of the VPC to which the NAT gateway is attached."
+                },
+                "subnet_uuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "cbd79771-23eb-49be-b5ea-59cc56222622",
+                  "description": "The unique identifier of the VPC subnet to which the NAT gateway is attached."
                 },
                 "default_gateway": {
                   "type": "boolean",
@@ -66904,8 +66924,15 @@
               "properties": {
                 "vpc_uuid": {
                   "type": "string",
+                  "format": "uuid",
                   "example": "0d3db13e-a604-4944-9827-7ec2642d32ac",
                   "description": "The unique identifier of the VPC to which the NAT gateway is attached."
+                },
+                "subnet_uuid": {
+                  "type": "string",
+                  "format": "uuid",
+                  "example": "cbd79771-23eb-49be-b5ea-59cc56222622",
+                  "description": "The unique identifier of the VPC subnet to which the NAT gateway is attached."
                 },
                 "default_gateway": {
                   "type": "boolean",
@@ -99785,6 +99812,7 @@
               "enable_proxy_protocol": false,
               "enable_backend_keepalive": false,
               "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+              "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
               "disable_lets_encrypt_dns_records": false,
               "firewall": {
                 "deny": [
@@ -99867,6 +99895,7 @@
               "enable_proxy_protocol": false,
               "enable_backend_keepalive": false,
               "vpc_uuid": "587d698c-de84-11e8-80bc-3cfdfea9fcd1",
+              "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
               "disable_lets_encrypt_dns_records": false,
               "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30",
               "http_idle_timeout_seconds": 60,
@@ -99893,6 +99922,7 @@
         "value": {
           "name": "example-lb-01",
           "region": "nyc3",
+          "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
           "forwarding_rules": [
             {
               "entry_protocol": "http",
@@ -100071,6 +100101,7 @@
             "enable_proxy_protocol": false,
             "enable_backend_keepalive": false,
             "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+            "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
             "disable_lets_encrypt_dns_records": false,
             "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30",
             "http_idle_timeout_seconds": 60,
@@ -100155,6 +100186,7 @@
             "enable_proxy_protocol": false,
             "enable_backend_keepalive": false,
             "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+            "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
             "disable_lets_encrypt_dns_records": false
           }
         }
@@ -100227,6 +100259,7 @@
             "enable_proxy_protocol": false,
             "enable_backend_keepalive": false,
             "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+            "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
             "disable_lets_encrypt_dns_records": false,
             "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30"
           }
@@ -100302,6 +100335,7 @@
             "enable_proxy_protocol": false,
             "enable_backend_keepalive": false,
             "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+            "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
             "disable_lets_encrypt_dns_records": false,
             "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30"
           }
@@ -100350,6 +100384,7 @@
           "enable_proxy_protocol": true,
           "enable_backend_keepalive": true,
           "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+          "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
           "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30",
           "http_idle_timeout_seconds": 60,
           "firewall": {
@@ -100441,6 +100476,7 @@
             "enable_proxy_protocol": true,
             "enable_backend_keepalive": true,
             "vpc_uuid": "c33931f2-a26a-4e61-b85c-4e95a2ec431b",
+            "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
             "disable_lets_encrypt_dns_records": false,
             "project_id": "9cc10173-e9ea-4176-9dbc-a4cee4c4ff30",
             "http_idle_timeout_seconds": 60,
@@ -101696,6 +101732,7 @@
               "vpcs": [
                 {
                   "vpc_uuid": "0eb1752f-807b-4562-a077-8018e13ab1fb",
+                  "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
                   "gateway_ip": "10.118.0.35"
                 }
               ],
@@ -101729,6 +101766,7 @@
           "vpcs": [
             {
               "vpc_uuid": "0eb1752f-807b-4562-a077-8018e13ab1fb",
+              "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
               "default_gateway": true
             }
           ],
@@ -101750,6 +101788,7 @@
             "vpcs": [
               {
                 "vpc_uuid": "0eb1752f-807b-4562-a077-8018e13ab1fb",
+                "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
                 "default_gateway": true
               }
             ],
@@ -101774,6 +101813,7 @@
             "vpcs": [
               {
                 "vpc_uuid": "0eb1752f-807b-4562-a077-8018e13ab1fb",
+                "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
                 "gateway_ip": "10.118.0.35",
                 "default_gateway": true
               }
@@ -101820,6 +101860,7 @@
             "vpcs": [
               {
                 "vpc_uuid": "0eb1752f-807b-4562-a077-8018e13ab1fb",
+                "subnet_uuid": "cbd79771-23eb-49be-b5ea-59cc56222622",
                 "gateway_ip": "10.118.0.35"
               }
             ],
