@@ -44,6 +44,10 @@
       "description": "Add-ons are third-party applications that can be added to your DigitalOcean account.\nThey are available through the [DigitalOcean Marketplace](https://marketplace.digitalocean.com/).\nAdd-ons can be used to enhance the functionality of your existing resources or to provide\nadditional services.\n\nThe Add-Ons API allows you to manage these resources, including creating, listing, and retrieving\ndetails about specific add-on resources."
     },
     {
+      "name": "Action Gateway",
+      "description": "Discover Action Gateway tools and providers, manage versioned toolbelts and\nOAuth connections, and create policy-bound sessions for end users."
+    },
+    {
       "name": "Apps",
       "description": "App Platform is a Platform-as-a-Service (PaaS) offering from DigitalOcean that allows\ndevelopers to publish code directly to DigitalOcean servers without worrying about the\nunderlying infrastructure.\n\nMost API operations are centered around a few core object types. Following are the\ndefinitions of these types. These definitions will be omitted from the operation-specific\ndocumentation.\n\nFor documentation on app specifications (`AppSpec` objects), please refer to the\n[product documentation](https://docs.digitalocean.com/products/app-platform/reference/app-spec/))."
     },
@@ -275,6 +279,7 @@
         "Account",
         "Actions",
         "Add-Ons",
+        "Action Gateway",
         "Apps",
         "Billing",
         "Block Storage",
@@ -339,6 +344,1617 @@
     }
   ],
   "paths": {
+    "/v2/action-gateway/tools": {
+      "get": {
+        "operationId": "tools_list",
+        "summary": "List Tools",
+        "description": "Lists active Action Gateway tools visible to the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "toolkit_id",
+            "in": "query",
+            "description": "Filter tools by toolkit identifier.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "exa"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tools were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_tools_response"
+                },
+                "examples": {
+                  "tools_list_response": {
+                    "$ref": "#/components/examples/tools_list_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/tools?toolkit_id=exa\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/tools/toolkits": {
+      "get": {
+        "operationId": "tools_list_toolkits",
+        "summary": "List Toolkits",
+        "description": "Lists the toolkits that group Action Gateway tools.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "responses": {
+          "200": {
+            "description": "Toolkits were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_toolkits_response"
+                },
+                "examples": {
+                  "tools_list_toolkits_response": {
+                    "$ref": "#/components/examples/tools_list_toolkits_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/tools/toolkits\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/tools/providers": {
+      "get": {
+        "operationId": "tools_list_providers",
+        "summary": "List Tool Providers",
+        "description": "Lists Action Gateway providers and their connection requirements.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "responses": {
+          "200": {
+            "description": "Tool providers were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_providers_response"
+                },
+                "examples": {
+                  "tools_list_providers_response": {
+                    "$ref": "#/components/examples/tools_list_providers_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/tools/providers\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/tools/{name}/definition": {
+      "get": {
+        "operationId": "tools_get_definition",
+        "summary": "Retrieve a Tool Definition",
+        "description": "Retrieves the executable definition for an active Action Gateway tool.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "description": "The provider-qualified tool name.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "exa_web_search"
+          },
+          {
+            "name": "version",
+            "in": "query",
+            "description": "The tool version. Omit to retrieve the current version.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "v1"
+          },
+          {
+            "name": "toolkit_id",
+            "in": "query",
+            "description": "The toolkit identifier used to disambiguate a bare tool name.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "exa"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The tool definition was retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/tool_definition"
+                },
+                "examples": {
+                  "tools_get_definition_response": {
+                    "$ref": "#/components/examples/tools_get_definition_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/tools/exa_web_search/definition?version=v1\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/toolbelts": {
+      "get": {
+        "operationId": "toolbelts_list",
+        "summary": "List Toolbelts",
+        "description": "Lists the latest version of each toolbelt owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/toolbelt_status"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Toolbelts were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelts_response"
+                },
+                "examples": {
+                  "toolbelts_list_response": {
+                    "$ref": "#/components/examples/toolbelts_list_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts?status=active\""
+          }
+        ]
+      },
+      "post": {
+        "operationId": "toolbelts_create",
+        "summary": "Create a Toolbelt",
+        "description": "Creates a versioned collection of provider-qualified Action Gateway tool names.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/toolbelt_create"
+              },
+              "examples": {
+                "toolbelts_create_request": {
+                  "$ref": "#/components/examples/toolbelts_create_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "A toolbelt was created successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelt_response"
+                },
+                "examples": {
+                  "toolbelt_response": {
+                    "$ref": "#/components/examples/toolbelt_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\n    \"name\": \"search-toolbelt\",\n    \"display_name\": \"Search Tools\",\n    \"tools\": [\"exa_web_search\", \"exa_web_fetch\"]\n  }' \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/toolbelts/{name}": {
+      "get": {
+        "operationId": "toolbelts_get",
+        "summary": "Retrieve a Toolbelt",
+        "description": "Retrieves the latest active version or a specified immutable version of a toolbelt.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/toolbelt_name"
+          },
+          {
+            "$ref": "#/components/parameters/toolbelt_version"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The toolbelt was retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelt_response"
+                },
+                "examples": {
+                  "toolbelt_response": {
+                    "$ref": "#/components/examples/toolbelt_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts/search-toolbelt?version=1\""
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "toolbelts_delete",
+        "summary": "Delete a Toolbelt",
+        "description": "Deprecates the latest active version of a toolbelt.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/toolbelt_name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The toolbelt was deprecated successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelt_response"
+                },
+                "examples": {
+                  "toolbelts_delete_response": {
+                    "$ref": "#/components/examples/toolbelts_delete_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts/search-toolbelt\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/toolbelts/{name}/tools/add": {
+      "post": {
+        "operationId": "toolbelts_add_tools",
+        "summary": "Add Tools to a Toolbelt",
+        "description": "Adds provider-qualified tool names and creates a new immutable toolbelt version.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/toolbelt_name"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/toolbelt_tools"
+              },
+              "examples": {
+                "toolbelts_add_tools_request": {
+                  "$ref": "#/components/examples/toolbelts_add_tools_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The resulting toolbelt version.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelt_response"
+                },
+                "examples": {
+                  "toolbelt_response": {
+                    "$ref": "#/components/examples/toolbelt_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:update"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"tools\": [\"exa_web_fetch\"]}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts/search-toolbelt/tools/add\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/toolbelts/{name}/tools/remove": {
+      "post": {
+        "operationId": "toolbelts_delete_tools",
+        "summary": "Remove Tools from a Toolbelt",
+        "description": "Removes tool names and creates a new immutable toolbelt version.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/toolbelt_name"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/toolbelt_tools"
+              },
+              "examples": {
+                "toolbelts_remove_tools_request": {
+                  "$ref": "#/components/examples/toolbelts_remove_tools_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The resulting toolbelt version.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/toolbelt_response"
+                },
+                "examples": {
+                  "toolbelt_response": {
+                    "$ref": "#/components/examples/toolbelt_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"tools\": [\"exa_web_fetch\"]}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/toolbelts/search-toolbelt/tools/remove\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/connections": {
+      "get": {
+        "operationId": "connections_list",
+        "summary": "List Connections",
+        "description": "Lists OAuth connections owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "query",
+            "description": "Filter by provider name.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "github"
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "description": "Filter by end-user identifier.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "end-user-123"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "Filter by connection status.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "active"
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Field used to sort results.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "created_at"
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "description": "Sort direction.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "desc"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Connections were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_connections_response"
+                },
+                "examples": {
+                  "connections_list_response": {
+                    "$ref": "#/components/examples/connections_list_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/connections?user_id=end-user-123\""
+          }
+        ]
+      },
+      "post": {
+        "operationId": "connections_create",
+        "summary": "Create a Connection",
+        "description": "Creates or begins authorization for an OAuth connection to an Action Gateway provider.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_connection_request"
+              },
+              "examples": {
+                "connections_create_request": {
+                  "$ref": "#/components/examples/connections_create_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The connection was created or authorization was started.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/create_connection_response"
+                },
+                "examples": {
+                  "connections_create_response": {
+                    "$ref": "#/components/examples/connections_create_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\n    \"provider\": \"github\",\n    \"user_id\": \"end-user-123\",\n    \"scopes\": [\"repo\"],\n    \"connection_parameters\": {}\n  }' \\\n  \"https://api.digitalocean.com/v2/action-gateway/connections\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/connections/{id}": {
+      "get": {
+        "operationId": "connections_get",
+        "summary": "Retrieve a Connection",
+        "description": "Retrieves an OAuth connection owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The connection UUID.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The connection was retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/get_connection_response"
+                },
+                "examples": {
+                  "connections_get_response": {
+                    "$ref": "#/components/examples/connections_get_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/connections/123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "connections_update",
+        "summary": "Update Connection Parameters",
+        "description": "Updates non-sensitive connection parameters for an OAuth connection.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The connection UUID.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/update_connection_parameters_request"
+              },
+              "examples": {
+                "connections_update_request": {
+                  "$ref": "#/components/examples/connections_update_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The connection parameters were updated successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/update_connection_parameters_response"
+                },
+                "examples": {
+                  "connections_update_response": {
+                    "$ref": "#/components/examples/connections_update_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:update"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"connection_parameters\": {\"site_url\": \"https://github.com\"}}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/connections/123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "connections_delete",
+        "summary": "Delete a Connection",
+        "description": "Revokes and deletes an OAuth connection owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The connection UUID.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The connection was deleted successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/delete_connection_response"
+                },
+                "examples": {
+                  "connections_delete_response": {
+                    "$ref": "#/components/examples/connections_delete_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/connections/123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/users": {
+      "get": {
+        "operationId": "users_list",
+        "summary": "List Action Gateway Users",
+        "description": "Lists end-user identifiers derived from sessions and OAuth connections for the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Users were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_users_response"
+                },
+                "examples": {
+                  "users_list_response": {
+                    "$ref": "#/components/examples/users_list_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/users\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/users/{user_id}": {
+      "get": {
+        "operationId": "users_get",
+        "summary": "Retrieve an Action Gateway User",
+        "description": "Retrieves a derived end-user view containing its sessions and OAuth connections.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "description": "The end-user identifier.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "end-user-123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The user was retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/get_user_response"
+                },
+                "examples": {
+                  "users_get_response": {
+                    "$ref": "#/components/examples/users_get_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/users/end-user-123\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/sessions": {
+      "get": {
+        "operationId": "sessions_list",
+        "summary": "List Action Gateway Sessions",
+        "description": "Lists Action Gateway sessions owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "end_user_id",
+            "in": "query",
+            "description": "Filter sessions by actor identifier.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "end-user-123"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sessions were retrieved successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_sessions_response"
+                },
+                "examples": {
+                  "sessions_list_response": {
+                    "$ref": "#/components/examples/sessions_list_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/sessions?end_user_id=end-user-123\""
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sessions_create",
+        "summary": "Create an Action Gateway Session",
+        "description": "Creates a session with a tool selection, invocation policy, and optional direct-tool preload configuration.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_session_request"
+              },
+              "examples": {
+                "sessions_create_request": {
+                  "$ref": "#/components/examples/sessions_create_request"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The session was created successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/create_session_response"
+                },
+                "examples": {
+                  "sessions_create_response": {
+                    "$ref": "#/components/examples/sessions_create_response"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:create"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\n    \"name\": \"research-session\",\n    \"actor_id\": \"end-user-123\",\n    \"policy\": {\n      \"defaultAction\": \"ask\",\n      \"rules\": [{\"tool\": \"exa_web_search\", \"action\": \"allow\"}]\n    },\n    \"tools\": [\"exa_web_search@v1\"],\n    \"config\": {\"preloadTools\": [\"exa_web_search@v1\"]}\n  }' \\\n  \"https://api.digitalocean.com/v2/action-gateway/sessions\""
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/sessions/{session_urn}": {
+      "delete": {
+        "operationId": "sessions_delete",
+        "summary": "Delete an Action Gateway Session",
+        "description": "Deletes an Action Gateway session owned by the authenticated team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "name": "session_urn",
+            "in": "path",
+            "required": true,
+            "description": "The URL-encoded managed agents session URN.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The session was deleted successfully.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/delete_session_response"
+                },
+                "examples": {
+                  "sessions_delete_response": {
+                    "$ref": "#/components/examples/sessions_delete_response"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:delete"
+            ]
+          }
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/sessions/do%3Amanaged_agents_session%3A123e4567-e89b-12d3-a456-426614174000\""
+          }
+        ]
+      }
+    },
     "/v2/1-clicks": {
       "get": {
         "operationId": "oneClicks_list",
@@ -46466,19 +48082,17 @@
       }
     },
     "parameters": {
-      "oneClicks_type": {
+      "page": {
         "in": "query",
-        "name": "type",
-        "description": "Restrict results to a certain type of 1-Click.",
+        "name": "page",
         "required": false,
+        "description": "Which 'page' of paginated results to return.",
         "schema": {
-          "type": "string",
-          "enum": [
-            "droplet",
-            "kubernetes"
-          ]
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
         },
-        "example": "kubernetes"
+        "example": 1
       },
       "per_page": {
         "in": "query",
@@ -46493,17 +48107,57 @@
         },
         "example": 2
       },
-      "page": {
+      "toolbelt_status": {
+        "name": "status",
         "in": "query",
-        "name": "page",
         "required": false,
-        "description": "Which 'page' of paginated results to return.",
+        "description": "Filter toolbelts by status.",
         "schema": {
-          "type": "integer",
-          "minimum": 1,
-          "default": 1
+          "type": "string",
+          "enum": [
+            "active",
+            "deprecated",
+            "all"
+          ],
+          "default": "active"
         },
-        "example": 1
+        "example": "active"
+      },
+      "toolbelt_name": {
+        "name": "name",
+        "in": "path",
+        "required": true,
+        "description": "The natural key identifying the toolbelt.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+        },
+        "example": "search-toolbelt"
+      },
+      "toolbelt_version": {
+        "name": "version",
+        "in": "query",
+        "required": false,
+        "description": "An immutable numeric toolbelt version. Omit to retrieve the latest active version.",
+        "schema": {
+          "type": "string",
+          "pattern": "^[0-9]+$"
+        },
+        "example": "1"
+      },
+      "oneClicks_type": {
+        "in": "query",
+        "name": "type",
+        "description": "Restrict results to a certain type of 1-Click.",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "droplet",
+            "kubernetes"
+          ]
+        },
+        "example": "kubernetes"
       },
       "ssh_key_identifier": {
         "in": "path",
@@ -48289,6 +49943,1512 @@
           "message"
         ]
       },
+      "tool_annotations": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Search the Web"
+          },
+          "readOnlyHint": {
+            "type": "boolean",
+            "example": true
+          },
+          "idempotentHint": {
+            "type": "boolean",
+            "example": true
+          },
+          "openWorldHint": {
+            "type": "boolean",
+            "example": true
+          },
+          "destructiveHint": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "tool": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "toolkitId": {
+            "type": "string",
+            "example": "exa"
+          },
+          "title": {
+            "type": "string",
+            "example": "Search the Web"
+          },
+          "description": {
+            "type": "string",
+            "example": "The provider site URL."
+          },
+          "inputSchema": {
+            "type": "object",
+            "example": {
+              "type": "object"
+            }
+          },
+          "annotations": {
+            "$ref": "#/components/schemas/tool_annotations"
+          },
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "parallelizable": {
+            "type": "boolean",
+            "example": true
+          },
+          "streamingSafe": {
+            "type": "boolean",
+            "example": false
+          },
+          "outputSchema": {
+            "type": "object",
+            "example": {
+              "type": "object"
+            }
+          },
+          "toolSlug": {
+            "type": "string",
+            "description": "tool_slug is the provider-qualified, stable tool identifier\n\"<toolkit_id>_<name>\". Pass this value back verbatim to the toolbelt\nadd/remove endpoints; clients should treat it as opaque rather than\nreconstructing it from toolkit_id and name.",
+            "example": "exa_web_search"
+          }
+        },
+        "additionalProperties": false
+      },
+      "auth_injection": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "example": "header"
+          },
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "scheme": {
+            "type": "string",
+            "example": "Bearer"
+          }
+        },
+        "example": {
+          "location": "header",
+          "name": "Authorization",
+          "scheme": "Bearer"
+        },
+        "additionalProperties": false
+      },
+      "http_lookup_spec": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "example": "POST"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://api.example.com/resources"
+          },
+          "matchField": {
+            "type": "string",
+            "example": "id"
+          },
+          "matchValue": {
+            "type": "string",
+            "example": "site-123"
+          },
+          "caseInsensitive": {
+            "type": "boolean",
+            "example": false
+          },
+          "trimTrailingSlash": {
+            "type": "boolean",
+            "example": true
+          },
+          "extractField": {
+            "type": "string",
+            "example": "url"
+          },
+          "baseUrlTemplate": {
+            "type": "string",
+            "example": "https://{value}"
+          },
+          "requiredScopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "read"
+            ]
+          },
+          "match_value_parameter": {
+            "type": "string",
+            "example": "site_id"
+          }
+        },
+        "description": "HTTPLookupSpec resolves a base_url by calling url (bearer-authenticated\nwith the just-exchanged access token), selecting an entry in the JSON array,\nextracting extract_field from that entry, and substituting it for \"{value}\"\nin base_url_template. When match_field and match_value are both set, they\nselect the entry. When both are empty, exactly one entry whose own \"scopes\"\narray contains required_scopes must exist. Configuring only one match field\nis invalid. Resolution fails fast on zero or multiple compatible entries.",
+        "additionalProperties": false
+      },
+      "base_url_resolution": {
+        "type": "object",
+        "properties": {
+          "httpLookup": {
+            "$ref": "#/components/schemas/http_lookup_spec"
+          }
+        },
+        "description": "BaseURLResolution declaratively describes a post-token-exchange lookup an\nOAuth-backed tool needs to compute its real request base_url (e.g. Jira\nCloud's per-site cloudId indirection). strategy is a oneof so exactly one\nresolution kind can ever be set at a time; \"http_lookup\" is the only kind\nimplemented today, see action-executor/internal/credentials for the\ngeneric resolver that executes this recipe.",
+        "additionalProperties": false
+      },
+      "auth_spec": {
+        "type": "object",
+        "properties": {
+          "modes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "oauth2"
+            ]
+          },
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          },
+          "credentialBinding": {
+            "type": "string",
+            "example": "user"
+          },
+          "credentialRefSource": {
+            "type": "string",
+            "example": "connection"
+          },
+          "doManagedCredentialRef": {
+            "type": "string",
+            "example": "do-managed"
+          },
+          "injection": {
+            "$ref": "#/components/schemas/auth_injection"
+          },
+          "baseUrlResolution": {
+            "$ref": "#/components/schemas/base_url_resolution"
+          }
+        },
+        "additionalProperties": false
+      },
+      "http_execution": {
+        "type": "object",
+        "properties": {
+          "baseUrl": {
+            "type": "string",
+            "example": "https://api.example.com"
+          },
+          "path": {
+            "type": "string",
+            "example": "/search"
+          },
+          "method": {
+            "type": "string",
+            "example": "POST"
+          },
+          "allowedHosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "api.example.com"
+            ]
+          },
+          "requestEncoding": {
+            "type": "string",
+            "example": "json"
+          },
+          "responseFormat": {
+            "type": "string",
+            "example": "json"
+          }
+        },
+        "additionalProperties": false
+      },
+      "mcp_execution": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "example": "https://mcp.example.com"
+          },
+          "toolName": {
+            "type": "string",
+            "example": "search"
+          },
+          "transport": {
+            "type": "string",
+            "example": "streamable_http"
+          },
+          "serverRef": {
+            "type": "string",
+            "example": "provider-mcp"
+          },
+          "allowedHosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "api.example.com"
+            ]
+          }
+        },
+        "description": "MCPExecution describes how to invoke a tool that is fronted by a remote\nMCP server (as opposed to a plain HTTP endpoint). endpoint is the remote\nMCP server's URL, tool_name is the name the remote server expects on\ntools/call (may differ from this tool's registry name), transport\nselects the wire protocol (\"streamable_http\" is the only kind implemented\ntoday), and server_ref is an opaque label identifying the remote server\nfor logging/metrics/allowlisting.",
+        "additionalProperties": false
+      },
+      "execution_spec": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "example": "http"
+          },
+          "adapterVersion": {
+            "type": "string",
+            "example": "v1"
+          },
+          "configRef": {
+            "type": "string",
+            "example": "exa_web_search@v1"
+          },
+          "http": {
+            "$ref": "#/components/schemas/http_execution"
+          },
+          "mcp": {
+            "$ref": "#/components/schemas/mcp_execution"
+          }
+        },
+        "additionalProperties": false
+      },
+      "transform_spec": {
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "example": "jq"
+          },
+          "input": {
+            "type": "object",
+            "example": {}
+          },
+          "output": {
+            "type": "object",
+            "example": {}
+          }
+        },
+        "additionalProperties": false
+      },
+      "policy_spec": {
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string",
+            "example": "read"
+          }
+        },
+        "additionalProperties": false
+      },
+      "retry_spec": {
+        "type": "object",
+        "properties": {
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32",
+            "example": 3
+          },
+          "backoff": {
+            "type": "string",
+            "example": "exponential"
+          },
+          "retryOn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "timeout"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "reliability_spec": {
+        "type": "object",
+        "properties": {
+          "timeoutMs": {
+            "type": "integer",
+            "format": "int32",
+            "example": 30000
+          },
+          "maxOutputBytes": {
+            "type": "string",
+            "format": "int64",
+            "example": "1048576"
+          },
+          "retry": {
+            "$ref": "#/components/schemas/retry_spec"
+          }
+        },
+        "additionalProperties": false
+      },
+      "usage_meter": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "example": "action-gateway-invocation"
+          },
+          "unit": {
+            "type": "string",
+            "example": "request"
+          },
+          "quantitySource": {
+            "type": "string",
+            "example": "invocation_count"
+          }
+        },
+        "additionalProperties": false
+      },
+      "usage_spec": {
+        "type": "object",
+        "properties": {
+          "billable": {
+            "type": "boolean",
+            "description": "When usage metadata is present, false prevents billing. Omitting usage\nmetadata leaves consumers' legacy billing classification unchanged.",
+            "example": true
+          },
+          "meters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/usage_meter"
+            },
+            "example": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "hook_spec": {
+        "type": "object",
+        "properties": {
+          "usage": {
+            "$ref": "#/components/schemas/usage_spec"
+          }
+        },
+        "additionalProperties": false
+      },
+      "classification": {
+        "type": "object",
+        "properties": {
+          "operation": {
+            "type": "string",
+            "example": "search"
+          },
+          "risk": {
+            "type": "string",
+            "example": "low"
+          },
+          "dataClasses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "public"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "tool_definition": {
+        "type": "object",
+        "properties": {
+          "toolId": {
+            "type": "string",
+            "example": "tool-123"
+          },
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "toolkitId": {
+            "type": "string",
+            "example": "exa"
+          },
+          "title": {
+            "type": "string",
+            "example": "Search the Web"
+          },
+          "description": {
+            "type": "string",
+            "example": "The provider site URL."
+          },
+          "inputSchema": {
+            "type": "object",
+            "example": {
+              "type": "object"
+            }
+          },
+          "outputSchema": {
+            "type": "object",
+            "example": {
+              "type": "object"
+            }
+          },
+          "annotations": {
+            "$ref": "#/components/schemas/tool_annotations"
+          },
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "example": "1"
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "parallelizable": {
+            "type": "boolean",
+            "example": true
+          },
+          "streamingSafe": {
+            "type": "boolean",
+            "example": false
+          },
+          "auth": {
+            "$ref": "#/components/schemas/auth_spec"
+          },
+          "execution": {
+            "$ref": "#/components/schemas/execution_spec"
+          },
+          "transform": {
+            "$ref": "#/components/schemas/transform_spec"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/policy_spec"
+          },
+          "reliability": {
+            "$ref": "#/components/schemas/reliability_spec"
+          },
+          "hooks": {
+            "$ref": "#/components/schemas/hook_spec"
+          },
+          "classification": {
+            "$ref": "#/components/schemas/classification"
+          },
+          "flipperName": {
+            "type": "string",
+            "example": "action_gateway_search"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "search"
+            ]
+          },
+          "toolSlug": {
+            "type": "string",
+            "description": "tool_slug is the provider-qualified, stable tool identifier\n\"<toolkit_id>_<name>\". Pass this value back verbatim to the toolbelt\nadd/remove endpoints; clients should treat it as opaque.",
+            "example": "exa_web_search"
+          }
+        },
+        "additionalProperties": false
+      },
+      "pagination": {
+        "type": "object",
+        "required": [
+          "page",
+          "per_page",
+          "total"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          }
+        },
+        "additionalProperties": false
+      },
+      "list_tools_response": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/tool"
+            },
+            "example": [
+              {
+                "name": "web_search"
+              }
+            ]
+          },
+          "definitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/tool_definition"
+            },
+            "example": []
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/pagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolkit": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "description": {
+            "type": "string",
+            "example": "The provider site URL."
+          }
+        },
+        "additionalProperties": false
+      },
+      "list_toolkits_response": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "example": "v1"
+          },
+          "toolkits": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/toolkit"
+            },
+            "example": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "connection_parameter_spec": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "site_url"
+          },
+          "label": {
+            "type": "string",
+            "example": "Site URL"
+          },
+          "description": {
+            "type": "string",
+            "example": "The provider site URL."
+          },
+          "input_kind": {
+            "type": "string",
+            "example": "url"
+          },
+          "required": {
+            "type": "boolean",
+            "example": true
+          },
+          "normalization": {
+            "type": "string",
+            "example": "trim"
+          },
+          "allowed_values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "option-a"
+            ]
+          },
+          "allowed_host_suffixes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "example.com"
+            ]
+          },
+          "max_length": {
+            "type": "integer",
+            "format": "int32",
+            "example": 255
+          }
+        },
+        "description": "ConnectionParameterSpec describes one non-sensitive value collected while\nconfiguring a provider connection. The UI and MCP clients render these\nspecifications generically.",
+        "additionalProperties": false
+      },
+      "provider_summary": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "display_name-example"
+          },
+          "description": {
+            "type": "string",
+            "example": "The provider site URL."
+          },
+          "auth_type": {
+            "type": "string",
+            "example": "auth_type-example"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          },
+          "connection_parameters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/connection_parameter_spec"
+            },
+            "example": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "list_providers_response": {
+        "type": "object",
+        "properties": {
+          "providers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/provider_summary"
+            },
+            "example": []
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelt_summary": {
+        "type": "object",
+        "required": [
+          "name",
+          "latest_version",
+          "version_count",
+          "tool_count",
+          "status",
+          "reference_latest",
+          "updated_at"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "search-toolbelt"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "Search Tools"
+          },
+          "description": {
+            "type": "string",
+            "example": "Tools for searching and fetching public web pages."
+          },
+          "latest_version": {
+            "type": "string",
+            "example": "1"
+          },
+          "version_count": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "tool_count": {
+            "type": "integer",
+            "format": "int32",
+            "example": 2
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deprecated"
+            ],
+            "example": "active"
+          },
+          "reference_latest": {
+            "type": "string",
+            "example": "search-toolbelt"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelts_response": {
+        "type": "object",
+        "required": [
+          "toolbelts",
+          "pagination"
+        ],
+        "properties": {
+          "toolbelts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/toolbelt_summary"
+            },
+            "example": []
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/pagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelt_create": {
+        "type": "object",
+        "required": [
+          "name",
+          "tools"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+            "example": "search-toolbelt"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "default": "1",
+            "example": "1"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 128,
+            "example": "Search Tools"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Tools for searching and fetching public web pages."
+          },
+          "tools": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search",
+              "exa_web_fetch"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelt": {
+        "type": "object",
+        "required": [
+          "name",
+          "version",
+          "tools",
+          "status",
+          "reference",
+          "reference_latest",
+          "tool_count",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "search-toolbelt"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^[0-9]+$",
+            "example": "1"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 128,
+            "example": "Search Tools"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 255,
+            "example": "Tools for searching and fetching public web pages."
+          },
+          "tools": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search",
+              "exa_web_fetch"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "deprecated"
+            ],
+            "example": "active"
+          },
+          "reference": {
+            "type": "string",
+            "description": "A reference pinned to this immutable toolbelt version.",
+            "example": "search-toolbelt@1"
+          },
+          "reference_latest": {
+            "type": "string",
+            "description": "An unversioned reference to the latest active version.",
+            "example": "search-toolbelt"
+          },
+          "tool_count": {
+            "type": "integer",
+            "format": "int32",
+            "example": 2
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelt_response": {
+        "type": "object",
+        "required": [
+          "toolbelt"
+        ],
+        "properties": {
+          "toolbelt": {
+            "$ref": "#/components/schemas/toolbelt"
+          }
+        },
+        "additionalProperties": false
+      },
+      "toolbelt_tools": {
+        "type": "object",
+        "required": [
+          "tools"
+        ],
+        "properties": {
+          "tools": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 500,
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "oauth_connection": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "user_id": {
+            "type": "string",
+            "example": "end-user-123"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "granted_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-12T12:00:00Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "provider_display_name": {
+            "type": "string",
+            "example": "GitHub"
+          },
+          "connection_parameters": {
+            "type": "object",
+            "example": {
+              "site_url": "https://example.com"
+            }
+          }
+        },
+        "description": "-----------------------------------------------------------------------------\nOAuth connection resources\n-----------------------------------------------------------------------------\nOAuthConnection is the public, team-scoped connection metadata returned to\nthe UI. It deliberately excludes the team ID, Secrets Manager assignment,\nactor identifiers, poll URL, and authorization handle.",
+        "additionalProperties": false
+      },
+      "list_connections_response": {
+        "type": "object",
+        "properties": {
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/oauth_connection"
+            },
+            "example": []
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/pagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "create_connection_request": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "user_id": {
+            "type": "string",
+            "example": "end-user-123"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          },
+          "connection_parameters": {
+            "type": "object",
+            "example": {
+              "site_url": "https://example.com"
+            }
+          }
+        },
+        "example": {
+          "provider": "github",
+          "user_id": "end-user-123",
+          "scopes": [
+            "repo"
+          ],
+          "connection_parameters": {}
+        },
+        "additionalProperties": false
+      },
+      "connection_authorization": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "connect_url": {
+            "type": "string",
+            "example": "https://cloud.digitalocean.com/action-gateway/connections/connect"
+          },
+          "verification_code": {
+            "type": "string",
+            "example": "ABCD-EFGH"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:15:00Z"
+          }
+        },
+        "description": "ConnectionAuthorization is present only while a connection is pending. The\nUI sends the user to connect_url and polls GetConnection until the connection\nbecomes active or expires. The Secrets Manager poll URL is never exposed.",
+        "additionalProperties": false
+      },
+      "create_connection_response": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/oauth_connection"
+          },
+          "authorization": {
+            "$ref": "#/components/schemas/connection_authorization"
+          }
+        },
+        "additionalProperties": false
+      },
+      "get_connection_response": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/oauth_connection"
+          },
+          "authorization": {
+            "$ref": "#/components/schemas/connection_authorization"
+          }
+        },
+        "additionalProperties": false
+      },
+      "delete_connection_response": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/oauth_connection"
+          }
+        },
+        "additionalProperties": false
+      },
+      "update_connection_parameters_request": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "123e4567-e89b-12d3-a456-426614174000"
+          },
+          "connection_parameters": {
+            "type": "object",
+            "example": {
+              "site_url": "https://example.com"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "update_connection_parameters_response": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/oauth_connection"
+          }
+        },
+        "additionalProperties": false
+      },
+      "list_users_response": {
+        "type": "object",
+        "properties": {
+          "user_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": []
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/pagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "user_session": {
+        "type": "object",
+        "properties": {
+          "session_urn": {
+            "type": "string",
+            "example": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000"
+          },
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          }
+        },
+        "additionalProperties": false
+      },
+      "user": {
+        "type": "object",
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "example": "end-user-123"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/user_session"
+            },
+            "example": []
+          },
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/oauth_connection"
+            },
+            "example": []
+          }
+        },
+        "description": "User is a derived, team-scoped view across sessions and OAuth connections.",
+        "additionalProperties": false
+      },
+      "get_user_response": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/user"
+          }
+        },
+        "additionalProperties": false
+      },
+      "session_policy_action": {
+        "type": "string",
+        "enum": [
+          "allow",
+          "ask",
+          "deny"
+        ],
+        "default": "ask",
+        "description": "SessionPolicyAction is the disposition applied to a tool call. Lowercase\nvalues are canonical so ProtoJSON matches the public REST vocabulary; the\nprefixed aliases preserve compatibility for existing protobuf clients.",
+        "example": "ask"
+      },
+      "session_policy_rule": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "match": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "query": "DigitalOcean"
+            }
+          },
+          "action": {
+            "$ref": "#/components/schemas/session_policy_action"
+          }
+        },
+        "description": "SessionPolicyRule applies an action to a tool or version-pinned toolbelt.\naction must be allow, ask, or deny. match optionally narrows the rule to\ncalls with matching arguments.",
+        "additionalProperties": false
+      },
+      "session_policy_spec": {
+        "type": "object",
+        "properties": {
+          "defaultAction": {
+            "$ref": "#/components/schemas/session_policy_action"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/session_policy_rule"
+            },
+            "example": []
+          }
+        },
+        "description": "SessionPolicySpec is the Gateway-relevant subset of a session's permission\npolicy. Filesystem and network policy remain enforced by the sandbox.",
+        "additionalProperties": false
+      },
+      "session_tool_reference_kind": {
+        "type": "string",
+        "enum": [
+          "SESSION_TOOL_REFERENCE_KIND_TOOL",
+          "SESSION_TOOL_REFERENCE_KIND_TOOLBELT"
+        ],
+        "example": "SESSION_TOOL_REFERENCE_KIND_TOOL"
+      },
+      "session_tool_reference": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/session_tool_reference_kind"
+          },
+          "name": {
+            "type": "string",
+            "example": "exa_web_search"
+          },
+          "version": {
+            "type": "string",
+            "example": "v1"
+          }
+        },
+        "additionalProperties": false
+      },
+      "session_tool_selection": {
+        "type": "object",
+        "properties": {
+          "references": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/session_tool_reference"
+            },
+            "example": [
+              {
+                "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                "name": "exa_web_search",
+                "version": "v1"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "public_session_policy": {
+        "type": "object",
+        "properties": {
+          "sessionUrn": {
+            "type": "string",
+            "example": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000",
+            "x-client-name": "sessionUrn"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/session_policy_spec"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-11T12:00:00Z"
+          },
+          "name": {
+            "type": "string",
+            "description": "name is the required human-readable session name.",
+            "example": "exa_web_search"
+          },
+          "actorId": {
+            "type": "string",
+            "description": "actor_id is empty when the session is not bound to an actor.",
+            "example": "end-user-123",
+            "x-client-name": "actorId"
+          },
+          "tools": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/session_tool_selection"
+              }
+            ],
+            "description": "Omitted when the request omitted tools (all tools). A present selection\nwith no references represents tools: []."
+          },
+          "config": {
+            "type": "object",
+            "description": "Preserved as an opaque object. Gateway currently interprets\nconfig.preloadTools to add selected direct tools to the session MCP.",
+            "example": {}
+          }
+        },
+        "description": "A session and the tool-permission policy bound to it.",
+        "additionalProperties": false
+      },
+      "list_sessions_response": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/public_session_policy"
+            },
+            "example": []
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/pagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "create_session_request": {
+        "type": "object",
+        "properties": {
+          "policy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/session_policy_spec"
+              }
+            ],
+            "description": "Invocation policy. Omit to use a default action of ask."
+          },
+          "name": {
+            "type": "string",
+            "example": "research-session"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Omitted enables every tool. An explicit empty array enables no tools.\nDirect tools may be <tool> or <tool>@<version>; toolbelt references must\nbe version-pinned as toolbelt:<belt-name>@<version>.",
+            "example": [
+              "exa_web_search@v1"
+            ]
+          },
+          "config": {
+            "type": "object",
+            "description": "Opaque session options. config.preloadTools may contain concrete tool\nnames (optionally version-pinned) and version-pinned toolbelt references.",
+            "example": {},
+            "properties": {
+              "preloadTools": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Concrete tools or pinned toolbelts to expose directly beside the session meta-tools.",
+                "example": [
+                  "exa_web_search@v1"
+                ]
+              }
+            },
+            "additionalProperties": true
+          },
+          "actor_id": {
+            "type": "string",
+            "example": "end-user-123"
+          }
+        },
+        "example": {
+          "name": "research-session",
+          "actor_id": "end-user-123",
+          "policy": {
+            "defaultAction": "ask",
+            "rules": []
+          },
+          "tools": [
+            "exa_web_search@v1"
+          ],
+          "config": {
+            "preloadTools": [
+              "exa_web_search@v1"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "actor_id"
+        ]
+      },
+      "create_session_response": {
+        "type": "object",
+        "properties": {
+          "session": {
+            "$ref": "#/components/schemas/public_session_policy"
+          },
+          "mcpUrl": {
+            "type": "string",
+            "description": "Public session-pinned MCP URL.",
+            "example": "https://actions.do-ai.run/mcp/session/123e4567-e89b-12d3-a456-426614174000",
+            "x-client-name": "mcpUrl"
+          },
+          "tools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Canonical, version-pinned selected tool references.",
+            "example": [
+              "exa_web_search@v1"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "session",
+          "mcpUrl",
+          "tools"
+        ]
+      },
+      "delete_session_response": {
+        "type": "object",
+        "example": {},
+        "additionalProperties": false
+      },
       "oneClicks": {
         "type": "object",
         "properties": {
@@ -48537,7 +51697,7 @@
           }
         }
       },
-      "pagination": {
+      "pages_pagination": {
         "type": "object",
         "properties": {
           "links": {
@@ -51418,7 +54578,7 @@
             }
           },
           {
-            "$ref": "#/components/schemas/pagination"
+            "$ref": "#/components/schemas/pages_pagination"
           },
           {
             "$ref": "#/components/schemas/meta"
@@ -51583,7 +54743,7 @@
             }
           },
           {
-            "$ref": "#/components/schemas/pagination"
+            "$ref": "#/components/schemas/pages_pagination"
           },
           {
             "$ref": "#/components/schemas/meta"
@@ -51749,7 +54909,7 @@
             }
           },
           {
-            "$ref": "#/components/schemas/pagination"
+            "$ref": "#/components/schemas/pages_pagination"
           }
         ]
       },
@@ -51848,7 +55008,7 @@
             }
           },
           {
-            "$ref": "#/components/schemas/pagination"
+            "$ref": "#/components/schemas/pages_pagination"
           }
         ]
       },
@@ -61399,6 +64559,18 @@
           }
         }
       },
+      "nfs_csi_plugin": {
+        "type": "object",
+        "nullable": true,
+        "description": "An object specifying whether the NFS CSI plugin should be enabled for the Kubernetes cluster.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Indicates whether the NFS CSI plugin is enabled.",
+            "example": true
+          }
+        }
+      },
       "cluster_read": {
         "type": "object",
         "properties": {
@@ -61600,6 +64772,9 @@
           },
           "p2p_oci_registry_plugin": {
             "$ref": "#/components/schemas/p2p_oci_registry_plugin"
+          },
+          "nfs_csi_plugin": {
+            "$ref": "#/components/schemas/nfs_csi_plugin"
           }
         },
         "required": [
@@ -61777,6 +64952,9 @@
           "p2p_oci_registry_plugin": {
             "$ref": "#/components/schemas/p2p_oci_registry_plugin"
           },
+          "nfs_csi_plugin": {
+            "$ref": "#/components/schemas/nfs_csi_plugin"
+          },
           "amd_gpu_device_plugin": {
             "$ref": "#/components/schemas/amd_gpu_device_plugin"
           },
@@ -61861,6 +65039,9 @@
           },
           "p2p_oci_registry_plugin": {
             "$ref": "#/components/schemas/p2p_oci_registry_plugin"
+          },
+          "nfs_csi_plugin": {
+            "$ref": "#/components/schemas/nfs_csi_plugin"
           },
           "amd_gpu_device_plugin": {
             "$ref": "#/components/schemas/amd_gpu_device_plugin"
@@ -62067,7 +65248,7 @@
           "count"
         ]
       },
-      "user": {
+      "user-2": {
         "type": "object",
         "properties": {
           "kubernetes_cluster_user": {
@@ -81332,50 +84513,6 @@
           }
         }
       },
-      "oneClicks_all": {
-        "description": "A JSON object with a key of `1_clicks`.",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "properties": {
-                "1_clicks": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/oneClicks"
-                  }
-                }
-              }
-            },
-            "examples": {
-              "All 1-Click Applications": {
-                "value": {
-                  "1_clicks": [
-                    {
-                      "slug": "monitoring",
-                      "type": "kubernetes"
-                    },
-                    {
-                      "slug": "wordpress-18-04",
-                      "type": "droplet"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      },
       "unauthorized": {
         "description": "Authentication failed due to invalid credentials.",
         "headers": {
@@ -81447,6 +84584,126 @@
             "example": {
               "id": "server_error",
               "message": "Unexpected server-side error"
+            }
+          }
+        }
+      },
+      "not_found": {
+        "description": "The resource was not found.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "not_found",
+              "message": "The resource you requested could not be found."
+            }
+          }
+        }
+      },
+      "bad_request": {
+        "description": "There was an error parsing the request body.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "bad_request",
+              "message": "error parsing request body",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "conflict": {
+        "description": "The request could not be completed due to a conflict.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "conflict",
+              "message": "The request could not be completed due to a conflict."
+            }
+          }
+        }
+      },
+      "oneClicks_all": {
+        "description": "A JSON object with a key of `1_clicks`.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "properties": {
+                "1_clicks": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/oneClicks"
+                  }
+                }
+              }
+            },
+            "examples": {
+              "All 1-Click Applications": {
+                "value": {
+                  "1_clicks": [
+                    {
+                      "slug": "monitoring",
+                      "type": "kubernetes"
+                    },
+                    {
+                      "slug": "wordpress-18-04",
+                      "type": "droplet"
+                    }
+                  ]
+                }
+              }
             }
           }
         }
@@ -81539,7 +84796,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -81641,31 +84898,6 @@
           }
         }
       },
-      "not_found": {
-        "description": "The resource was not found.",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/error"
-            },
-            "example": {
-              "id": "not_found",
-              "message": "The resource you requested could not be found."
-            }
-          }
-        }
-      },
       "no_content": {
         "description": "The action was successful and the response body is empty.",
         "headers": {
@@ -81709,7 +84941,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -82727,7 +85959,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -82834,7 +86066,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -83041,7 +86273,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta_optional_total"
@@ -83110,7 +86342,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -83181,7 +86413,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -84826,32 +88058,6 @@
           }
         }
       },
-      "bad_request": {
-        "description": "There was an error parsing the request body.",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/error"
-            },
-            "example": {
-              "id": "bad_request",
-              "message": "error parsing request body",
-              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
-            }
-          }
-        }
-      },
       "unprocessable_entity": {
         "description": "Unprocessable Entity",
         "headers": {
@@ -86315,7 +89521,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -86408,7 +89614,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -86489,7 +89695,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -86605,7 +89811,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -86727,7 +89933,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -86903,7 +90109,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87007,7 +90213,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87156,7 +90362,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87215,7 +90421,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87351,7 +90557,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87408,7 +90614,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87690,31 +90896,6 @@
           }
         }
       },
-      "conflict": {
-        "description": "The request could not be completed due to a conflict.",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/error"
-            },
-            "example": {
-              "id": "conflict",
-              "message": "The request could not be completed due to a conflict."
-            }
-          }
-        }
-      },
       "all_autoscale_pools": {
         "description": "A JSON object with a key of `autoscale_pools`.",
         "headers": {
@@ -87744,7 +90925,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87851,7 +91032,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87895,7 +91076,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -87939,7 +91120,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -88277,7 +91458,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -88445,7 +91626,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -89062,7 +92243,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -89297,7 +92478,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -89521,7 +92702,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -90102,7 +93283,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/user"
+              "$ref": "#/components/schemas/user-2"
             }
           }
         }
@@ -90238,7 +93419,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -90373,7 +93554,7 @@
                   "$ref": "#/components/schemas/list_alert_policy"
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -91410,7 +94591,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -91634,7 +94815,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -91750,7 +94931,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -91916,7 +95097,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92037,7 +95218,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92389,7 +95570,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92473,7 +95654,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92528,7 +95709,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92683,7 +95864,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92764,7 +95945,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -92932,7 +96113,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93088,7 +96269,7 @@
                   "$ref": "#/components/schemas/reserved_ipv6_list"
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93345,7 +96526,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93529,7 +96710,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93568,7 +96749,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93756,7 +96937,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93843,7 +97024,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -93944,7 +97125,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94198,7 +97379,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94416,7 +97597,7 @@
                   ]
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94605,7 +97786,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94688,7 +97869,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94748,7 +97929,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94851,7 +98032,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -94918,7 +98099,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95023,7 +98204,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95084,7 +98265,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95159,7 +98340,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95216,7 +98397,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95315,7 +98496,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95496,7 +98677,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95630,7 +98811,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95721,7 +98902,7 @@
                   }
                 },
                 {
-                  "$ref": "#/components/schemas/pagination"
+                  "$ref": "#/components/schemas/pages_pagination"
                 },
                 {
                   "$ref": "#/components/schemas/meta"
@@ -95758,37 +98939,466 @@
         }
       }
     },
-    "links": {
-      "sshKeys_get_by_id": {
-        "operationId": "sshKeys_get_by_id",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/id"
-        },
-        "description": "The `id` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_get_by_fingerprint": {
-        "operationId": "sshKeys_get_by_fingerprint",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
-        },
-        "description": "The `fingerprint` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_delete_by_id": {
-        "operationId": "sshKeys_delete_by_id",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/id"
-        },
-        "description": "The `id` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_delete_by_fingerprint": {
-        "operationId": "ssh_keys_delete_by_fingerprint",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
-        },
-        "description": "The `fingerprint` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
-      }
-    },
     "examples": {
+      "tools_list_response": {
+        "value": {
+          "version": "v1",
+          "tools": [
+            {
+              "name": "exa_web_search",
+              "toolkitId": "exa",
+              "title": "Search the Web",
+              "description": "Search public web pages.",
+              "inputSchema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  }
+                }
+              },
+              "annotations": {
+                "title": "Search the Web",
+                "readOnlyHint": true,
+                "idempotentHint": true,
+                "openWorldHint": true,
+                "destructiveHint": false
+              },
+              "version": "v1",
+              "parallelizable": true,
+              "streamingSafe": false,
+              "outputSchema": {
+                "type": "object"
+              },
+              "toolSlug": "exa_web_search"
+            }
+          ],
+          "definitions": [],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1
+          }
+        }
+      },
+      "tools_list_toolkits_response": {
+        "value": {
+          "version": "v1",
+          "toolkits": [
+            {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "name": "exa",
+              "description": "Web search and content retrieval tools."
+            }
+          ]
+        }
+      },
+      "tools_list_providers_response": {
+        "value": {
+          "providers": [
+            {
+              "name": "github",
+              "display_name": "GitHub",
+              "description": "Connect Action Gateway to GitHub.",
+              "auth_type": "oauth2",
+              "scopes": [
+                "repo"
+              ],
+              "connection_parameters": []
+            }
+          ]
+        }
+      },
+      "tools_get_definition_response": {
+        "value": {
+          "toolId": "tool-123",
+          "name": "exa_web_search",
+          "toolkitId": "exa",
+          "title": "Search the Web",
+          "description": "Search public web pages.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "query"
+            ]
+          },
+          "outputSchema": {
+            "type": "object"
+          },
+          "annotations": {
+            "title": "Search the Web",
+            "readOnlyHint": true,
+            "idempotentHint": true,
+            "openWorldHint": true,
+            "destructiveHint": false
+          },
+          "version": "v1",
+          "schemaVersion": "1",
+          "status": "active",
+          "parallelizable": true,
+          "streamingSafe": false,
+          "tags": [
+            "search"
+          ],
+          "toolSlug": "exa_web_search"
+        }
+      },
+      "toolbelts_list_response": {
+        "value": {
+          "toolbelts": [
+            {
+              "name": "search-toolbelt",
+              "display_name": "Search Tools",
+              "description": "Tools for searching and fetching public web pages.",
+              "latest_version": "1",
+              "version_count": 1,
+              "tool_count": 2,
+              "status": "active",
+              "reference_latest": "search-toolbelt",
+              "updated_at": "2026-06-11T12:00:00Z"
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1
+          }
+        }
+      },
+      "toolbelts_create_request": {
+        "value": {
+          "name": "search-toolbelt",
+          "display_name": "Search Tools",
+          "description": "Tools for searching and fetching public web pages.",
+          "tools": [
+            "exa_web_search",
+            "exa_web_fetch"
+          ]
+        }
+      },
+      "toolbelt_response": {
+        "value": {
+          "toolbelt": {
+            "name": "search-toolbelt",
+            "version": "1",
+            "display_name": "Search Tools",
+            "description": "Tools for searching and fetching public web pages.",
+            "tools": [
+              "exa_web_search",
+              "exa_web_fetch"
+            ],
+            "status": "active",
+            "reference": "search-toolbelt@1",
+            "reference_latest": "search-toolbelt",
+            "tool_count": 2,
+            "created_at": "2026-06-11T12:00:00Z",
+            "updated_at": "2026-06-11T12:00:00Z"
+          }
+        }
+      },
+      "toolbelts_delete_response": {
+        "value": {
+          "toolbelt": {
+            "name": "search-toolbelt",
+            "version": "1",
+            "display_name": "Search Tools",
+            "description": "Tools for searching and fetching public web pages.",
+            "tools": [
+              "exa_web_search",
+              "exa_web_fetch"
+            ],
+            "status": "deprecated",
+            "reference": "search-toolbelt@1",
+            "reference_latest": "search-toolbelt",
+            "tool_count": 2,
+            "created_at": "2026-06-11T12:00:00Z",
+            "updated_at": "2026-06-11T13:00:00Z"
+          }
+        }
+      },
+      "toolbelts_add_tools_request": {
+        "value": {
+          "tools": [
+            "exa_web_fetch"
+          ]
+        }
+      },
+      "toolbelts_remove_tools_request": {
+        "value": {
+          "tools": [
+            "exa_web_fetch"
+          ]
+        }
+      },
+      "connections_list_response": {
+        "value": {
+          "connections": [
+            {
+              "id": "123e4567-e89b-12d3-a456-426614174000",
+              "provider": "github",
+              "user_id": "end-user-123",
+              "scopes": [
+                "repo"
+              ],
+              "status": "active",
+              "created_at": "2026-06-11T12:00:00Z",
+              "granted_at": "2026-06-11T12:01:00Z",
+              "provider_display_name": "GitHub",
+              "connection_parameters": {}
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1
+          }
+        }
+      },
+      "connections_create_request": {
+        "value": {
+          "provider": "github",
+          "user_id": "end-user-123",
+          "scopes": [
+            "repo"
+          ],
+          "connection_parameters": {}
+        }
+      },
+      "connections_create_response": {
+        "value": {
+          "connection": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "provider": "github",
+            "user_id": "end-user-123",
+            "scopes": [
+              "repo"
+            ],
+            "status": "pending",
+            "created_at": "2026-06-11T12:00:00Z",
+            "provider_display_name": "GitHub",
+            "connection_parameters": {}
+          },
+          "authorization": {
+            "status": "pending",
+            "connect_url": "https://cloud.digitalocean.com/action-gateway/connections/connect",
+            "verification_code": "ABCD-EFGH",
+            "expires_at": "2026-06-11T12:15:00Z"
+          }
+        }
+      },
+      "connections_get_response": {
+        "value": {
+          "connection": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "provider": "github",
+            "user_id": "end-user-123",
+            "scopes": [
+              "repo"
+            ],
+            "status": "active",
+            "created_at": "2026-06-11T12:00:00Z",
+            "granted_at": "2026-06-11T12:01:00Z",
+            "provider_display_name": "GitHub",
+            "connection_parameters": {}
+          }
+        }
+      },
+      "connections_delete_response": {
+        "value": {
+          "connection": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "provider": "github",
+            "user_id": "end-user-123",
+            "scopes": [
+              "repo"
+            ],
+            "status": "revoked",
+            "created_at": "2026-06-11T12:00:00Z",
+            "granted_at": "2026-06-11T12:01:00Z",
+            "revoked_at": "2026-06-11T13:00:00Z",
+            "provider_display_name": "GitHub",
+            "connection_parameters": {}
+          }
+        }
+      },
+      "connections_update_request": {
+        "value": {
+          "connection_parameters": {
+            "site_url": "https://github.com"
+          }
+        }
+      },
+      "connections_update_response": {
+        "value": {
+          "connection": {
+            "id": "123e4567-e89b-12d3-a456-426614174000",
+            "provider": "github",
+            "user_id": "end-user-123",
+            "scopes": [
+              "repo"
+            ],
+            "status": "active",
+            "created_at": "2026-06-11T12:00:00Z",
+            "granted_at": "2026-06-11T12:01:00Z",
+            "provider_display_name": "GitHub",
+            "connection_parameters": {
+              "site_url": "https://github.com"
+            }
+          }
+        }
+      },
+      "users_list_response": {
+        "value": {
+          "user_ids": [
+            "end-user-123"
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1
+          }
+        }
+      },
+      "users_get_response": {
+        "value": {
+          "user": {
+            "user_id": "end-user-123",
+            "sessions": [
+              {
+                "session_urn": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000",
+                "name": "research-session",
+                "created_at": "2026-06-11T12:00:00Z",
+                "updated_at": "2026-06-11T12:00:00Z"
+              }
+            ],
+            "connections": [
+              {
+                "id": "123e4567-e89b-12d3-a456-426614174000",
+                "provider": "github",
+                "user_id": "end-user-123",
+                "scopes": [
+                  "repo"
+                ],
+                "status": "active",
+                "created_at": "2026-06-11T12:00:00Z",
+                "granted_at": "2026-06-11T12:01:00Z",
+                "provider_display_name": "GitHub",
+                "connection_parameters": {}
+              }
+            ]
+          }
+        }
+      },
+      "sessions_list_response": {
+        "value": {
+          "sessions": [
+            {
+              "sessionUrn": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000",
+              "policy": {
+                "defaultAction": "ask",
+                "rules": [
+                  {
+                    "tool": "exa_web_search",
+                    "action": "allow"
+                  }
+                ]
+              },
+              "createdAt": "2026-06-11T12:00:00Z",
+              "updatedAt": "2026-06-11T12:00:00Z",
+              "name": "research-session",
+              "actorId": "end-user-123",
+              "tools": {
+                "references": [
+                  {
+                    "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "name": "exa_web_search",
+                    "version": "v1"
+                  }
+                ]
+              },
+              "config": {
+                "preloadTools": [
+                  "exa_web_search@v1"
+                ]
+              }
+            }
+          ],
+          "pagination": {
+            "page": 1,
+            "per_page": 20,
+            "total": 1
+          }
+        }
+      },
+      "sessions_create_request": {
+        "value": {
+          "name": "research-session",
+          "actor_id": "end-user-123",
+          "policy": {
+            "defaultAction": "ask",
+            "rules": [
+              {
+                "tool": "exa_web_search",
+                "action": "allow"
+              }
+            ]
+          },
+          "tools": [
+            "exa_web_search@v1"
+          ],
+          "config": {
+            "preloadTools": [
+              "exa_web_search@v1"
+            ]
+          }
+        }
+      },
+      "sessions_create_response": {
+        "value": {
+          "session": {
+            "sessionUrn": "do:managed_agents_session:123e4567-e89b-12d3-a456-426614174000",
+            "policy": {
+              "defaultAction": "ask",
+              "rules": [
+                {
+                  "tool": "exa_web_search",
+                  "action": "allow"
+                }
+              ]
+            },
+            "createdAt": "2026-06-11T12:00:00Z",
+            "updatedAt": "2026-06-11T12:00:00Z",
+            "name": "research-session",
+            "actorId": "end-user-123",
+            "tools": {
+              "references": [
+                {
+                  "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                  "name": "exa_web_search",
+                  "version": "v1"
+                }
+              ]
+            },
+            "config": {
+              "preloadTools": [
+                "exa_web_search@v1"
+              ]
+            }
+          },
+          "mcpUrl": "https://actions.do-ai.run/mcp/session/123e4567-e89b-12d3-a456-426614174000",
+          "tools": [
+            "exa_web_search@v1"
+          ]
+        }
+      },
+      "sessions_delete_response": {
+        "value": {}
+      },
       "apps": {
         "value": {
           "apps": [
@@ -100024,6 +103634,9 @@
               },
               "p2p_oci_registry_plugin": {
                 "enabled": false
+              },
+              "nfs_csi_plugin": {
+                "enabled": false
               }
             }
           ],
@@ -100218,6 +103831,9 @@
               "enabled": false
             },
             "p2p_oci_registry_plugin": {
+              "enabled": false
+            },
+            "nfs_csi_plugin": {
               "enabled": false
             }
           }
@@ -100556,6 +104172,9 @@
             },
             "p2p_oci_registry_plugin": {
               "enabled": false
+            },
+            "nfs_csi_plugin": {
+              "enabled": false
             }
           }
         }
@@ -100738,6 +104357,9 @@
               "enabled": false
             },
             "p2p_oci_registry_plugin": {
+              "enabled": false
+            },
+            "nfs_csi_plugin": {
               "enabled": false
             }
           }
@@ -103208,6 +106830,36 @@
             "updated_at": "2025-08-12T19:00:04Z"
           }
         }
+      }
+    },
+    "links": {
+      "sshKeys_get_by_id": {
+        "operationId": "sshKeys_get_by_id",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/id"
+        },
+        "description": "The `id` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_get_by_fingerprint": {
+        "operationId": "sshKeys_get_by_fingerprint",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
+        },
+        "description": "The `fingerprint` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_delete_by_id": {
+        "operationId": "sshKeys_delete_by_id",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/id"
+        },
+        "description": "The `id` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_delete_by_fingerprint": {
+        "operationId": "ssh_keys_delete_by_fingerprint",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
+        },
+        "description": "The `fingerprint` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
       }
     }
   },
