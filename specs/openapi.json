@@ -48,6 +48,10 @@
       "description": "Discover Action Gateway tools and providers, manage versioned toolbelts and\nOAuth connections, and create policy-bound sessions for end users."
     },
     {
+      "name": "Agent Platform API",
+      "description": "The API lets you build GPU-powered AI agents with pre-built or custom foundation models, function and agent routes, and RAG pipelines with knowledge bases."
+    },
+    {
       "name": "Apps",
       "description": "App Platform is a Platform-as-a-Service (PaaS) offering from DigitalOcean that allows\ndevelopers to publish code directly to DigitalOcean servers without worrying about the\nunderlying infrastructure.\n\nMost API operations are centered around a few core object types. Following are the\ndefinitions of these types. These definitions will be omitted from the operation-specific\ndocumentation.\n\nFor documentation on app specifications (`AppSpec` objects), please refer to the\n[product documentation](https://docs.digitalocean.com/products/app-platform/reference/app-spec/))."
     },
@@ -130,10 +134,6 @@
     {
       "name": "Functions",
       "description": "[Serverless functions](https://docs.digitalocean.com/products/functions) are blocks of code that run on demand without the need to manage any infrastructure.\nYou can develop functions on your local machine and then deploy them to a namespace using `doctl`, the [official DigitalOcean CLI tool](https://docs.digitalocean.com/reference/doctl).\n\nThe Serverless Functions API currently only supports creating and managing namespaces."
-    },
-    {
-      "name": "GradientAI Platform",
-      "description": "The API lets you build GPU-powered AI agents with pre-built or custom foundation models, function and agent routes, and RAG pipelines with knowledge bases."
     },
     {
       "name": "Image Actions",
@@ -255,15 +255,15 @@
       "name": "Inference Introduction",
       "x-displayName": "Introduction",
       "x-traitTag": true,
-      "description": "The DigitalOcean Gradient™ AI Agentic Cloud provides inference capabilities through\ntwo API variants:\n\n- **Serverless Inference**: Access serverless inference models using an inference key\n  at `https://inference.do-ai.run`.\n- **Agent Inference**: Integrate multi-agent workflows into your AI applications using\n  a customer-specific agent endpoint.\n\nThese APIs are independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`).\n\n## Base URLs\n\n| API | Base URL |\n|-----|----------|\n| Serverless Inference | `https://inference.do-ai.run` |\n| Agent Inference | `https://{your-agent-url}.agents.do-ai.run` |\n\n## Requests\n\nAny tool that is fluent in HTTP can communicate with the API simply by\nrequesting the correct URI. Requests should be made using the HTTPS protocol\nso that traffic is encrypted. The interface responds to different methods\ndepending on the action required.\n\n|Method|Usage|\n|--- |--- |\n|GET|For simple retrieval of information about your account, Droplets, or environment, you should use the GET method.  The information you request will be returned to you as a JSON object. The attributes defined by the JSON object can be used to form additional requests.  Any request using the GET method is read-only and will not affect any of the objects you are querying.|\n|DELETE|To destroy a resource and remove it from your account and environment, the DELETE method should be used.  This will remove the specified object if it is found.  If it is not found, the operation will return a response indicating that the object was not found. This idempotency means that you do not have to check for a resource's availability prior to issuing a delete command, the final state will be the same regardless of its existence.|\n|PUT|To update the information about a resource in your account, the PUT method is available. Like the DELETE Method, the PUT method is idempotent.  It sets the state of the target using the provided values, regardless of their current values. Requests using the PUT method do not need to check the current attributes of the object.|\n|PATCH|Some resources support partial modification. In these cases, the PATCH method is available. Unlike PUT which generally requires a complete representation of a resource, a PATCH request is a set of instructions on how to modify a resource updating only specific attributes.|\n|POST|To create a new object, your request should specify the POST method. The POST request includes all of the attributes necessary to create a new object.  When you wish to create a new object, send a POST request to the target endpoint.|\n|HEAD|Finally, to retrieve metadata information, you should use the HEAD method to get the headers.  This returns only the header of what would be returned with an associated GET request. Response headers contain some useful information about your API access and the results that are available for your request. For instance, the headers contain your current rate-limit value and the amount of time available until the limit resets. It also contains metrics about the total number of objects found, pagination information, and the total content length.|\n\n## HTTP Statuses\n\nAlong with the HTTP methods that the API responds to, it will also return\nstandard HTTP statuses, including error codes.\n\nIn the event of a problem, the status will contain the error code, while the\nbody of the response will usually contain additional information about the\nproblem that was encountered.\n\nIn general, if the status returned is in the 200 range, it indicates that\nthe request was fulfilled successfully and that no error was encountered.\n\nReturn codes in the 400 range typically indicate that there was an issue\nwith the request that was sent. Among other things, this could mean that you\ndid not authenticate correctly, that you are requesting an action that you\ndo not have authorization for, that the object you are requesting does not\nexist, or that your request is malformed.\n\nIf you receive a status in the 500 range, this generally indicates a\nserver-side problem. This means that we are having an issue on our end and\ncannot fulfill your request currently.\n\n400 and 500 level error responses will include a JSON object in their body,\nincluding the following attributes:\n\n|Name|Type|Description|\n|--- |--- |--- |\n|id|string|A short identifier corresponding to the HTTP status code returned. For example, the ID for a response returning a 404 status code would be \"not_found.\"|\n|message|string|A message providing additional information about the error, including details to help resolve it when possible.|\n|request_id|string|Optionally, some endpoints may include a request ID that should be provided when reporting bugs or opening support tickets to help identify the issue.|\n\n### Example Error Response\n\n```\n    HTTP/1.1 403 Forbidden\n    {\n      \"id\":       \"forbidden\",\n      \"message\":  \"You do not have access for the attempted action.\"\n    }\n```\n\n## Responses\n\nWhen a request is successful, a response body will typically be sent back in\none of two formats depending on the request parameters:\n\n### JSON Response (Non-Streaming)\n\nBy default, or when `stream` is set to `false`, the API returns a complete JSON\nresponse once the inference is finished. The response contains the full generated\ncontent in a single payload.\n\n```json\n    {\n        \"id\": \"chatcmpl-abc123\",\n        \"object\": \"chat.completion\",\n        \"created\": 1677858242,\n        \"model\": \"meta-llama/Llama-3.3-70B-Instruct\",\n        \"choices\": [\n            {\n                \"index\": 0,\n                \"message\": {\n                    \"role\": \"assistant\",\n                    \"content\": \"Hello! How can I help you today?\"\n                },\n                \"finish_reason\": \"stop\"\n            }\n        ],\n        \"usage\": {\n            \"prompt_tokens\": 10,\n            \"completion_tokens\": 12,\n            \"total_tokens\": 22\n        }\n    }\n```\n\n### Streaming Response (Server-Sent Events)\n\nWhen `stream` is set to `true`, the API returns the response as Server-Sent Events\n(SSE) with content type `text/event-stream`. This allows you to receive tokens as\nthey are generated, providing a more responsive user experience.\n\nEach event in the stream is prefixed with `data: ` and contains a JSON object\nrepresenting a chunk of the response. The stream ends with a `data: [DONE]` message.\n\n```\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":null}]}\n\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"!\"},\"finish_reason\":null}]}\n\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n    data: [DONE]\n```\n\nTo consume streaming responses, read the response body line by line, parse each\n`data:` line as JSON, and process the `delta.content` field to build up the\ncomplete response incrementally.\n\n## Rate Limit\n\nRequests through the API are rate limited per OAuth token. Current rate limits:\n\n*   5,000 requests per hour\n*   250 requests per minute (5% of the hourly total)\n\nOnce you exceed either limit, you will be rate limited until the next cycle\nstarts. Space out any requests that you would otherwise issue in bursts for\nthe best results.\n\nThe rate limiting information is contained within the response headers of\neach request. The relevant headers are:\n\n*   **ratelimit-limit**: The number of requests that can be made per hour.\n*   **ratelimit-remaining**: The number of requests that remain before you hit your request limit. See the information below for how the request limits expire.\n*   **ratelimit-reset**: This represents the time when the oldest request will expire. The value is given in [Unix epoch time](http://en.wikipedia.org/wiki/Unix_time). See below for more information about how request limits expire.\n\nMore rate limiting information is returned only within burst limit error response headers:\n*   **retry-after**: The number of seconds to wait before making another request when rate limited.\n\nAs long as the `ratelimit-remaining` count is above zero, you will be able\nto make additional requests.\n\nThe way that a request expires and is removed from the current limit count\nis important to understand. Rather than counting all of the requests for an\nhour and resetting the `ratelimit-remaining` value at the end of the hour,\neach request instead has its own timer.\n\nThis means that each request contributes toward the `ratelimit-remaining`\ncount for one complete hour after the request is made. When that request's\ntimer runs out, it is no longer counted towards the request limit.\n\nThis has implications on the meaning of the `ratelimit-reset` header as\nwell. Because the entire rate limit is not reset at one time, the value of\nthis header is set to the time when the _oldest_ request will expire.\n\nKeep this in mind if you see your `ratelimit-reset` value change, but not\nmove an entire hour into the future.\n\nIf the `ratelimit-remaining` reaches zero, subsequent requests will receive\na 429 error code until the request reset has been reached. \n\n`ratelimit-remaining` reaching zero can also indicate that the \"burst limit\" of 250 \nrequests per minute limit was met, even if the 5,000 requests per hour limit was not. \nIn this case, the 429 error response will include a `retry-after` header to indicate how \nlong to wait (in seconds) until the request may be retried.\n\nYou can see the format of the response in the examples.\n\n### Sample Rate Limit Headers\n\n```\n    . . .\n    ratelimit-limit: 1200\n    ratelimit-remaining: 1193\n    rateLimit-reset: 1402425459\n    . . .\n```\n\n### Sample Rate Limit Headers When Burst Limit is Reached:\n\n```\n    . . .\n    ratelimit-limit: 5000\n    ratelimit-remaining: 0\n    rateLimit-reset: 1402425459\n    retry-after: 29\n    . . .\n```\n\n### Sample Rate Exceeded Response\n\n```\n    429 Too Many Requests\n    {\n            id: \"too_many_requests\",\n            message: \"API Rate limit exceeded.\"\n    }\n```\n"
+      "description": "DigitalOcean Inference provides inference capabilities through\ntwo API variants:\n\n- **Serverless Inference**: Access serverless inference models using an inference key\n  at `https://inference.do-ai.run`.\n- **Agent Inference**: Integrate multi-agent workflows into your AI applications using\n  a customer-specific agent endpoint.\n\nThese APIs are independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`).\n\n## Base URLs\n\n| API | Base URL |\n|-----|----------|\n| Serverless Inference | `https://inference.do-ai.run` |\n| Agent Inference | `https://{your-agent-url}.agents.do-ai.run` |\n\n## Requests\n\nAny tool that is fluent in HTTP can communicate with the API simply by\nrequesting the correct URI. Requests should be made using the HTTPS protocol\nso that traffic is encrypted. The interface responds to different methods\ndepending on the action required.\n\n|Method|Usage|\n|--- |--- |\n|GET|For simple retrieval of information about your account, Droplets, or environment, you should use the GET method.  The information you request will be returned to you as a JSON object. The attributes defined by the JSON object can be used to form additional requests.  Any request using the GET method is read-only and will not affect any of the objects you are querying.|\n|DELETE|To destroy a resource and remove it from your account and environment, the DELETE method should be used.  This will remove the specified object if it is found.  If it is not found, the operation will return a response indicating that the object was not found. This idempotency means that you do not have to check for a resource's availability prior to issuing a delete command, the final state will be the same regardless of its existence.|\n|PUT|To update the information about a resource in your account, the PUT method is available. Like the DELETE Method, the PUT method is idempotent.  It sets the state of the target using the provided values, regardless of their current values. Requests using the PUT method do not need to check the current attributes of the object.|\n|PATCH|Some resources support partial modification. In these cases, the PATCH method is available. Unlike PUT which generally requires a complete representation of a resource, a PATCH request is a set of instructions on how to modify a resource updating only specific attributes.|\n|POST|To create a new object, your request should specify the POST method. The POST request includes all of the attributes necessary to create a new object.  When you wish to create a new object, send a POST request to the target endpoint.|\n|HEAD|Finally, to retrieve metadata information, you should use the HEAD method to get the headers.  This returns only the header of what would be returned with an associated GET request. Response headers contain some useful information about your API access and the results that are available for your request. For instance, the headers contain your current rate-limit value and the amount of time available until the limit resets. It also contains metrics about the total number of objects found, pagination information, and the total content length.|\n\n## HTTP Statuses\n\nAlong with the HTTP methods that the API responds to, it will also return\nstandard HTTP statuses, including error codes.\n\nIn the event of a problem, the status will contain the error code, while the\nbody of the response will usually contain additional information about the\nproblem that was encountered.\n\nIn general, if the status returned is in the 200 range, it indicates that\nthe request was fulfilled successfully and that no error was encountered.\n\nReturn codes in the 400 range typically indicate that there was an issue\nwith the request that was sent. Among other things, this could mean that you\ndid not authenticate correctly, that you are requesting an action that you\ndo not have authorization for, that the object you are requesting does not\nexist, or that your request is malformed.\n\nIf you receive a status in the 500 range, this generally indicates a\nserver-side problem. This means that we are having an issue on our end and\ncannot fulfill your request currently.\n\n400 and 500 level error responses will include a JSON object in their body,\nincluding the following attributes:\n\n|Name|Type|Description|\n|--- |--- |--- |\n|id|string|A short identifier corresponding to the HTTP status code returned. For example, the ID for a response returning a 404 status code would be \"not_found.\"|\n|message|string|A message providing additional information about the error, including details to help resolve it when possible.|\n|request_id|string|Optionally, some endpoints may include a request ID that should be provided when reporting bugs or opening support tickets to help identify the issue.|\n\n### Example Error Response\n\n```\n    HTTP/1.1 403 Forbidden\n    {\n      \"id\":       \"forbidden\",\n      \"message\":  \"You do not have access for the attempted action.\"\n    }\n```\n\n## Responses\n\nWhen a request is successful, a response body will typically be sent back in\none of two formats depending on the request parameters:\n\n### JSON Response (Non-Streaming)\n\nBy default, or when `stream` is set to `false`, the API returns a complete JSON\nresponse once the inference is finished. The response contains the full generated\ncontent in a single payload.\n\n```json\n    {\n        \"id\": \"chatcmpl-abc123\",\n        \"object\": \"chat.completion\",\n        \"created\": 1677858242,\n        \"model\": \"meta-llama/Llama-3.3-70B-Instruct\",\n        \"choices\": [\n            {\n                \"index\": 0,\n                \"message\": {\n                    \"role\": \"assistant\",\n                    \"content\": \"Hello! How can I help you today?\"\n                },\n                \"finish_reason\": \"stop\"\n            }\n        ],\n        \"usage\": {\n            \"prompt_tokens\": 10,\n            \"completion_tokens\": 12,\n            \"total_tokens\": 22\n        }\n    }\n```\n\n### Streaming Response (Server-Sent Events)\n\nWhen `stream` is set to `true`, the API returns the response as Server-Sent Events\n(SSE) with content type `text/event-stream`. This allows you to receive tokens as\nthey are generated, providing a more responsive user experience.\n\nEach event in the stream is prefixed with `data: ` and contains a JSON object\nrepresenting a chunk of the response. The stream ends with a `data: [DONE]` message.\n\n```\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"Hello\"},\"finish_reason\":null}]}\n\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"!\"},\"finish_reason\":null}]}\n\n    data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"created\":1677858242,\"model\":\"meta-llama/Llama-3.3-70B-Instruct\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n    data: [DONE]\n```\n\nTo consume streaming responses, read the response body line by line, parse each\n`data:` line as JSON, and process the `delta.content` field to build up the\ncomplete response incrementally.\n\n## Rate Limit\n\nRequests through the API are rate limited per OAuth token. Current rate limits:\n\n*   5,000 requests per hour\n*   250 requests per minute (5% of the hourly total)\n\nOnce you exceed either limit, you will be rate limited until the next cycle\nstarts. Space out any requests that you would otherwise issue in bursts for\nthe best results.\n\nThe rate limiting information is contained within the response headers of\neach request. The relevant headers are:\n\n*   **ratelimit-limit**: The number of requests that can be made per hour.\n*   **ratelimit-remaining**: The number of requests that remain before you hit your request limit. See the information below for how the request limits expire.\n*   **ratelimit-reset**: This represents the time when the oldest request will expire. The value is given in [Unix epoch time](http://en.wikipedia.org/wiki/Unix_time). See below for more information about how request limits expire.\n\nMore rate limiting information is returned only within burst limit error response headers:\n*   **retry-after**: The number of seconds to wait before making another request when rate limited.\n\nAs long as the `ratelimit-remaining` count is above zero, you will be able\nto make additional requests.\n\nThe way that a request expires and is removed from the current limit count\nis important to understand. Rather than counting all of the requests for an\nhour and resetting the `ratelimit-remaining` value at the end of the hour,\neach request instead has its own timer.\n\nThis means that each request contributes toward the `ratelimit-remaining`\ncount for one complete hour after the request is made. When that request's\ntimer runs out, it is no longer counted towards the request limit.\n\nThis has implications on the meaning of the `ratelimit-reset` header as\nwell. Because the entire rate limit is not reset at one time, the value of\nthis header is set to the time when the _oldest_ request will expire.\n\nKeep this in mind if you see your `ratelimit-reset` value change, but not\nmove an entire hour into the future.\n\nIf the `ratelimit-remaining` reaches zero, subsequent requests will receive\na 429 error code until the request reset has been reached. \n\n`ratelimit-remaining` reaching zero can also indicate that the \"burst limit\" of 250 \nrequests per minute limit was met, even if the 5,000 requests per hour limit was not. \nIn this case, the 429 error response will include a `retry-after` header to indicate how \nlong to wait (in seconds) until the request may be retried.\n\nYou can see the format of the response in the examples.\n\n### Sample Rate Limit Headers\n\n```\n    . . .\n    ratelimit-limit: 1200\n    ratelimit-remaining: 1193\n    rateLimit-reset: 1402425459\n    . . .\n```\n\n### Sample Rate Limit Headers When Burst Limit is Reached:\n\n```\n    . . .\n    ratelimit-limit: 5000\n    ratelimit-remaining: 0\n    rateLimit-reset: 1402425459\n    retry-after: 29\n    . . .\n```\n\n### Sample Rate Exceeded Response\n\n```\n    429 Too Many Requests\n    {\n            id: \"too_many_requests\",\n            message: \"API Rate limit exceeded.\"\n    }\n```\n"
     },
     {
       "name": "Serverless Inference",
-      "description": "DigitalOcean Gradient™ AI Agentic Cloud allows access to serverless inference models.\nYou can access models by providing an inference key.\n\n**Note:** The Serverless Inference API uses a separate base URL (`https://inference.do-ai.run`)\nand is independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`)."
+      "description": "DigitalOcean Inference allows access to serverless inference models.\nYou can access models by providing an inference key.\n\n**Note:** The Serverless Inference API uses a separate base URL (`https://inference.do-ai.run`)\nand is independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`)."
     },
     {
       "name": "Agent Inference",
-      "description": "DigitalOcean Gradient™ AI Agentic Cloud allows you to create multi-agent workflows\nto power your AI applications. This allows developers to integrate agents into your\nAI applications.\n\n**Note:** The Agent Inference API uses a customer-specific base URL (the agent endpoint)\nand is independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`)."
+      "description": "DigitalOcean Agent Platform allows you to create multi-agent workflows\nto power your AI applications. This allows developers to integrate agents into your\nAI applications.\n\n**Note:** The Agent Inference API uses a customer-specific base URL (the agent endpoint)\nand is independent of the main DigitalOcean control-plane API (`https://api.digitalocean.com`)."
     },
     {
       "name": "Batch Inference",
@@ -280,6 +280,7 @@
         "Actions",
         "Add-Ons",
         "Action Gateway",
+        "Agent Platform API",
         "Apps",
         "Billing",
         "Block Storage",
@@ -300,7 +301,6 @@
         "Floating IP Actions",
         "Floating IPs",
         "Functions",
-        "GradientAI Platform",
         "Image Actions",
         "Images",
         "Kubernetes",
@@ -35010,7 +35010,7 @@
         ],
         "summary": "List Agents",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35078,7 +35078,7 @@
         ],
         "summary": "Create an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35169,7 +35169,7 @@
         ],
         "summary": "List Agent API Keys",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35249,7 +35249,7 @@
         ],
         "summary": "Create an Agent API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35341,7 +35341,7 @@
         ],
         "summary": "Update API Key for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35422,7 +35422,7 @@
         ],
         "summary": "Delete API Key for an Agent ",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35505,7 +35505,7 @@
         ],
         "summary": "Regenerate API Key for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35587,7 +35587,7 @@
         ],
         "summary": "Add Function Route to an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35679,7 +35679,7 @@
         ],
         "summary": "Update Function Route for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35760,7 +35760,7 @@
         ],
         "summary": "Delete Function Route for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35842,7 +35842,7 @@
         ],
         "summary": "Attach Guardrails to an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35925,7 +35925,7 @@
         ],
         "summary": "Detach a Guardrail from an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -35998,7 +35998,7 @@
         ],
         "summary": "Attach Knowledge Bases to an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36081,7 +36081,7 @@
         ],
         "summary": "Attach Knowledge Base to an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36162,7 +36162,7 @@
         ],
         "summary": "Detach Knowledge Base from an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36254,7 +36254,7 @@
         ],
         "summary": "Add Agent Route to an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36344,7 +36344,7 @@
         ],
         "summary": "Update Agent Route for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36425,7 +36425,7 @@
         ],
         "summary": "Delete Agent Route for an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36498,7 +36498,7 @@
         ],
         "summary": "Retrieve an Existing Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36578,7 +36578,7 @@
         ],
         "summary": "Update an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36649,7 +36649,7 @@
         ],
         "summary": "Delete an Agent",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36722,7 +36722,7 @@
         ],
         "summary": "View Agent Routes",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36804,7 +36804,7 @@
         ],
         "summary": "Update Agent Status",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36895,7 +36895,7 @@
         ],
         "summary": "Get Agent Usage",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -36986,7 +36986,7 @@
         ],
         "summary": "List Agent Versions",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37066,7 +37066,7 @@
         ],
         "summary": "Rollback to Agent Version",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37147,7 +37147,7 @@
         ],
         "summary": "List Anthropic API Keys",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37215,7 +37215,7 @@
         ],
         "summary": "Create Anthropic API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37288,7 +37288,7 @@
         ],
         "summary": "Get Anthropic API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37368,7 +37368,7 @@
         ],
         "summary": "Update Anthropic API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37439,7 +37439,7 @@
         ],
         "summary": "Delete Anthropic API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37530,7 +37530,7 @@
         ],
         "summary": "List agents by Anthropic key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37628,7 +37628,7 @@
         ],
         "summary": "List Custom Models",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37698,7 +37698,7 @@
         ],
         "summary": "Import Custom Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37771,7 +37771,7 @@
         ],
         "summary": "Get Custom Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37842,7 +37842,7 @@
         ],
         "summary": "Delete Custom Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -37924,7 +37924,7 @@
         ],
         "summary": "Update Custom Model Metadata",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38003,7 +38003,7 @@
         ],
         "summary": "List Evaluation Datasets",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38071,7 +38071,7 @@
         ],
         "summary": "Create Evaluation Dataset",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38141,7 +38141,7 @@
         ],
         "summary": "Create Presigned URLs for Evaluation Dataset File Upload",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38214,7 +38214,7 @@
         ],
         "summary": "Delete Evaluation Dataset",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38287,7 +38287,7 @@
         ],
         "summary": "Get Download URL for Evaluation Dataset",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38348,7 +38348,7 @@
         ],
         "summary": "List Evaluation Metrics",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38418,7 +38418,7 @@
         ],
         "summary": "Create Custom Evaluation Metric",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38500,7 +38500,7 @@
         ],
         "summary": "Update Custom Evaluation Metric",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38571,7 +38571,7 @@
         ],
         "summary": "Delete Custom Evaluation Metric",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38641,7 +38641,7 @@
         ],
         "summary": "Run an Evaluation Test Case",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38714,7 +38714,7 @@
         ],
         "summary": "Retrieve Information About an Existing Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38805,7 +38805,7 @@
         ],
         "summary": "Retrieve Results of an Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38888,7 +38888,7 @@
         ],
         "summary": "Retrieve Results of an Evaluation Run Prompt",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -38949,7 +38949,7 @@
         ],
         "summary": "List Evaluation Test Cases",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39017,7 +39017,7 @@
         ],
         "summary": "Create Evaluation Test Case.",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39099,7 +39099,7 @@
         ],
         "summary": "List Evaluation Runs by Test Case",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39181,7 +39181,7 @@
         ],
         "summary": "Retrieve Information About an Existing Evaluation Test Case",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39261,7 +39261,7 @@
         ],
         "summary": "Update an Evaluation Test Case.",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39342,7 +39342,7 @@
         ],
         "summary": "List Indexing Jobs for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39410,7 +39410,7 @@
         ],
         "summary": "Start Indexing Job for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39483,7 +39483,7 @@
         ],
         "summary": "List Data Sources for Indexing Job for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39556,7 +39556,7 @@
         ],
         "summary": "Get Signed URL for Indexing Job Details",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39629,7 +39629,7 @@
         ],
         "summary": "Retrieve Status of Indexing Job for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39711,7 +39711,7 @@
         ],
         "summary": "Cancel Indexing Job for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39792,7 +39792,7 @@
         ],
         "summary": "List Knowledge Bases",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39860,7 +39860,7 @@
         ],
         "summary": "Create a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -39930,7 +39930,7 @@
         ],
         "summary": "Create Presigned URLs for Data Source File Upload",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40021,7 +40021,7 @@
         ],
         "summary": "List Data Sources for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40101,7 +40101,7 @@
         ],
         "summary": "Add Data Source to a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40193,7 +40193,7 @@
         ],
         "summary": "Update Data Source options",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40274,7 +40274,7 @@
         ],
         "summary": "Delete a Data Source from a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40347,7 +40347,7 @@
         ],
         "summary": "List Indexing Jobs for a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40420,7 +40420,7 @@
         ],
         "summary": "Retrieve Information About an Existing Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40500,7 +40500,7 @@
         ],
         "summary": "Update a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40571,7 +40571,7 @@
         ],
         "summary": "Delete a Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40641,7 +40641,7 @@
         ],
         "summary": "Create Presigned URLs for Model Evaluation Dataset File Upload",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40702,7 +40702,7 @@
         ],
         "summary": "List Model Evaluation Metrics",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40763,7 +40763,7 @@
         ],
         "summary": "List Model Evaluation Presets",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40836,7 +40836,7 @@
         ],
         "summary": "Retrieve Model Evaluation Preset",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -40907,7 +40907,7 @@
         ],
         "summary": "Delete Model Evaluation Preset",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41101,7 +41101,7 @@
         ],
         "summary": "List Model Evaluation Runs",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41169,7 +41169,7 @@
         ],
         "summary": "Create Model Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41260,7 +41260,7 @@
         ],
         "summary": "Retrieve Model Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41331,7 +41331,7 @@
         ],
         "summary": "Delete Model Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41411,7 +41411,7 @@
         ],
         "summary": "Update Model Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41493,7 +41493,7 @@
         ],
         "summary": "Cancel Model Evaluation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41566,7 +41566,7 @@
         ],
         "summary": "Get Download URL for Model Evaluation Run Results",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41679,7 +41679,7 @@
         ],
         "summary": "List Available Models",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41760,7 +41760,7 @@
         ],
         "summary": "List Model API Keys",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41830,7 +41830,7 @@
           }
         ],
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ]
       }
     },
@@ -41906,7 +41906,7 @@
         ],
         "summary": "Update API Key for a Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -41977,7 +41977,7 @@
         ],
         "summary": "Delete API Key for a Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42050,7 +42050,7 @@
         ],
         "summary": "Regenerate API Key for a Model",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42254,7 +42254,7 @@
         ],
         "summary": "List Model Catalog",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42335,7 +42335,7 @@
         ],
         "summary": "Get Model Catalog Card",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42416,7 +42416,7 @@
         ],
         "summary": "List Model Routers",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42484,7 +42484,7 @@
         ],
         "summary": "Create a Model Router",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42565,7 +42565,7 @@
         ],
         "summary": "List Model Router Presets",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42646,7 +42646,7 @@
         ],
         "summary": "List Model Router Task Presets",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42719,7 +42719,7 @@
         ],
         "summary": "Retrieve an Existing Model Router",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42799,7 +42799,7 @@
         ],
         "summary": "Update a Model Router",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42870,7 +42870,7 @@
         ],
         "summary": "Delete a Model Router",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -42940,7 +42940,7 @@
         ],
         "summary": "Get Oauth2 Dropbox Tokens",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43021,7 +43021,7 @@
         ],
         "summary": "Get Oauth2 URL",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43102,7 +43102,7 @@
         ],
         "summary": "List OpenAI API Keys",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43170,7 +43170,7 @@
         ],
         "summary": "Create OpenAI API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43243,7 +43243,7 @@
         ],
         "summary": "Get OpenAI API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43323,7 +43323,7 @@
         ],
         "summary": "Update OpenAI API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43394,7 +43394,7 @@
         ],
         "summary": "Delete OpenAI API Key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43485,7 +43485,7 @@
         ],
         "summary": "List agents by OpenAI key",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43566,7 +43566,7 @@
         ],
         "summary": "List Datacenter Regions",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43695,7 +43695,7 @@
         ],
         "summary": "List Common Scenario & Goal Library",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43777,7 +43777,7 @@
         ],
         "summary": "Create Scenario Set From Library",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -43908,7 +43908,7 @@
         ],
         "summary": "List Scenarios In Library Entry",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44073,7 +44073,7 @@
         ],
         "summary": "List Scenario Sets",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44141,7 +44141,7 @@
         ],
         "summary": "Create Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44211,7 +44211,7 @@
         ],
         "summary": "Create Presigned URLs for Scenario Set File Upload",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44281,7 +44281,7 @@
         ],
         "summary": "Generate Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44354,7 +44354,7 @@
         ],
         "summary": "Retrieve Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44434,7 +44434,7 @@
         ],
         "summary": "Update Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44505,7 +44505,7 @@
         ],
         "summary": "Delete Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44578,7 +44578,7 @@
         ],
         "summary": "Retrieve Scenario Set Download URL",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44660,7 +44660,7 @@
         ],
         "summary": "Duplicate Scenario Set",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44791,7 +44791,7 @@
         ],
         "summary": "List Scenarios",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44861,7 +44861,7 @@
         ],
         "summary": "Create scheduled indexing for knowledge base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -44934,7 +44934,7 @@
         ],
         "summary": "Get Scheduled Indexing for Knowledge Base",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45007,7 +45007,7 @@
         ],
         "summary": "Delete Scheduled Indexing",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45162,7 +45162,7 @@
         ],
         "summary": "List Simulation Runs",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45230,7 +45230,7 @@
         ],
         "summary": "Create Simulation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45303,7 +45303,7 @@
         ],
         "summary": "Retrieve Simulation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45383,7 +45383,7 @@
         ],
         "summary": "Update Simulation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45454,7 +45454,7 @@
         ],
         "summary": "Delete Simulation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45536,7 +45536,7 @@
         ],
         "summary": "Cancel Simulation Run",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45718,7 +45718,7 @@
         ],
         "summary": "List Simulation Journeys",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45801,7 +45801,7 @@
         ],
         "summary": "Retrieve Simulation Journey",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45884,7 +45884,7 @@
         ],
         "summary": "Retrieve Journey Trajectory",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -45967,7 +45967,7 @@
         ],
         "summary": "Retrieve Journey Trajectory Download URL",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46028,7 +46028,7 @@
         ],
         "summary": "List Workspaces",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46096,7 +46096,7 @@
         ],
         "summary": "Create a Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46169,7 +46169,7 @@
         ],
         "summary": "Retrieve an Existing Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46249,7 +46249,7 @@
         ],
         "summary": "Update a Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46320,7 +46320,7 @@
         ],
         "summary": "Delete a Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46420,7 +46420,7 @@
         ],
         "summary": "List agents by Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46500,7 +46500,7 @@
         ],
         "summary": "Move Agents to a Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -46573,7 +46573,7 @@
         ],
         "summary": "List Evaluation Test Cases by Workspace",
         "tags": [
-          "GradientAI Platform"
+          "Agent Platform API"
         ],
         "x-codeSamples": [
           {
@@ -77016,7 +77016,7 @@
             "type": "string"
           },
           "datasources": {
-            "description": "Optional data sources to attach at creation. Omit or use an empty list to create the knowledge base without sources, then add sources (with chunking strategy and sizes) using [Add a Data Source to a Knowledge Base](#operation/create_knowledge_base_data_source). When provided, see [Organize Data Sources](https://docs.digitalocean.com/products/gradient-ai-platform/how-to/create-manage-agent-knowledge-bases/#add-data-sources) for best practices.",
+            "description": "Optional data sources to attach at creation. Omit or use an empty list to create the knowledge base without sources, then add sources (with chunking strategy and sizes) using [Add a Data Source to a Knowledge Base](#operation/create_knowledge_base_data_source). When provided, see [Organize Data Sources](https://docs.digitalocean.com/products/inference/how-to/create-manage-agent-knowledge-bases/#add-data-sources) for best practices.",
             "items": {
               "$ref": "#/components/schemas/apiKBDataSource"
             },
