@@ -144,6 +144,10 @@
       "description": "A DigitalOcean [image](https://docs.digitalocean.com/products/images/) can be\nused to create a Droplet and may come in a number of flavors. Currently,\nthere are five types of images: snapshots, backups, applications,\ndistributions, and custom images.\n\n* [Snapshots](https://docs.digitalocean.com/products/snapshots/) provide\na full copy of an existing Droplet instance taken on demand.\n\n* [Backups](https://docs.digitalocean.com/products/backups/) are similar\nto snapshots but are created automatically at regular intervals when\nenabled for a Droplet.\n\n* [Custom images](https://docs.digitalocean.com/products/custom-images/)\nare Linux-based virtual machine images (raw, qcow2, vhdx, vdi, and vmdk\nformats are supported) that you may upload for use on DigitalOcean.\n\n* Distributions are the public Linux distributions that are available to\nbe used as a base to create Droplets.\n\n* Applications, or [1-Click Apps](https://docs.digitalocean.com/products/marketplace/),\nare distributions pre-configured with additional software.\n\nTo interact with images, you will generally send requests to the images\nendpoint at /v2/images."
     },
     {
+      "name": "Insights",
+      "description": "The DigitalOcean Insights API provides observability resources for\nmonitoring your infrastructure, including alert rules that evaluate\nmetrics, notification channels that deliver alert events, read-only\nalert instances that record when alert rules fire, and PromQL and logs\nquery interfaces."
+    },
+    {
       "name": "Kubernetes",
       "description": "[DigitalOcean Kubernetes](https://docs.digitalocean.com/products/kubernetes/)\nallows you to quickly deploy scalable and secure Kubernetes clusters. By\nsending requests to the `/v2/kubernetes/clusters` endpoint, you can list,\ncreate, or delete clusters as well as scale node pools up and down,\nrecycle individual nodes, and retrieve the kubeconfig file for use with\na cluster."
     },
@@ -303,6 +307,7 @@
         "Functions",
         "Image Actions",
         "Images",
+        "Insights",
         "Kubernetes",
         "Load Balancers",
         "Monitoring",
@@ -11474,7 +11479,7 @@
       "put": {
         "operationId": "databases_update_user",
         "summary": "Update a Database User",
-        "description": "To update an existing database user, send a PUT request to `/v2/databases/$DATABASE_ID/users/$USERNAME`\nwith the desired settings.\n\n**Note**: only `settings` can be updated via this type of request. If you wish to change the name of a user,\nyou must recreate a new user.\n\nFor PostgreSQL clusters, you can update `settings.pg_allow_replication` to enable or\ndisable replication privileges for the user. When omitted, the value defaults to `false`.\n\nFor Kafka and OpenSearch clusters, additional options can be configured in the\n`settings` object (for example, topic or index ACLs).\n\nUpdating users is not supported for MongoDB clusters. MongoDB roles and database\naccess are set with `settings.mongo_user_settings` when creating a user and cannot\nbe changed afterward; recreate the user to apply different roles or databases.\n\nThe response will be a JSON object with a key called `user`. The value of this will be an\nobject that contains the name of the updated database user, along with the `settings` object that\nhas been updated.\n",
+        "description": "To update an existing database user, send a PUT request to `/v2/databases/$DATABASE_ID/users/$USERNAME`\nwith the desired settings.\n\n**Note**: only `settings` can be updated via this type of request. If you wish to change the name of a user,\nyou must recreate a new user.\n\nFor PostgreSQL clusters, you can update `settings.pg_allow_replication` to enable or\ndisable replication privileges for the user. When omitted, the value defaults to `false`.\n\nFor Kafka and OpenSearch clusters, additional options can be configured in the\n`settings` object (for example, topic or index ACLs).\n\nUpdating users is supported for PostgreSQL, Kafka, and OpenSearch clusters. For\nother engines, the request returns a 422. MongoDB roles and database access are\nset with `settings.mongo_user_settings` when creating a user and cannot be\nchanged afterward; recreate the user to apply different roles or databases.\n\nThe response will be a JSON object with a key called `user`. The value of this will be an\nobject that contains the name of the updated database user, along with the `settings` object that\nhas been updated.\n",
         "tags": [
           "Databases"
         ],
@@ -11549,6 +11554,9 @@
           },
           "404": {
             "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity"
           },
           "429": {
             "$ref": "#/components/responses/too_many_requests"
@@ -20282,6 +20290,1155 @@
         ]
       }
     },
+    "/v2/insights/alert-instances": {
+      "get": {
+        "operationId": "insights_list_alertInstances",
+        "summary": "List Alert Instances",
+        "description": "To list alert instances for your account, send a GET request to\n`/v2/insights/alert-instances`. Alert instances are read-only records of\nalert rule firings against your resources.\n\nResults can optionally be filtered by `status`, `rule_id`, or\n`resource_urn`.\n\nResults are ordered by `triggered_at` descending (newest first). Because\nthe list is append-only and continuously growing, offset-based pagination\nis best-effort: newly triggered instances may shift older rows onto\nsubsequent pages between fetches. For stable pagination, filter by\n`rule_id` or a fixed time window on the client side.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_per_page"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/alert_instance_status"
+          },
+          {
+            "$ref": "#/components/parameters/rule_id"
+          },
+          {
+            "$ref": "#/components/parameters/resource_urn"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_alert_instances_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-instances?status=active&page=1&per_page=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/alert-instances/{id}": {
+      "get": {
+        "operationId": "insights_get_alertInstance",
+        "summary": "Retrieve an Alert Instance",
+        "description": "To retrieve a single alert instance, send a GET request to\n`/v2/insights/alert-instances/{id}`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alert_instance_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/alert_instance_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-instances/a1b2c3d4-e5f6-7890-abcd-ef1234567890\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/alert-rules": {
+      "get": {
+        "operationId": "insights_list_alertRules",
+        "summary": "List Alert Rules",
+        "description": "To list alert rules for your account, send a GET request to\n`/v2/insights/alert-rules`. Results are paginated with `page` and `per_page`\n(default `20`, maximum `200`). Optionally filter by `resource_urn`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_per_page"
+          },
+          {
+            "$ref": "#/components/parameters/resource_urn"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_alert_rules_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules?page=1&per_page=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "insights_create_alertRule",
+        "summary": "Create an Alert Rule",
+        "description": "To create an alert rule, send a POST request to `/v2/insights/alert-rules`\nwith a `spec` containing `name`, `query`, `thresholds`, and at least one\n`notification_channels` binding. `status` defaults to\n`ALERT_RULE_STATUS_ACTIVE` when omitted. `re_alert_duration` defaults to\n`RE_ALERT_DURATION_4H` when omitted.\n\n`query.metric` must be a dotted OpenTelemetry name such as\n`do.droplets.cpu_utilization`. Underscored Prometheus-style names are\nrejected with `422 Unprocessable Entity`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/alert_rule_create_request"
+              },
+              "example": {
+                "spec": {
+                  "name": "High CPU",
+                  "query": {
+                    "metric": "do.droplets.cpu_utilization",
+                    "resource_urns": [
+                      "do:droplet:12345"
+                    ],
+                    "tags": [
+                      "env:prod"
+                    ]
+                  },
+                  "condition": {
+                    "window": "EVALUATION_WINDOW_5M"
+                  },
+                  "thresholds": {
+                    "warning": 80,
+                    "critical": 95,
+                    "operator": "THRESHOLD_OPERATOR_GREATER_THAN"
+                  },
+                  "notification_channels": [
+                    {
+                      "notification_channel_id": "550e8400-e29b-41d4-a716-446655440000",
+                      "notify_on": [
+                        "SEVERITY_CRITICAL"
+                      ]
+                    }
+                  ],
+                  "re_alert_duration": "RE_ALERT_DURATION_4H"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/alert_rule_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"spec\":{\"name\":\"High CPU\",\"query\":{\"metric\":\"do.droplets.cpu_utilization\",\"resource_urns\":[\"do:droplet:12345\"],\"tags\":[\"env:prod\"]},\"condition\":{\"window\":\"EVALUATION_WINDOW_5M\"},\"thresholds\":{\"warning\":80,\"critical\":95,\"operator\":\"THRESHOLD_OPERATOR_GREATER_THAN\"},\"notification_channels\":[{\"notification_channel_id\":\"550e8400-e29b-41d4-a716-446655440000\",\"notify_on\":[\"SEVERITY_CRITICAL\"]}],\"re_alert_duration\":\"RE_ALERT_DURATION_4H\"}}' \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/alert-rules/{id}": {
+      "get": {
+        "operationId": "insights_get_alertRule",
+        "summary": "Retrieve an Alert Rule",
+        "description": "To retrieve an alert rule, send a GET request to\n`/v2/insights/alert-rules/{id}`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alert_rule_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/alert_rule_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules/a1b2c3d4-e5f6-7890-abcd-ef1234567890\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "insights_update_alertRule",
+        "summary": "Update an Alert Rule",
+        "description": "This PUT endpoint uses merge semantics. To update an alert rule, send a\nrequest to `/v2/insights/alert-rules/{id}` with a full `spec`. Omit\n`notification_channels` to keep existing bindings. Omit `status` or\n`re_alert_duration` to keep those existing values.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alert_rule_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/alert_rule_request"
+              },
+              "example": {
+                "spec": {
+                  "name": "High CPU (renamed)",
+                  "query": {
+                    "metric": "do.droplets.cpu_utilization",
+                    "resource_urns": [
+                      "do:droplet:12345",
+                      "do:droplet:67890"
+                    ]
+                  },
+                  "condition": {
+                    "window": "EVALUATION_WINDOW_15M"
+                  },
+                  "thresholds": {
+                    "critical": 90,
+                    "operator": "THRESHOLD_OPERATOR_GREATER_THAN_OR_EQUAL"
+                  },
+                  "notification_channels": [
+                    {
+                      "notification_channel_id": "550e8400-e29b-41d4-a716-446655440000"
+                    }
+                  ]
+                },
+                "status": "ALERT_RULE_STATUS_PAUSED"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/alert_rule_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"spec\":{\"name\":\"High CPU (renamed)\",\"query\":{\"metric\":\"do.droplets.cpu_utilization\",\"resource_urns\":[\"do:droplet:12345\",\"do:droplet:67890\"]},\"condition\":{\"window\":\"EVALUATION_WINDOW_15M\"},\"thresholds\":{\"critical\":90,\"operator\":\"THRESHOLD_OPERATOR_GREATER_THAN_OR_EQUAL\"},\"notification_channels\":[{\"notification_channel_id\":\"550e8400-e29b-41d4-a716-446655440000\"}]},\"status\":\"ALERT_RULE_STATUS_PAUSED\"}' \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules/a1b2c3d4-e5f6-7890-abcd-ef1234567890\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "insights_delete_alertRule",
+        "summary": "Delete an Alert Rule",
+        "description": "To delete an alert rule, send a DELETE request to\n`/v2/insights/alert-rules/{id}`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/alert_rule_id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/no_content"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules/a1b2c3d4-e5f6-7890-abcd-ef1234567890\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/notification-channels": {
+      "get": {
+        "operationId": "insights_list_notificationChannels",
+        "summary": "List Notification Channels",
+        "description": "To list all notification channels for your account, send a GET request to\n`/v2/insights/notification-channels`. Results are paginated with `page` and\n`per_page` (default `20`, maximum `200`).\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_per_page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_notification_channels_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels?page=1&per_page=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "insights_create_notificationChannel",
+        "summary": "Create a Notification Channel",
+        "description": "To create a notification channel, send a POST request to\n`/v2/insights/notification-channels` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nEmail recipients must be verified team member addresses. Webhook URLs must\nuse HTTPS. Secret fields (`slack.webhook_url`, webhook credentials) are\nwrite-only and returned masked on subsequent reads.\n",
+        "tags": [
+          "Insights"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/notification_channel_request"
+              },
+              "examples": {
+                "slack": {
+                  "summary": "Slack channel",
+                  "value": {
+                    "name": "Platform alerts",
+                    "slack": {
+                      "webhook_url": "https://hooks.slack.com/services/T000/B000/XXXXXXXX",
+                      "channel": "#platform-alerts"
+                    }
+                  }
+                },
+                "email": {
+                  "summary": "Email channel",
+                  "value": {
+                    "name": "On-call email",
+                    "email": {
+                      "to": "alerts@example.com, backup@example.com"
+                    }
+                  }
+                },
+                "webhook": {
+                  "summary": "HTTPS webhook with bearer token",
+                  "value": {
+                    "name": "Incident webhook",
+                    "webhook": {
+                      "url": "https://example.com/hook",
+                      "bearer_token": {
+                        "token": "secret-token"
+                      },
+                      "headers": {
+                        "X-Custom": "1"
+                      },
+                      "signature": {
+                        "secret": "whsec"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/notification_channel_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"Platform alerts\",\"slack\":{\"webhook_url\":\"https://hooks.slack.com/services/T000/B000/XXXXXXXX\",\"channel\":\"#platform-alerts\"}}' \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/notification-channels/{id}": {
+      "get": {
+        "operationId": "insights_get_notificationChannel",
+        "summary": "Retrieve a Notification Channel",
+        "description": "To retrieve a notification channel, send a GET request to\n`/v2/insights/notification-channels/{id}`. Secret fields are returned masked\nas `********`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/notification_channel_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/notification_channel_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels/550e8400-e29b-41d4-a716-446655440000\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "insights_update_notificationChannel",
+        "summary": "Update a Notification Channel",
+        "description": "To update a notification channel, send a PUT request to\n`/v2/insights/notification-channels/{id}` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nSending a secret field rotates it; omitting the secret field keeps the\nexisting value.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/notification_channel_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/notification_channel_request"
+              },
+              "examples": {
+                "slack": {
+                  "summary": "Slack channel",
+                  "value": {
+                    "name": "Platform alerts (updated)",
+                    "slack": {
+                      "webhook_url": "https://hooks.slack.com/services/T000/B000/NEWTOKEN",
+                      "channel": "#platform-alerts-prod"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/notification_channel_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"Platform alerts (updated)\",\"slack\":{\"webhook_url\":\"https://hooks.slack.com/services/T000/B000/NEWTOKEN\",\"channel\":\"#platform-alerts-prod\"}}' \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels/550e8400-e29b-41d4-a716-446655440000\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "insights_delete_notificationChannel",
+        "summary": "Delete a Notification Channel",
+        "description": "To delete a notification channel, send a DELETE request to\n`/v2/insights/notification-channels/{id}`.\n\nDeleting a channel that is still referenced by one or more alert rules\nreturns `409 Conflict`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/notification_channel_id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/no_content"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels/550e8400-e29b-41d4-a716-446655440000\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/prom/api/v1/query": {
+      "get": {
+        "operationId": "insights_get_promQuery",
+        "summary": "Execute an instant PromQL query",
+        "description": "To evaluate a PromQL expression at a single point in time, send a GET request to `/v2/insights/query/{region}/prom/api/v1/query`.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          },
+          {
+            "$ref": "#/components/parameters/query"
+          },
+          {
+            "$ref": "#/components/parameters/time"
+          },
+          {
+            "$ref": "#/components/parameters/timeout"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prom_query"
+          },
+          "400": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "503": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --get \"https://api.digitalocean.com/v2/insights/query/nyc3/prom/api/v1/query\" \\\n  --data-urlencode \"query=do.droplets.cpu_time\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/prom/api/v1/query_range": {
+      "get": {
+        "operationId": "insights_get_promQueryRange",
+        "summary": "Execute a range PromQL query",
+        "description": "To evaluate a PromQL expression over a time range, send a GET request to `/v2/insights/query/{region}/prom/api/v1/query_range`.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          },
+          {
+            "$ref": "#/components/parameters/query"
+          },
+          {
+            "$ref": "#/components/parameters/start"
+          },
+          {
+            "$ref": "#/components/parameters/end"
+          },
+          {
+            "$ref": "#/components/parameters/step"
+          },
+          {
+            "$ref": "#/components/parameters/timeout"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prom_query_range"
+          },
+          "400": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "503": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --get \"https://api.digitalocean.com/v2/insights/query/nyc3/prom/api/v1/query_range\" \\\n  --data-urlencode \"query=do.droplets.cpu_time\" \\\n  --data-urlencode \"start=1620683817\" \\\n  --data-urlencode \"end=1620705417\" \\\n  --data-urlencode \"step=15s\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/prom/api/v1/labels": {
+      "get": {
+        "operationId": "insights_get_promLabels",
+        "summary": "List label names",
+        "description": "To list label names, send a GET request to `/v2/insights/query/{region}/prom/api/v1/labels`.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          },
+          {
+            "$ref": "#/components/parameters/start_optional"
+          },
+          {
+            "$ref": "#/components/parameters/end_optional"
+          },
+          {
+            "$ref": "#/components/parameters/match"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prom_labels"
+          },
+          "400": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "503": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/prom/api/v1/labels\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/prom/api/v1/label/{name}/values": {
+      "get": {
+        "operationId": "insights_get_promLabelValues",
+        "summary": "List values for a label",
+        "description": "To list values for a label name, send a GET request to `/v2/insights/query/{region}/prom/api/v1/label/{name}/values`.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          },
+          {
+            "$ref": "#/components/parameters/label_name"
+          },
+          {
+            "$ref": "#/components/parameters/start_optional"
+          },
+          {
+            "$ref": "#/components/parameters/end_optional"
+          },
+          {
+            "$ref": "#/components/parameters/match"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prom_label_values"
+          },
+          "400": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "503": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/prom/api/v1/label/__name__/values\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/prom/api/v1/series": {
+      "get": {
+        "operationId": "insights_get_promSeries",
+        "summary": "Find series by label selectors",
+        "description": "To find series matching one or more selectors, send a GET request to `/v2/insights/query/{region}/prom/api/v1/series`.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          },
+          {
+            "$ref": "#/components/parameters/match_required"
+          },
+          {
+            "$ref": "#/components/parameters/start_optional"
+          },
+          {
+            "$ref": "#/components/parameters/end_optional"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/prom_series"
+          },
+          "400": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "503": {
+            "$ref": "#/components/responses/prom_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --get \"https://api.digitalocean.com/v2/insights/query/nyc3/prom/api/v1/series\" \\\n  --data-urlencode 'match[]={__name__=\"do.droplets.cpu_time\"}'"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/query/{region}/logs/search": {
+      "post": {
+        "operationId": "insights_post_logsSearch",
+        "summary": "Search logs",
+        "description": "To search log records in a region, send a POST request to `/v2/insights/query/{region}/logs/search` with a JSON body describing the time range, optional filter, ordering, and pagination.\nThe time range must not exceed 7 days. `pagination.limit` defaults to 100 and is clamped to 1000. Cursor pagination requires ordering by `timestamp` alone; other sort orders return `has_more: false` and cannot be paged.",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_region"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/logs_search_request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/logs_search"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"time_range\": {\n      \"from\": {\"absolute\": \"2026-09-30T00:00:00Z\"},\n      \"to\": {\"absolute\": \"2026-09-30T01:00:00Z\"}\n    },\n    \"filter\": {\n      \"condition\": {\n        \"field\": {\"name\": \"severity_text\"},\n        \"operator\": \"FILTER_OPERATOR_EQ\",\n        \"value\": {\"string_value\": \"Error\"}\n      }\n    },\n    \"order_by\": [\n      {\"field\": {\"name\": \"timestamp\"}, \"direction\": \"SORT_DIRECTION_DESC\"}\n    ],\n    \"pagination\": {\"limit\": 100}\n  }' \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/logs/search\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/kubernetes/clusters": {
       "get": {
         "operationId": "kubernetes_list_clusters",
@@ -22380,21 +23537,16 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "droplet_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer"
-                    },
-                    "example": [
-                      3164444,
-                      3164445
-                    ],
-                    "description": "An array containing the IDs of the Droplets assigned to the load balancer."
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/load_balancer_droplet_ids"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "droplet_ids"
+                    ]
                   }
-                },
-                "required": [
-                  "droplet_ids"
                 ]
               }
             }
@@ -22463,21 +23615,16 @@
           "content": {
             "application/json": {
               "schema": {
-                "properties": {
-                  "droplet_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer"
-                    },
-                    "example": [
-                      3164444,
-                      3164445
-                    ],
-                    "description": "An array containing the IDs of the Droplets assigned to the load balancer."
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/load_balancer_droplet_ids"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "droplet_ids"
+                    ]
                   }
-                },
-                "required": [
-                  "droplet_ids"
                 ]
               }
             }
@@ -26526,7 +27673,7 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           }
         ],
         "responses": {
@@ -26577,7 +27724,7 @@
             "$ref": "#/components/parameters/nfs_id"
           },
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           }
         ],
         "responses": {
@@ -26626,7 +27773,7 @@
             "$ref": "#/components/parameters/nfs_id"
           },
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           }
         ],
         "responses": {
@@ -26763,7 +27910,7 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           },
           {
             "$ref": "#/components/parameters/share_id"
@@ -26817,7 +27964,7 @@
             "$ref": "#/components/parameters/nfs_snapshot_id"
           },
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           }
         ],
         "responses": {
@@ -26866,7 +28013,7 @@
             "$ref": "#/components/parameters/nfs_snapshot_id"
           },
           {
-            "$ref": "#/components/parameters/parameters_region"
+            "$ref": "#/components/parameters/parameters_region-2"
           }
         ],
         "responses": {
@@ -34455,7 +35602,7 @@
             "$ref": "#/components/parameters/volume_name"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-2"
+            "$ref": "#/components/parameters/parameters_region-3"
           },
           {
             "$ref": "#/components/parameters/parameters_per_page"
@@ -34628,7 +35775,7 @@
             "$ref": "#/components/parameters/volume_name"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-2"
+            "$ref": "#/components/parameters/parameters_region-3"
           }
         ],
         "responses": {
@@ -36699,7 +37846,7 @@
             "$ref": "#/components/parameters/page"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-2"
+            "$ref": "#/components/parameters/parameters_region-3"
           }
         ],
         "responses": {
@@ -52534,6 +53681,208 @@
         },
         "example": 62137902
       },
+      "alert_instance_status": {
+        "in": "query",
+        "name": "status",
+        "required": false,
+        "description": "Optional filter. When set, only alert instances with this status are\nreturned.\n",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "active",
+            "resolved"
+          ]
+        },
+        "example": "active"
+      },
+      "rule_id": {
+        "in": "query",
+        "name": "rule_id",
+        "required": false,
+        "description": "Optional filter. When set, only alert instances fired by the alert rule\nwith this ID are returned.\n",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "8f3a2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+      },
+      "resource_urn": {
+        "in": "query",
+        "name": "resource_urn",
+        "required": false,
+        "description": "Optional filter. When set, only resources associated with this resource URN\nare returned.\n",
+        "schema": {
+          "type": "string"
+        },
+        "example": "do:droplet:12345"
+      },
+      "alert_instance_id": {
+        "in": "path",
+        "name": "id",
+        "description": "A unique identifier for an alert instance.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      },
+      "alert_rule_id": {
+        "in": "path",
+        "name": "id",
+        "description": "A unique identifier for an alert rule.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+      },
+      "notification_channel_id": {
+        "in": "path",
+        "name": "id",
+        "description": "A unique identifier for a notification channel.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "550e8400-e29b-41d4-a716-446655440000"
+      },
+      "parameters_region": {
+        "in": "path",
+        "name": "region",
+        "description": "The datacenter region slug for the query.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "nyc3"
+      },
+      "query": {
+        "in": "query",
+        "name": "query",
+        "description": "A PromQL expression. This may be a metric selector (for example `do.droplets.cpu_time`) or a fuller expression (for example `rate(do.droplets.cpu_time[5m])`).",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "do.droplets.cpu_time"
+      },
+      "time": {
+        "in": "query",
+        "name": "time",
+        "description": "Evaluation timestamp for an instant query. Accepts a RFC3339 string or a UNIX timestamp. Defaults to now when omitted.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1620683817"
+      },
+      "timeout": {
+        "in": "query",
+        "name": "timeout",
+        "description": "Optional evaluation timeout as a Prometheus duration string.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "30s"
+      },
+      "start": {
+        "in": "query",
+        "name": "start",
+        "description": "Start timestamp (inclusive). Accepts a RFC3339 string or a UNIX timestamp.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1620683817"
+      },
+      "end": {
+        "in": "query",
+        "name": "end",
+        "description": "End timestamp (inclusive). Accepts a RFC3339 string or a UNIX timestamp.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1620705417"
+      },
+      "step": {
+        "in": "query",
+        "name": "step",
+        "description": "Query resolution step width as a Prometheus duration string (for example `15s`, `1m`, `1h`).",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "15s"
+      },
+      "start_optional": {
+        "in": "query",
+        "name": "start",
+        "description": "Optional start timestamp (inclusive). Accepts a RFC3339 string or a UNIX timestamp.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1620683817"
+      },
+      "end_optional": {
+        "in": "query",
+        "name": "end",
+        "description": "Optional end timestamp (inclusive). Accepts a RFC3339 string or a UNIX timestamp.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1620705417"
+      },
+      "match": {
+        "in": "query",
+        "name": "match[]",
+        "description": "One or more series selectors. Repeat the parameter for multiple matchers.",
+        "required": false,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": "form",
+        "explode": true,
+        "example": [
+          "{__name__=~\".+\"}"
+        ]
+      },
+      "label_name": {
+        "in": "path",
+        "name": "name",
+        "description": "The label name whose values should be listed.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "__name__"
+      },
+      "match_required": {
+        "in": "query",
+        "name": "match[]",
+        "description": "One or more series selectors. At least one matcher is required. Repeat the parameter for multiple matchers.",
+        "required": true,
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": "form",
+        "explode": true,
+        "example": [
+          "{__name__=\"do.droplets.cpu_time\"}"
+        ]
+      },
       "kubernetes_cluster_id": {
         "in": "path",
         "name": "cluster_id",
@@ -52889,7 +54238,7 @@
         },
         "example": "78b172b6-52c3-4a4b-96d5-78d3f1a0b18c"
       },
-      "parameters_region": {
+      "parameters_region-2": {
         "in": "query",
         "name": "region",
         "description": "The DigitalOcean region slug (e.g., nyc2, atl1) where the NFS share resides.",
@@ -53272,7 +54621,7 @@
         },
         "example": "example"
       },
-      "parameters_region-2": {
+      "parameters_region-3": {
         "name": "region",
         "in": "query",
         "description": "The slug identifier for the region where the resource is available.",
@@ -64842,7 +66191,7 @@
       },
       "user_settings_update": {
         "type": "object",
-        "description": "User settings that can be updated via the Update a Database User endpoint.\nSupported for PostgreSQL, Kafka, and OpenSearch clusters. MongoDB user roles\nand database access (`mongo_user_settings`) cannot be updated after creation;\nrecreate the user to change them.\n",
+        "description": "User settings that can be updated via the Update a Database User endpoint.\nSupported for PostgreSQL, Kafka, and OpenSearch clusters. For other engines,\nthe request returns a 422. MongoDB user roles and database access\n(`mongo_user_settings`) cannot be updated after creation; recreate the user\nto change them.\n",
         "properties": {
           "pg_allow_replication": {
             "type": "boolean",
@@ -69336,6 +70685,1302 @@
           }
         ]
       },
+      "alert_instance": {
+        "type": "object",
+        "description": "A read-only record of an alert rule firing against a resource.\n",
+        "required": [
+          "id",
+          "rule_id",
+          "severity",
+          "status",
+          "value",
+          "triggered_at",
+          "last_triggered_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "A unique identifier for the alert instance.",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "rule_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the alert rule that fired this alert instance.",
+            "example": "8f3a2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+          },
+          "severity": {
+            "type": "string",
+            "description": "Severity of the breached threshold.",
+            "enum": [
+              "warning",
+              "critical"
+            ],
+            "example": "warning"
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the alert instance.",
+            "enum": [
+              "active",
+              "resolved"
+            ],
+            "example": "active"
+          },
+          "resource_urn": {
+            "type": "string",
+            "description": "URN of the DigitalOcean resource the alert fired for. May be an empty\nstring for alerts fired on non-resource-bound signals (for example,\ncluster/pod/namespace-scoped Kubernetes alerts).\n",
+            "example": "do:droplet:12345"
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "The observed metric value that breached the threshold.",
+            "example": 87.5
+          },
+          "triggered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time the alert instance first fired.",
+            "example": "2026-09-03T10:15:00Z"
+          },
+          "last_triggered_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time the alert instance most recently fired.",
+            "example": "2026-09-03T10:45:00Z"
+          },
+          "resolved_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time the alert instance resolved. Only present when `status` is\n`resolved`.\n",
+            "example": "2026-09-03T11:00:00Z"
+          },
+          "last_notified_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time a notification was last sent for this alert instance.",
+            "example": "2026-09-03T10:15:00Z"
+          }
+        }
+      },
+      "query_filter": {
+        "type": "object",
+        "description": "A filter applied to the metrics query.",
+        "required": [
+          "field",
+          "operator",
+          "value"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "The metric label or field to filter on.",
+            "example": "host_id"
+          },
+          "operator": {
+            "type": "string",
+            "description": "Comparison operator for the filter. Allowed values:\n\n- `FILTER_OPERATOR_EQUAL` = equal\n- `FILTER_OPERATOR_NOT_EQUAL` = `not_equal`\n- `FILTER_OPERATOR_LESS_THAN` = `less_than`\n- `FILTER_OPERATOR_LESS_THAN_OR_EQUAL` = `less_than_or_equal`\n- `FILTER_OPERATOR_GREATER_THAN` = `greater_than`\n- `FILTER_OPERATOR_GREATER_THAN_OR_EQUAL` = `greater_than_or_equal`\n",
+            "enum": [
+              "FILTER_OPERATOR_EQUAL",
+              "FILTER_OPERATOR_NOT_EQUAL",
+              "FILTER_OPERATOR_LESS_THAN",
+              "FILTER_OPERATOR_LESS_THAN_OR_EQUAL",
+              "FILTER_OPERATOR_GREATER_THAN",
+              "FILTER_OPERATOR_GREATER_THAN_OR_EQUAL"
+            ],
+            "example": "FILTER_OPERATOR_EQUAL"
+          },
+          "value": {
+            "type": "string",
+            "description": "Value compared against the field.",
+            "example": "12345678"
+          }
+        }
+      },
+      "metrics_query": {
+        "type": "object",
+        "description": "Metrics query that the alert rule evaluates. `metric` must be a dotted\nOpenTelemetry name (for example `do.droplets.cpu_utilization`). Underscored\nPrometheus-style names are rejected. When `resource_urns` is omitted or empty,\nthe rule is not scoped to specific resources.\n",
+        "required": [
+          "metric"
+        ],
+        "properties": {
+          "metric": {
+            "type": "string",
+            "description": "Dotted OpenTelemetry metric name to evaluate\n(for example `do.droplets.cpu_utilization`).\n",
+            "example": "do.droplets.cpu_utilization"
+          },
+          "filters": {
+            "type": "array",
+            "description": "Optional label filters applied to the metric series.",
+            "items": {
+              "$ref": "#/components/schemas/query_filter"
+            }
+          },
+          "resource_urns": {
+            "type": "array",
+            "description": "Optional list of DigitalOcean resource URNs the rule applies to. Empty or\nomitted means the rule is not scoped to specific resources.\n",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "do:droplet:12345"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "description": "Optional resource tags used to select matching resources.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "env:prod"
+            ]
+          }
+        }
+      },
+      "alert_condition": {
+        "type": "object",
+        "description": "Evaluation condition for the alert rule.",
+        "properties": {
+          "window": {
+            "type": "string",
+            "description": "Time window over which the metric is evaluated. Allowed values:\n\n- `EVALUATION_WINDOW_1M` = `1m`\n- `EVALUATION_WINDOW_5M` = `5m`\n- `EVALUATION_WINDOW_10M` = `10m`\n- `EVALUATION_WINDOW_15M` = `15m`\n- `EVALUATION_WINDOW_30M` = `30m`\n- `EVALUATION_WINDOW_1H` = `1h`\n",
+            "enum": [
+              "EVALUATION_WINDOW_1M",
+              "EVALUATION_WINDOW_5M",
+              "EVALUATION_WINDOW_10M",
+              "EVALUATION_WINDOW_15M",
+              "EVALUATION_WINDOW_30M",
+              "EVALUATION_WINDOW_1H"
+            ],
+            "example": "EVALUATION_WINDOW_5M"
+          }
+        }
+      },
+      "alert_thresholds": {
+        "type": "object",
+        "description": "Threshold configuration for the alert rule. At least one of `warning` or\n`critical` must be set.\n",
+        "required": [
+          "operator"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "warning"
+            ]
+          },
+          {
+            "required": [
+              "critical"
+            ]
+          }
+        ],
+        "properties": {
+          "warning": {
+            "type": "number",
+            "format": "double",
+            "description": "Warning threshold value.",
+            "example": 80
+          },
+          "critical": {
+            "type": "number",
+            "format": "double",
+            "description": "Critical threshold value.",
+            "example": 95
+          },
+          "operator": {
+            "type": "string",
+            "description": "Comparison operator applied to the aggregated metric value. Allowed\nvalues:\n\n- `THRESHOLD_OPERATOR_EQUAL` = equal\n- `THRESHOLD_OPERATOR_LESS_THAN_OR_EQUAL` = `less_than_or_equal`\n- `THRESHOLD_OPERATOR_LESS_THAN` = `less_than`\n- `THRESHOLD_OPERATOR_GREATER_THAN` = `greater_than`\n- `THRESHOLD_OPERATOR_GREATER_THAN_OR_EQUAL` = `greater_than_or_equal`\n- `THRESHOLD_OPERATOR_NOT_EQUAL` = `not_equal`\n",
+            "enum": [
+              "THRESHOLD_OPERATOR_EQUAL",
+              "THRESHOLD_OPERATOR_LESS_THAN_OR_EQUAL",
+              "THRESHOLD_OPERATOR_LESS_THAN",
+              "THRESHOLD_OPERATOR_GREATER_THAN",
+              "THRESHOLD_OPERATOR_GREATER_THAN_OR_EQUAL",
+              "THRESHOLD_OPERATOR_NOT_EQUAL"
+            ],
+            "example": "THRESHOLD_OPERATOR_GREATER_THAN"
+          }
+        }
+      },
+      "notification_channel_binding": {
+        "type": "object",
+        "description": "Binding from an alert rule to a notification channel. When `notify_on` is\nomitted or empty, the channel is notified for all severities.\n",
+        "required": [
+          "notification_channel_id"
+        ],
+        "properties": {
+          "notification_channel_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of an existing notification channel owned by the account.",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "notify_on": {
+            "type": "array",
+            "description": "Severities that trigger this channel. Allowed values:\n\n- `SEVERITY_WARNING` = warning\n- `SEVERITY_CRITICAL` = critical\n",
+            "items": {
+              "type": "string",
+              "enum": [
+                "SEVERITY_WARNING",
+                "SEVERITY_CRITICAL"
+              ]
+            },
+            "example": [
+              "SEVERITY_CRITICAL"
+            ]
+          }
+        }
+      },
+      "alert_rule_spec": {
+        "type": "object",
+        "description": "Spec for an Insights alert rule. On create, `name`, `query`, `thresholds`,\nand at least one `notification_channels` binding are required. On update,\nomit `notification_channels` to keep existing bindings; an explicit empty\nlist is rejected.\n",
+        "required": [
+          "name",
+          "query",
+          "thresholds"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A human-readable name for the alert rule.",
+            "example": "High CPU"
+          },
+          "query": {
+            "$ref": "#/components/schemas/metrics_query"
+          },
+          "condition": {
+            "$ref": "#/components/schemas/alert_condition"
+          },
+          "thresholds": {
+            "$ref": "#/components/schemas/alert_thresholds"
+          },
+          "notification_channels": {
+            "type": "array",
+            "description": "Notification channels to notify when the rule fires.",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/notification_channel_binding"
+            }
+          },
+          "re_alert_duration": {
+            "type": "string",
+            "description": "Minimum wait before re-notifying a still-firing alert. Defaults to\n`RE_ALERT_DURATION_4H` on create when omitted. Allowed values:\n\n- `RE_ALERT_DURATION_30M` = `30m`\n- `RE_ALERT_DURATION_1H` = `1h`\n- `RE_ALERT_DURATION_4H` = `4h`\n- `RE_ALERT_DURATION_NEVER` = never\n",
+            "enum": [
+              "RE_ALERT_DURATION_30M",
+              "RE_ALERT_DURATION_1H",
+              "RE_ALERT_DURATION_4H",
+              "RE_ALERT_DURATION_NEVER"
+            ],
+            "example": "RE_ALERT_DURATION_4H"
+          }
+        }
+      },
+      "alert_rule": {
+        "type": "object",
+        "description": "An Insights alert rule.",
+        "required": [
+          "id",
+          "spec",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true,
+            "description": "A unique identifier for the alert rule.",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/alert_rule_spec"
+          },
+          "status": {
+            "type": "string",
+            "readOnly": true,
+            "description": "Current alert rule status. Allowed values:\n\n- `ALERT_RULE_STATUS_ACTIVE` = active\n- `ALERT_RULE_STATUS_PAUSED` = paused\n",
+            "enum": [
+              "ALERT_RULE_STATUS_ACTIVE",
+              "ALERT_RULE_STATUS_PAUSED"
+            ],
+            "example": "ALERT_RULE_STATUS_ACTIVE"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the alert rule was created.",
+            "example": "2026-09-03T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the alert rule was last updated.",
+            "example": "2026-09-03T10:00:00Z"
+          }
+        }
+      },
+      "list_alert_rules": {
+        "type": "object",
+        "required": [
+          "alert_rules"
+        ],
+        "properties": {
+          "alert_rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/alert_rule"
+            }
+          }
+        }
+      },
+      "alert_rule_request": {
+        "type": "object",
+        "description": "Create or update body for an alert rule. `spec` is required. `status` is\noptional; create defaults to `ALERT_RULE_STATUS_ACTIVE`, and update keeps the\nexisting status when omitted.\n",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "spec": {
+            "$ref": "#/components/schemas/alert_rule_spec"
+          },
+          "status": {
+            "type": "string",
+            "description": "Desired alert rule status. Allowed values:\n\n- `ALERT_RULE_STATUS_ACTIVE` = active\n- `ALERT_RULE_STATUS_PAUSED` = paused\n",
+            "enum": [
+              "ALERT_RULE_STATUS_ACTIVE",
+              "ALERT_RULE_STATUS_PAUSED"
+            ],
+            "example": "ALERT_RULE_STATUS_ACTIVE"
+          }
+        }
+      },
+      "alert_rule_create_request": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/alert_rule_request"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "spec": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/alert_rule_spec"
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "notification_channels"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "email_notification_config": {
+        "type": "object",
+        "description": "Email notification channel configuration. Recipients must be verified team\nmember email addresses.\n",
+        "required": [
+          "to"
+        ],
+        "properties": {
+          "to": {
+            "type": "string",
+            "description": "One or more recipient email addresses, separated by commas, semicolons,\nor spaces.\n",
+            "example": "alerts@example.com, backup@example.com"
+          }
+        }
+      },
+      "slack_notification_config": {
+        "type": "object",
+        "description": "Slack notification channel configuration. `webhook_url` is write-only: send\nthe full value on create/update; reads return a masked value (`********`).\nOmit `webhook_url` on update to keep the existing secret.\n",
+        "required": [
+          "channel"
+        ],
+        "properties": {
+          "webhook_url": {
+            "type": "string",
+            "description": "Slack incoming webhook URL. Write-only secret — full value on\ncreate/update; masked as `********` on read. Omit on update to retain the\nexisting value.\n",
+            "example": "https://hooks.slack.com/services/T000/B000/XXXXXXXX"
+          },
+          "channel": {
+            "type": "string",
+            "description": "The Slack channel name to notify.",
+            "example": "#platform-alerts"
+          }
+        }
+      },
+      "webhook_basic_auth": {
+        "type": "object",
+        "description": "HTTP basic authentication credentials for a webhook. `password` is\nwrite-only: full value on create/update; masked (`********`) on read. Omit on\nupdate to keep the existing password.\n",
+        "required": [
+          "username"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Basic auth username.",
+            "example": "webhook-user"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "description": "Basic auth password. Write-only secret — full value on create/update;\nmasked as `********` on read.\n",
+            "example": "secret-password"
+          }
+        }
+      },
+      "webhook_bearer_token": {
+        "type": "object",
+        "description": "Bearer token authentication for a webhook. `token` is write-only: full value\non create/update; masked (`********`) on read. Omit on update to keep the\nexisting token.\n",
+        "properties": {
+          "token": {
+            "type": "string",
+            "format": "password",
+            "description": "Bearer token value sent in the Authorization header. Write-only secret —\nfull value on create/update; masked as `********` on read.\n",
+            "example": "secret-token"
+          }
+        }
+      },
+      "webhook_signature_config": {
+        "type": "object",
+        "description": "Optional HMAC signature configuration. `secret` is write-only: full value on\ncreate/update; masked (`********`) on read. Omit on update to keep the\nexisting secret.\n",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "format": "password",
+            "description": "Shared secret used to sign webhook payloads. Write-only secret — full\nvalue on create/update; masked as `********` on read.\n",
+            "example": "whsec"
+          }
+        }
+      },
+      "webhook_notification_config": {
+        "type": "object",
+        "description": "Generic HTTPS webhook notification channel configuration. The URL must use\nHTTPS and must not include userinfo. Optionally configure either\n`basic_auth` or `bearer_token` (not both), custom headers, and a signing\nsecret.\n\n`url` is not a secret and is returned in full on read. Credential fields\n(`basic_auth.password`, `bearer_token.token`, `signature.secret`) are\nwrite-only: full value on create/update; masked as `********` on read. Omit\na secret field on update to keep the existing value.\n",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL that receives webhook deliveries. Returned in full on read.",
+            "example": "https://example.com/hook"
+          },
+          "basic_auth": {
+            "$ref": "#/components/schemas/webhook_basic_auth"
+          },
+          "bearer_token": {
+            "$ref": "#/components/schemas/webhook_bearer_token"
+          },
+          "headers": {
+            "type": "object",
+            "maxProperties": 20,
+            "additionalProperties": {
+              "type": "string",
+              "example": "1"
+            },
+            "description": "Optional custom HTTP headers to include on webhook deliveries. At most\n20 headers are allowed. Reserved header names such as `host`,\n`content-type`, and `proxy-*` are rejected.\n",
+            "example": {
+              "X-Custom": "1"
+            }
+          },
+          "signature": {
+            "$ref": "#/components/schemas/webhook_signature_config"
+          }
+        }
+      },
+      "notification_channel_usage": {
+        "type": "object",
+        "description": "Output-only usage summary derived from alert rules that reference this\nnotification channel.\n",
+        "properties": {
+          "rule_count": {
+            "type": "integer",
+            "description": "Number of alert rules that reference this channel.",
+            "example": 2
+          }
+        }
+      },
+      "notification_channel": {
+        "type": "object",
+        "description": "A reusable Insights notification channel.",
+        "required": [
+          "id",
+          "name",
+          "channel_type",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true,
+            "description": "A unique identifier for the notification channel.",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "name": {
+            "type": "string",
+            "description": "A human-readable name for the notification channel.",
+            "example": "On-call email"
+          },
+          "channel_type": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The configured channel type. Allowed values:\n\n- `CHANNEL_TYPE_EMAIL` = email\n- `CHANNEL_TYPE_SLACK` = slack\n- `CHANNEL_TYPE_WEBHOOK` = webhook\n",
+            "enum": [
+              "CHANNEL_TYPE_EMAIL",
+              "CHANNEL_TYPE_SLACK",
+              "CHANNEL_TYPE_WEBHOOK"
+            ],
+            "example": "CHANNEL_TYPE_EMAIL"
+          },
+          "email": {
+            "$ref": "#/components/schemas/email_notification_config"
+          },
+          "slack": {
+            "$ref": "#/components/schemas/slack_notification_config"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/webhook_notification_config"
+          },
+          "usage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/notification_channel_usage"
+              }
+            ],
+            "readOnly": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the notification channel was created.",
+            "example": "2026-09-03T10:15:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the notification channel was last updated.",
+            "example": "2026-09-03T10:15:00Z"
+          }
+        }
+      },
+      "list_notification_channels": {
+        "type": "object",
+        "required": [
+          "notification_channels"
+        ],
+        "properties": {
+          "notification_channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/notification_channel"
+            }
+          }
+        }
+      },
+      "notification_channel_request": {
+        "type": "object",
+        "description": "Create or update body for a notification channel. Provide a `name` and\nexactly one of `email`, `slack`, or `webhook`.\n\nSecret fields are write-only: send the full value to set or rotate; omit the\nfield on update to keep the existing secret.\n",
+        "required": [
+          "name"
+        ],
+        "oneOf": [
+          {
+            "title": "Email",
+            "required": [
+              "email"
+            ]
+          },
+          {
+            "title": "Slack",
+            "required": [
+              "slack"
+            ]
+          },
+          {
+            "title": "Webhook",
+            "required": [
+              "webhook"
+            ]
+          }
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "A human-readable name for the notification channel.",
+            "example": "Platform alerts"
+          },
+          "email": {
+            "$ref": "#/components/schemas/email_notification_config"
+          },
+          "slack": {
+            "$ref": "#/components/schemas/slack_notification_config"
+          },
+          "webhook": {
+            "$ref": "#/components/schemas/webhook_notification_config"
+          }
+        }
+      },
+      "prom_metric_labels": {
+        "type": "object",
+        "description": "Metric labels as key/value pairs. By default, metric names in responses use Prometheus underscored spelling (for example `do_droplets_cpu_time`), even when the request used a dotted selector (for example `do.droplets.cpu_time`).",
+        "additionalProperties": {
+          "type": "string"
+        },
+        "example": {
+          "__name__": "do_droplets_cpu_time"
+        }
+      },
+      "prom_sample": {
+        "type": "array",
+        "description": "A Prometheus sample as `[timestamp_seconds, value]`. The timestamp is a UNIX epoch float; the value is a string.",
+        "minItems": 2,
+        "maxItems": 2,
+        "items": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "example": [
+          1620683817,
+          "1"
+        ]
+      },
+      "prom_vector_sample": {
+        "type": "object",
+        "required": [
+          "metric",
+          "value"
+        ],
+        "properties": {
+          "metric": {
+            "$ref": "#/components/schemas/prom_metric_labels"
+          },
+          "value": {
+            "$ref": "#/components/schemas/prom_sample"
+          }
+        }
+      },
+      "prom_matrix_sample": {
+        "type": "object",
+        "required": [
+          "metric",
+          "values"
+        ],
+        "properties": {
+          "metric": {
+            "$ref": "#/components/schemas/prom_metric_labels"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/prom_sample"
+            }
+          }
+        }
+      },
+      "prom_query_data": {
+        "type": "object",
+        "required": [
+          "resultType",
+          "result"
+        ],
+        "properties": {
+          "resultType": {
+            "type": "string",
+            "enum": [
+              "vector",
+              "matrix",
+              "scalar",
+              "string"
+            ],
+            "example": "vector"
+          },
+          "result": {
+            "description": "Result payload shape depends on `resultType`. `vector` and `matrix` are series arrays. `scalar` and `string` both use a `[timestamp, value]` sample pair.",
+            "example": [
+              {
+                "metric": {
+                  "__name__": "do_droplets_cpu_time"
+                },
+                "value": [
+                  1620683817,
+                  "1"
+                ]
+              }
+            ],
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/prom_vector_sample"
+                }
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/prom_matrix_sample"
+                }
+              },
+              {
+                "$ref": "#/components/schemas/prom_sample"
+              }
+            ]
+          }
+        }
+      },
+      "prom_query_response": {
+        "type": "object",
+        "required": [
+          "status",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "example": "success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/prom_query_data"
+          }
+        }
+      },
+      "prom_error": {
+        "type": "object",
+        "required": [
+          "status",
+          "errorType",
+          "error"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "error"
+            ],
+            "example": "error"
+          },
+          "errorType": {
+            "type": "string",
+            "description": "Prometheus error category.",
+            "enum": [
+              "bad_data",
+              "internal",
+              "timeout",
+              "canceled",
+              "execution",
+              "unavailable"
+            ],
+            "example": "bad_data"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error message.",
+            "example": "missing query parameter"
+          }
+        }
+      },
+      "prom_matrix_data": {
+        "type": "object",
+        "required": [
+          "resultType",
+          "result"
+        ],
+        "properties": {
+          "resultType": {
+            "type": "string",
+            "enum": [
+              "matrix"
+            ],
+            "example": "matrix"
+          },
+          "result": {
+            "description": "One entry per matching series, each carrying the samples evaluated at every step across the requested range.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/prom_matrix_sample"
+            },
+            "example": [
+              {
+                "metric": {
+                  "__name__": "do_droplets_cpu_time"
+                },
+                "values": [
+                  [
+                    1620683817,
+                    "1"
+                  ],
+                  [
+                    1620683832,
+                    "1"
+                  ]
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "prom_query_range_response": {
+        "type": "object",
+        "required": [
+          "status",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "example": "success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/prom_matrix_data"
+          }
+        }
+      },
+      "prom_string_list_response": {
+        "type": "object",
+        "required": [
+          "status",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "example": "success"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "__name__",
+              "job",
+              "instance"
+            ]
+          }
+        }
+      },
+      "prom_series_response": {
+        "type": "object",
+        "required": [
+          "status",
+          "data"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ],
+            "example": "success"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/prom_metric_labels"
+            }
+          }
+        }
+      },
+      "logs_time_instant": {
+        "type": "object",
+        "description": "A single point in time. Exactly one value form is set per message.",
+        "minProperties": 1,
+        "maxProperties": 1,
+        "properties": {
+          "absolute": {
+            "type": "string",
+            "format": "date-time",
+            "description": "An absolute timestamp. Accepts RFC3339/RFC3339Nano strings or Unix seconds/nanoseconds as decimal strings.",
+            "example": "2026-09-01T00:00:00Z"
+          },
+          "relative": {
+            "type": "string",
+            "description": "A relative time. Use `now` for the current time, a bare duration such as `1h` or `7d` to look back from now, or an offset such as `now-1h` or `now+30m`. Supported units are `s`, `m`, `h`, `d`, and `w`.",
+            "example": "1h"
+          },
+          "unix_nano": {
+            "type": "string",
+            "format": "int64",
+            "description": "A Unix nanosecond timestamp, encoded as a string to preserve 64-bit precision.",
+            "example": "1756684800000000000"
+          }
+        }
+      },
+      "logs_time_range": {
+        "type": "object",
+        "description": "An inclusive query time window.",
+        "required": [
+          "from",
+          "to"
+        ],
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/logs_time_instant"
+          },
+          "to": {
+            "$ref": "#/components/schemas/logs_time_instant"
+          }
+        }
+      },
+      "logs_field_ref": {
+        "type": "object",
+        "description": "A reference to a logical field for filters, ordering, grouping, or facets.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The field name. Intrinsic columns include `timestamp`, `severity_text`, `severity_number`, `body`, `trace_id`, `span_id`, and `trace_flags`. The dotted shorthands `service.name`, `resource.type`, and `resource.urn` are also supported. Arbitrary resource or log attributes can be accessed with `ResourceAttributes['key']` or `LogAttributes['key']`.",
+            "example": "service.name"
+          },
+          "scope": {
+            "type": "string",
+            "description": "The attribute scope to resolve the field against. Omit to let the server apply its default mapping for the field name.",
+            "enum": [
+              "FIELD_SCOPE_RESOURCE",
+              "FIELD_SCOPE_ATTRIBUTES"
+            ],
+            "example": "FIELD_SCOPE_RESOURCE"
+          }
+        }
+      },
+      "logs_filter_value": {
+        "type": "object",
+        "description": "A typed literal or list value for a filter condition. Exactly one kind is set per message.",
+        "minProperties": 1,
+        "maxProperties": 1,
+        "properties": {
+          "string_value": {
+            "type": "string",
+            "example": "droplet-123"
+          },
+          "number_value": {
+            "type": "number",
+            "example": 42
+          },
+          "bool_value": {
+            "type": "boolean",
+            "example": true
+          },
+          "string_array_value": {
+            "type": "object",
+            "required": [
+              "values"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "droplet-123",
+                  "droplet-456"
+                ]
+              }
+            }
+          },
+          "number_array_value": {
+            "type": "object",
+            "required": [
+              "values"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "type": "number"
+                },
+                "example": [
+                  42,
+                  84
+                ]
+              }
+            }
+          }
+        }
+      },
+      "logs_filter_condition": {
+        "type": "object",
+        "description": "A single field comparison in a logs filter expression.",
+        "required": [
+          "field",
+          "operator"
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/logs_field_ref"
+          },
+          "operator": {
+            "type": "string",
+            "description": "The comparison operator.",
+            "enum": [
+              "FILTER_OPERATOR_EQ",
+              "FILTER_OPERATOR_NEQ",
+              "FILTER_OPERATOR_IN",
+              "FILTER_OPERATOR_EXISTS",
+              "FILTER_OPERATOR_GTE",
+              "FILTER_OPERATOR_LTE"
+            ],
+            "example": "FILTER_OPERATOR_EQ"
+          },
+          "value": {
+            "$ref": "#/components/schemas/logs_filter_value"
+          }
+        }
+      },
+      "logs_filter_expression": {
+        "type": "object",
+        "description": "A boolean filter tree for logs queries. Exactly one node is set per message.",
+        "minProperties": 1,
+        "maxProperties": 1,
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/logs_filter_condition"
+          },
+          "and": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/logs_filter_expression"
+                }
+              }
+            }
+          },
+          "or": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/logs_filter_expression"
+                }
+              }
+            }
+          },
+          "not": {
+            "$ref": "#/components/schemas/logs_filter_expression"
+          },
+          "text_search": {
+            "type": "object",
+            "description": "A substring search across the log body, service name, and resource URN.",
+            "required": [
+              "query"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "The search string.",
+                "example": "error"
+              }
+            }
+          }
+        }
+      },
+      "logs_order_by": {
+        "type": "object",
+        "description": "A sort clause for logs search results.",
+        "required": [
+          "field"
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/logs_field_ref"
+          },
+          "direction": {
+            "type": "string",
+            "description": "The sort direction. Omit to use the server default.",
+            "enum": [
+              "SORT_DIRECTION_ASC",
+              "SORT_DIRECTION_DESC"
+            ],
+            "example": "SORT_DIRECTION_DESC"
+          }
+        }
+      },
+      "logs_pagination_request": {
+        "type": "object",
+        "description": "Opaque keyset pagination request. Cursors are only valid when ordering by `timestamp` alone.",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Maximum number of results to return. Defaults to 100 and is clamped to 1000.",
+            "default": 100,
+            "minimum": 1,
+            "maximum": 1000,
+            "example": 100
+          },
+          "cursor": {
+            "type": "string",
+            "description": "Opaque cursor from a previous response.",
+            "example": "eyJ0cyI6MTc1NjY4NDgwMDAwMDAwMDAwfQ"
+          }
+        }
+      },
+      "logs_search_request": {
+        "type": "object",
+        "description": "Request body for searching logs.",
+        "required": [
+          "time_range"
+        ],
+        "properties": {
+          "time_range": {
+            "$ref": "#/components/schemas/logs_time_range"
+          },
+          "filter": {
+            "$ref": "#/components/schemas/logs_filter_expression"
+          },
+          "order_by": {
+            "type": "array",
+            "description": "Sort clauses applied to the result set.",
+            "items": {
+              "$ref": "#/components/schemas/logs_order_by"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/logs_pagination_request"
+          }
+        }
+      },
+      "logs_log_record": {
+        "type": "object",
+        "description": "A single log record returned by a logs search.",
+        "required": [
+          "timestamp"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The log record timestamp.",
+            "example": "2026-09-01T00:00:00Z"
+          },
+          "severity_number": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The numeric severity level.",
+            "example": 17
+          },
+          "severity_text": {
+            "type": "string",
+            "description": "The textual severity level.",
+            "example": "Error"
+          },
+          "body": {
+            "type": "string",
+            "description": "The log message body. Omitted when empty.",
+            "example": "Connection timeout"
+          },
+          "trace_id": {
+            "type": "string",
+            "description": "The trace ID if present.",
+            "example": "abc123"
+          },
+          "span_id": {
+            "type": "string",
+            "description": "The span ID if present.",
+            "example": "def456"
+          },
+          "service_name": {
+            "type": "string",
+            "description": "The service name that emitted the log.",
+            "example": "api-gateway"
+          },
+          "resource": {
+            "type": "object",
+            "description": "Resource attributes associated with the log.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "do.component": "droplet",
+              "do.droplet.id": "12345678"
+            }
+          },
+          "attributes": {
+            "type": "object",
+            "description": "Log attributes.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "http.method": "GET",
+              "http.status_code": "504"
+            }
+          }
+        }
+      },
+      "logs_pagination_response": {
+        "type": "object",
+        "description": "Pagination response.",
+        "properties": {
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether more results are available.",
+            "example": true
+          },
+          "next_cursor": {
+            "type": "string",
+            "description": "Opaque cursor to fetch the next page.",
+            "example": "eyJ0cyI6MTc1NjY4NDgwMDAwMDAwMDAwfQ"
+          }
+        }
+      },
+      "logs_search_response": {
+        "type": "object",
+        "description": "Response body for a logs search.",
+        "properties": {
+          "data": {
+            "type": "array",
+            "description": "Matching log records. Omitted when no records match.",
+            "items": {
+              "$ref": "#/components/schemas/logs_log_record"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/logs_pagination_response"
+          }
+        }
+      },
       "kubernetes_node_pool_size": {
         "type": "object",
         "properties": {
@@ -71141,6 +73786,32 @@
           "forwarding_rules"
         ]
       },
+      "load_balancer_droplet_ids": {
+        "type": "object",
+        "properties": {
+          "droplet_ids": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "example": [
+              3164444,
+              3164445
+            ],
+            "description": "An array containing the IDs of the Droplets assigned to the load balancer."
+          }
+        }
+      },
+      "load_balancer_droplet_tag": {
+        "type": "object",
+        "properties": {
+          "tag": {
+            "type": "string",
+            "example": "prod:web",
+            "description": "The name of a Droplet tag corresponding to Droplets assigned to the load balancer."
+          }
+        }
+      },
       "load_balancer": {
         "allOf": [
           {
@@ -71175,53 +73846,35 @@
             }
           },
           {
-            "type": "object",
-            "properties": {
-              "droplet_ids": {
-                "type": "array",
-                "items": {
-                  "type": "integer"
-                },
-                "example": [
-                  3164444,
-                  3164445
-                ],
-                "description": "An array containing the IDs of the Droplets assigned to the load balancer."
-              }
-            }
+            "$ref": "#/components/schemas/load_balancer_droplet_ids"
           },
           {
-            "type": "object",
-            "properties": {
-              "tag": {
-                "type": "string",
-                "example": "prod:web",
-                "description": "The name of a Droplet tag corresponding to Droplets assigned to the load balancer."
-              }
-            }
+            "$ref": "#/components/schemas/load_balancer_droplet_tag"
           }
         ]
       },
-      "load_balancer_update": {
+      "load_balancer_ip": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "pattern": "^$|^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+            "example": "203.0.113.42",
+            "description": "An optional IP address to assign to the load balancer from one of your Bring Your Own IP (BYOIP) prefixes. The address must be an unassigned BYOIP address on your account in the same region as the load balancer. If omitted, DigitalOcean assigns a public IP address automatically. This field is only applied when creating the load balancer, cannot be changed afterward, and is not supported for `GLOBAL` or `INTERNAL` load balancers."
+          }
+        }
+      },
+      "load_balancer_create": {
+        "description": "The request schema for creating a load balancer. This is the same as the update schema with the addition of the create-only `ip` field, which assigns a Bring Your Own IP (BYOIP) address to the load balancer.",
         "oneOf": [
           {
             "title": "Assign Droplets by ID",
             "allOf": [
               {
-                "type": "object",
-                "properties": {
-                  "droplet_ids": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer"
-                    },
-                    "example": [
-                      3164444,
-                      3164445
-                    ],
-                    "description": "An array containing the IDs of the Droplets assigned to the load balancer."
-                  }
-                }
+                "$ref": "#/components/schemas/load_balancer_droplet_ids"
+              },
+              {
+                "$ref": "#/components/schemas/load_balancer_ip"
               },
               {
                 "type": "object",
@@ -71244,14 +73897,10 @@
             "title": "Assign Droplets by Tag",
             "allOf": [
               {
-                "type": "object",
-                "properties": {
-                  "tag": {
-                    "type": "string",
-                    "example": "prod:web",
-                    "description": "The name of a Droplet tag corresponding to Droplets assigned to the load balancer."
-                  }
-                }
+                "$ref": "#/components/schemas/load_balancer_droplet_tag"
+              },
+              {
+                "$ref": "#/components/schemas/load_balancer_ip"
               },
               {
                 "type": "object",
@@ -71272,22 +73921,53 @@
           }
         ]
       },
-      "load_balancer_create": {
-        "description": "The request schema for creating a load balancer. This is the same as the update schema with the addition of the create-only `ip` field, which assigns a Bring Your Own IP (BYOIP) address to the load balancer.",
-        "allOf": [
+      "load_balancer_update": {
+        "oneOf": [
           {
-            "$ref": "#/components/schemas/load_balancer_update"
+            "title": "Assign Droplets by ID",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/load_balancer_droplet_ids"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "$ref": "#/components/schemas/region_slug"
+                  }
+                }
+              },
+              {
+                "$ref": "#/components/schemas/load_balancer_base"
+              }
+            ],
+            "required": [
+              "droplet_ids",
+              "region"
+            ]
           },
           {
-            "type": "object",
-            "properties": {
-              "ip": {
-                "type": "string",
-                "pattern": "^$|^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
-                "example": "203.0.113.42",
-                "description": "An optional IP address to assign to the load balancer from one of your Bring Your Own IP (BYOIP) prefixes. The address must be an unassigned BYOIP address on your account in the same region as the load balancer. If omitted, DigitalOcean assigns a public IP address automatically. This field is only applied when creating the load balancer, cannot be changed afterward, and is not supported for `GLOBAL` or `INTERNAL` load balancers."
+            "title": "Assign Droplets by Tag",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/load_balancer_droplet_tag"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "region": {
+                    "$ref": "#/components/schemas/region_slug"
+                  }
+                }
+              },
+              {
+                "$ref": "#/components/schemas/load_balancer_base"
               }
-            }
+            ],
+            "required": [
+              "tag",
+              "region"
+            ]
           }
         ]
       },
@@ -98247,6 +100927,582 @@
           }
         }
       },
+      "list_alert_instances_response": {
+        "description": "The response will be a JSON object with a key called `alert_instances`. This will be set to an array of alert instance objects, each of which will contain the standard attributes associated with an alert instance.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "alert_instances": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/alert_instance"
+                      }
+                    }
+                  }
+                },
+                {
+                  "$ref": "#/components/schemas/pages_pagination"
+                },
+                {
+                  "$ref": "#/components/schemas/meta"
+                }
+              ]
+            },
+            "example": {
+              "alert_instances": [
+                {
+                  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "rule_id": "8f3a2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+                  "severity": "warning",
+                  "status": "active",
+                  "resource_urn": "do:droplet:12345",
+                  "value": 87.5,
+                  "triggered_at": "2026-09-03T10:15:00Z",
+                  "last_triggered_at": "2026-09-03T10:45:00Z",
+                  "last_notified_at": "2026-09-03T10:15:00Z"
+                }
+              ],
+              "links": {
+                "pages": {}
+              },
+              "meta": {
+                "total": 1
+              }
+            }
+          }
+        }
+      },
+      "alert_instance_response": {
+        "description": "The response will be a JSON object with a key called `alert_instance` containing the standard attributes associated with an alert instance.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "alert_instance"
+              ],
+              "properties": {
+                "alert_instance": {
+                  "$ref": "#/components/schemas/alert_instance"
+                }
+              }
+            },
+            "example": {
+              "alert_instance": {
+                "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "rule_id": "8f3a2b1c-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+                "severity": "critical",
+                "status": "resolved",
+                "resource_urn": "do:droplet:12345",
+                "value": 95.2,
+                "triggered_at": "2026-09-02T08:00:00Z",
+                "last_triggered_at": "2026-09-02T08:30:00Z",
+                "resolved_at": "2026-09-02T09:00:00Z",
+                "last_notified_at": "2026-09-02T08:00:00Z"
+              }
+            }
+          }
+        }
+      },
+      "list_alert_rules_response": {
+        "description": "A list of alert rules.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/list_alert_rules"
+                },
+                {
+                  "$ref": "#/components/schemas/pages_pagination"
+                },
+                {
+                  "$ref": "#/components/schemas/meta"
+                }
+              ]
+            },
+            "example": {
+              "alert_rules": [
+                {
+                  "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                  "spec": {
+                    "name": "High CPU",
+                    "query": {
+                      "metric": "do.droplets.cpu_utilization",
+                      "resource_urns": [
+                        "do:droplet:12345"
+                      ]
+                    },
+                    "condition": {
+                      "window": "EVALUATION_WINDOW_5M"
+                    },
+                    "thresholds": {
+                      "warning": 80,
+                      "critical": 95,
+                      "operator": "THRESHOLD_OPERATOR_GREATER_THAN"
+                    },
+                    "notification_channels": [
+                      {
+                        "notification_channel_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "notify_on": [
+                          "SEVERITY_CRITICAL"
+                        ]
+                      }
+                    ],
+                    "re_alert_duration": "RE_ALERT_DURATION_4H"
+                  },
+                  "status": "ALERT_RULE_STATUS_PAUSED",
+                  "created_at": "2026-09-03T10:00:00Z",
+                  "updated_at": "2026-09-03T10:30:00Z"
+                }
+              ],
+              "links": {
+                "pages": {
+                  "first": "https://api.digitalocean.com/v2/insights/alert-rules?page=1",
+                  "last": "https://api.digitalocean.com/v2/insights/alert-rules?page=1"
+                }
+              },
+              "meta": {
+                "total": 1
+              }
+            }
+          }
+        }
+      },
+      "alert_rule_response": {
+        "description": "A single alert rule.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "alert_rule"
+              ],
+              "properties": {
+                "alert_rule": {
+                  "$ref": "#/components/schemas/alert_rule"
+                }
+              }
+            },
+            "example": {
+              "alert_rule": {
+                "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                "spec": {
+                  "name": "High CPU",
+                  "query": {
+                    "metric": "do.droplets.cpu_utilization",
+                    "resource_urns": [
+                      "do:droplet:12345"
+                    ],
+                    "tags": [
+                      "env:prod"
+                    ]
+                  },
+                  "condition": {
+                    "window": "EVALUATION_WINDOW_5M"
+                  },
+                  "thresholds": {
+                    "warning": 80,
+                    "critical": 95,
+                    "operator": "THRESHOLD_OPERATOR_GREATER_THAN"
+                  },
+                  "notification_channels": [
+                    {
+                      "notification_channel_id": "550e8400-e29b-41d4-a716-446655440000",
+                      "notify_on": [
+                        "SEVERITY_CRITICAL"
+                      ]
+                    }
+                  ],
+                  "re_alert_duration": "RE_ALERT_DURATION_4H"
+                },
+                "status": "ALERT_RULE_STATUS_ACTIVE",
+                "created_at": "2026-09-03T10:00:00Z",
+                "updated_at": "2026-09-03T10:00:00Z"
+              }
+            }
+          }
+        }
+      },
+      "list_notification_channels_response": {
+        "description": "A list of notification channels.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/list_notification_channels"
+                },
+                {
+                  "$ref": "#/components/schemas/pages_pagination"
+                },
+                {
+                  "$ref": "#/components/schemas/meta"
+                }
+              ]
+            },
+            "example": {
+              "notification_channels": [
+                {
+                  "id": "550e8400-e29b-41d4-a716-446655440000",
+                  "name": "On-call email",
+                  "channel_type": "CHANNEL_TYPE_EMAIL",
+                  "email": {
+                    "to": "alerts@example.com"
+                  },
+                  "usage": {
+                    "rule_count": 2
+                  },
+                  "created_at": "2026-09-03T10:15:00Z",
+                  "updated_at": "2026-09-03T10:15:00Z"
+                }
+              ],
+              "links": {
+                "pages": {
+                  "first": "https://api.digitalocean.com/v2/insights/notification-channels?page=1",
+                  "last": "https://api.digitalocean.com/v2/insights/notification-channels?page=1"
+                }
+              },
+              "meta": {
+                "total": 1
+              }
+            }
+          }
+        }
+      },
+      "notification_channel_response": {
+        "description": "A single notification channel.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "notification_channel"
+              ],
+              "properties": {
+                "notification_channel": {
+                  "$ref": "#/components/schemas/notification_channel"
+                }
+              }
+            },
+            "examples": {
+              "email": {
+                "summary": "Email channel",
+                "value": {
+                  "notification_channel": {
+                    "id": "550e8400-e29b-41d4-a716-446655440000",
+                    "name": "On-call email",
+                    "channel_type": "CHANNEL_TYPE_EMAIL",
+                    "email": {
+                      "to": "alerts@example.com, backup@example.com"
+                    },
+                    "usage": {
+                      "rule_count": 0
+                    },
+                    "created_at": "2026-09-03T10:15:00Z",
+                    "updated_at": "2026-09-03T10:15:00Z"
+                  }
+                }
+              },
+              "slack": {
+                "summary": "Slack channel with masked webhook",
+                "value": {
+                  "notification_channel": {
+                    "id": "660e8400-e29b-41d4-a716-446655440001",
+                    "name": "Platform alerts",
+                    "channel_type": "CHANNEL_TYPE_SLACK",
+                    "slack": {
+                      "webhook_url": "********",
+                      "channel": "#platform-alerts"
+                    },
+                    "usage": {
+                      "rule_count": 0
+                    },
+                    "created_at": "2026-09-03T10:16:00Z",
+                    "updated_at": "2026-09-03T10:16:00Z"
+                  }
+                }
+              },
+              "webhook": {
+                "summary": "Webhook channel with masked credentials",
+                "value": {
+                  "notification_channel": {
+                    "id": "770e8400-e29b-41d4-a716-446655440002",
+                    "name": "Incident webhook",
+                    "channel_type": "CHANNEL_TYPE_WEBHOOK",
+                    "webhook": {
+                      "url": "https://example.com/hook",
+                      "bearer_token": {
+                        "token": "********"
+                      },
+                      "headers": {
+                        "X-Custom": "1"
+                      },
+                      "signature": {
+                        "secret": "********"
+                      }
+                    },
+                    "usage": {
+                      "rule_count": 0
+                    },
+                    "created_at": "2026-09-03T10:17:00Z",
+                    "updated_at": "2026-09-03T10:17:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "prom_query": {
+        "description": "Instant query result.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_query_response"
+            }
+          }
+        }
+      },
+      "prom_error": {
+        "description": "Prometheus-style query error.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_error"
+            }
+          }
+        }
+      },
+      "forbidden": {
+        "description": "The authenticated principal does not have permission to perform this action on the requested resource.\n",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "forbidden",
+              "message": "You do not have permission to perform this action."
+            }
+          }
+        }
+      },
+      "prom_query_range": {
+        "description": "Range query result.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_query_range_response"
+            }
+          }
+        }
+      },
+      "prom_labels": {
+        "description": "Label names.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_string_list_response"
+            }
+          }
+        }
+      },
+      "prom_label_values": {
+        "description": "Label values.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_string_list_response"
+            },
+            "example": {
+              "status": "success",
+              "data": [
+                "do_droplets_cpu_time",
+                "do_droplets_memory_free"
+              ]
+            }
+          }
+        }
+      },
+      "prom_series": {
+        "description": "Matching series label sets.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/prom_series_response"
+            }
+          }
+        }
+      },
+      "logs_search": {
+        "description": "Logs search result.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/logs_search_response"
+            }
+          }
+        }
+      },
       "all_clusters": {
         "description": "The response will be a JSON object with a key called `kubernetes_clusters`.\nThis will be set to an array of objects, each of which will contain the\nstandard Kubernetes cluster attributes.\n",
         "headers": {
@@ -100027,31 +103283,6 @@
                   "status": "ok"
                 }
               }
-            }
-          }
-        }
-      },
-      "forbidden": {
-        "description": "The authenticated principal does not have permission to perform this action on the requested resource.\n",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/error"
-            },
-            "example": {
-              "id": "forbidden",
-              "message": "You do not have permission to perform this action."
             }
           }
         }
