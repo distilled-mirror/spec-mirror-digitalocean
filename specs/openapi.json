@@ -42039,8 +42039,6 @@
               "default": "EVALUATION_DATASET_TYPE_UNKNOWN",
               "enum": [
                 "EVALUATION_DATASET_TYPE_UNKNOWN",
-                "EVALUATION_DATASET_TYPE_ADK",
-                "EVALUATION_DATASET_TYPE_NON_ADK",
                 "EVALUATION_DATASET_TYPE_MODEL"
               ],
               "type": "string"
@@ -81352,8 +81350,6 @@
         "default": "EVALUATION_DATASET_TYPE_UNKNOWN",
         "enum": [
           "EVALUATION_DATASET_TYPE_UNKNOWN",
-          "EVALUATION_DATASET_TYPE_ADK",
-          "EVALUATION_DATASET_TYPE_NON_ADK",
           "EVALUATION_DATASET_TYPE_MODEL"
         ],
         "example": "EVALUATION_DATASET_TYPE_UNKNOWN",
@@ -83633,7 +83629,7 @@
         "description": "Run an evaluation test case.",
         "properties": {
           "agent_deployment_names": {
-            "description": "Agent deployment names to run the test case against (ADK agent workspaces).",
+            "description": "Agent deployment names to run the test case against.",
             "example": [
               "example string"
             ],
