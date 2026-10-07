@@ -20765,7 +20765,7 @@
       "post": {
         "operationId": "insights_create_notificationChannel",
         "summary": "Create a Notification Channel",
-        "description": "To create a notification channel, send a POST request to\n`/v2/insights/notification-channels` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nEmail recipients must be verified team member addresses. Webhook URLs must\nuse HTTPS. Secret fields (`slack.webhook_url`, webhook credentials) are\nwrite-only and returned masked on subsequent reads.\n",
+        "description": "To create a notification channel, send a POST request to\n`/v2/insights/notification-channels` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nEmail recipients must be verified team member addresses. Webhook URLs must\nuse HTTPS. Secret fields (`slack.webhook_url`, webhook credentials) are\nwrite-only. Subsequent reads never return secret values; they include\noptional `*_status` objects when a secret is configured.\n",
         "tags": [
           "Insights"
         ],
@@ -20857,7 +20857,7 @@
       "get": {
         "operationId": "insights_get_notificationChannel",
         "summary": "Retrieve a Notification Channel",
-        "description": "To retrieve a notification channel, send a GET request to\n`/v2/insights/notification-channels/{id}`. Secret fields are returned masked\nas `********`.\n",
+        "description": "To retrieve a notification channel, send a GET request to\n`/v2/insights/notification-channels/{id}`. Secret credentials are never\nreturned. When a secret is configured, the response includes an optional\n`*_status` object (for example `webhook_url_status`) with\n`configured: true`.\n",
         "tags": [
           "Insights"
         ],
@@ -20903,7 +20903,7 @@
       "put": {
         "operationId": "insights_update_notificationChannel",
         "summary": "Update a Notification Channel",
-        "description": "To update a notification channel, send a PUT request to\n`/v2/insights/notification-channels/{id}` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nSending a secret field rotates it; omitting the secret field keeps the\nexisting value.\n",
+        "description": "To update a notification channel, send a PUT request to\n`/v2/insights/notification-channels/{id}` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nSending a secret field rotates it; omitting the secret field keeps the\nexisting value. Responses never return secret values; they include optional\n`*_status` objects when a secret is configured.\n",
         "tags": [
           "Insights"
         ],
@@ -20920,8 +20920,17 @@
                 "$ref": "#/components/schemas/notification_channel_request"
               },
               "examples": {
-                "slack": {
-                  "summary": "Slack channel",
+                "slack_preserve_webhook": {
+                  "summary": "Update Slack channel without rotating webhook",
+                  "value": {
+                    "name": "Platform alerts (updated)",
+                    "slack": {
+                      "channel": "#platform-alerts-prod"
+                    }
+                  }
+                },
+                "slack_rotate_webhook": {
+                  "summary": "Update Slack channel and rotate webhook",
                   "value": {
                     "name": "Platform alerts (updated)",
                     "slack": {
@@ -20960,7 +20969,7 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"Platform alerts (updated)\",\"slack\":{\"webhook_url\":\"https://hooks.slack.com/services/T000/B000/NEWTOKEN\",\"channel\":\"#platform-alerts-prod\"}}' \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels/550e8400-e29b-41d4-a716-446655440000\""
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"Platform alerts (updated)\",\"slack\":{\"channel\":\"#platform-alerts-prod\"}}' \\\n  \"https://api.digitalocean.com/v2/insights/notification-channels/550e8400-e29b-41d4-a716-446655440000\""
           }
         ],
         "security": [
@@ -71097,28 +71106,45 @@
           }
         }
       },
-      "slack_notification_config": {
+      "secret_status": {
         "type": "object",
-        "description": "Slack notification channel configuration. `webhook_url` is write-only: send\nthe full value on create/update; reads return a masked value (`********`).\nOmit `webhook_url` on update to keep the existing secret.\n",
+        "description": "Indicates whether a secret credential is configured without exposing its\nvalue. Status fields that use this schema are omitted from responses when\nthe secret is not set.\n",
+        "required": [
+          "configured"
+        ],
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "description": "Whether the secret is configured.",
+            "example": true
+          }
+        }
+      },
+      "slack_notification_config_response": {
+        "type": "object",
+        "description": "Slack notification channel configuration as returned in API responses. The\nwebhook URL is never returned; `webhook_url_status` indicates whether it is\nconfigured.\n",
         "required": [
           "channel"
         ],
         "properties": {
-          "webhook_url": {
-            "type": "string",
-            "description": "Slack incoming webhook URL. Write-only secret — full value on\ncreate/update; masked as `********` on read. Omit on update to retain the\nexisting value.\n",
-            "example": "https://hooks.slack.com/services/T000/B000/XXXXXXXX"
-          },
           "channel": {
             "type": "string",
             "description": "The Slack channel name to notify.",
             "example": "#platform-alerts"
+          },
+          "webhook_url_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/secret_status"
+              }
+            ],
+            "description": "Present when a Slack webhook URL is configured. Omitted when not\nconfigured.\n"
           }
         }
       },
-      "webhook_basic_auth": {
+      "webhook_basic_auth_response": {
         "type": "object",
-        "description": "HTTP basic authentication credentials for a webhook. `password` is\nwrite-only: full value on create/update; masked (`********`) on read. Omit on\nupdate to keep the existing password.\n",
+        "description": "HTTP basic authentication as returned in API responses. The password is\nnever returned; `password_status` indicates whether it is configured.\n",
         "required": [
           "username"
         ],
@@ -71128,41 +71154,47 @@
             "description": "Basic auth username.",
             "example": "webhook-user"
           },
-          "password": {
-            "type": "string",
-            "format": "password",
-            "description": "Basic auth password. Write-only secret — full value on create/update;\nmasked as `********` on read.\n",
-            "example": "secret-password"
+          "password_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/secret_status"
+              }
+            ],
+            "description": "Present when a basic auth password is configured. Omitted when not\nconfigured.\n"
           }
         }
       },
-      "webhook_bearer_token": {
+      "webhook_bearer_token_response": {
         "type": "object",
-        "description": "Bearer token authentication for a webhook. `token` is write-only: full value\non create/update; masked (`********`) on read. Omit on update to keep the\nexisting token.\n",
+        "description": "Bearer token authentication as returned in API responses. The token is never\nreturned; `token_status` indicates whether it is configured.\n",
         "properties": {
-          "token": {
-            "type": "string",
-            "format": "password",
-            "description": "Bearer token value sent in the Authorization header. Write-only secret —\nfull value on create/update; masked as `********` on read.\n",
-            "example": "secret-token"
+          "token_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/secret_status"
+              }
+            ],
+            "description": "Present when a bearer token is configured. Omitted when not configured.\n"
           }
         }
       },
-      "webhook_signature_config": {
+      "webhook_signature_config_response": {
         "type": "object",
-        "description": "Optional HMAC signature configuration. `secret` is write-only: full value on\ncreate/update; masked (`********`) on read. Omit on update to keep the\nexisting secret.\n",
+        "description": "HMAC signature configuration as returned in API responses. The signing\nsecret is never returned; `secret_status` indicates whether it is\nconfigured.\n",
         "properties": {
-          "secret": {
-            "type": "string",
-            "format": "password",
-            "description": "Shared secret used to sign webhook payloads. Write-only secret — full\nvalue on create/update; masked as `********` on read.\n",
-            "example": "whsec"
+          "secret_status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/secret_status"
+              }
+            ],
+            "description": "Present when a signing secret is configured. Omitted when not\nconfigured.\n"
           }
         }
       },
-      "webhook_notification_config": {
+      "webhook_notification_config_response": {
         "type": "object",
-        "description": "Generic HTTPS webhook notification channel configuration. The URL must use\nHTTPS and must not include userinfo. Optionally configure either\n`basic_auth` or `bearer_token` (not both), custom headers, and a signing\nsecret.\n\n`url` is not a secret and is returned in full on read. Credential fields\n(`basic_auth.password`, `bearer_token.token`, `signature.secret`) are\nwrite-only: full value on create/update; masked as `********` on read. Omit\na secret field on update to keep the existing value.\n",
+        "description": "Generic HTTPS webhook notification channel configuration as returned in API\nresponses. The URL and headers are returned in full. Credential secrets are\nnever returned; nested `*_status` objects indicate whether they are\nconfigured.\n",
         "required": [
           "url"
         ],
@@ -71170,14 +71202,14 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "description": "HTTPS URL that receives webhook deliveries. Returned in full on read.",
+            "description": "HTTPS URL that receives webhook deliveries.",
             "example": "https://example.com/hook"
           },
           "basic_auth": {
-            "$ref": "#/components/schemas/webhook_basic_auth"
+            "$ref": "#/components/schemas/webhook_basic_auth_response"
           },
           "bearer_token": {
-            "$ref": "#/components/schemas/webhook_bearer_token"
+            "$ref": "#/components/schemas/webhook_bearer_token_response"
           },
           "headers": {
             "type": "object",
@@ -71186,13 +71218,13 @@
               "type": "string",
               "example": "1"
             },
-            "description": "Optional custom HTTP headers to include on webhook deliveries. At most\n20 headers are allowed. Reserved header names such as `host`,\n`content-type`, and `proxy-*` are rejected.\n",
+            "description": "Optional custom HTTP headers included on webhook deliveries. At most 20\nheaders are allowed.\n",
             "example": {
               "X-Custom": "1"
             }
           },
           "signature": {
-            "$ref": "#/components/schemas/webhook_signature_config"
+            "$ref": "#/components/schemas/webhook_signature_config_response"
           }
         }
       },
@@ -71245,10 +71277,10 @@
             "$ref": "#/components/schemas/email_notification_config"
           },
           "slack": {
-            "$ref": "#/components/schemas/slack_notification_config"
+            "$ref": "#/components/schemas/slack_notification_config_response"
           },
           "webhook": {
-            "$ref": "#/components/schemas/webhook_notification_config"
+            "$ref": "#/components/schemas/webhook_notification_config_response"
           },
           "usage": {
             "allOf": [
@@ -71285,6 +71317,109 @@
             "items": {
               "$ref": "#/components/schemas/notification_channel"
             }
+          }
+        }
+      },
+      "slack_notification_config": {
+        "type": "object",
+        "description": "Slack notification channel configuration for create and update requests.\n`webhook_url` is write-only: send the full value to set or rotate. Omit\n`webhook_url` on update to keep the existing secret.\n",
+        "required": [
+          "channel"
+        ],
+        "properties": {
+          "webhook_url": {
+            "type": "string",
+            "writeOnly": true,
+            "description": "Slack incoming webhook URL. Write-only secret — send the full value on\ncreate or update. Omit on update to retain the existing value. Never\nreturned in responses.\n",
+            "example": "https://hooks.slack.com/services/T000/B000/XXXXXXXX"
+          },
+          "channel": {
+            "type": "string",
+            "description": "The Slack channel name to notify.",
+            "example": "#platform-alerts"
+          }
+        }
+      },
+      "webhook_basic_auth": {
+        "type": "object",
+        "description": "HTTP basic authentication credentials for a webhook create or update\nrequest. `password` is write-only: send the full value to set or rotate.\nOmit `password` on update to keep the existing password.\n",
+        "required": [
+          "username"
+        ],
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Basic auth username.",
+            "example": "webhook-user"
+          },
+          "password": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "description": "Basic auth password. Write-only secret — send the full value on create\nor update. Omit on update to retain the existing value. Never returned\nin responses.\n",
+            "example": "secret-password"
+          }
+        }
+      },
+      "webhook_bearer_token": {
+        "type": "object",
+        "description": "Bearer token authentication for a webhook create or update request. `token`\nis write-only: send the full value to set or rotate. Omit `token` on update\nto keep the existing token.\n",
+        "properties": {
+          "token": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "description": "Bearer token value sent in the Authorization header. Write-only secret —\nsend the full value on create or update. Omit on update to retain the\nexisting value. Never returned in responses.\n",
+            "example": "secret-token"
+          }
+        }
+      },
+      "webhook_signature_config": {
+        "type": "object",
+        "description": "Optional HMAC signature configuration for a webhook create or update\nrequest. `secret` is write-only: send the full value to set or rotate. Omit\n`secret` on update to keep the existing secret.\n",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "format": "password",
+            "writeOnly": true,
+            "description": "Shared secret used to sign webhook payloads. Write-only secret — send\nthe full value on create or update. Omit on update to retain the\nexisting value. Never returned in responses.\n",
+            "example": "whsec"
+          }
+        }
+      },
+      "webhook_notification_config": {
+        "type": "object",
+        "description": "Generic HTTPS webhook notification channel configuration for create and\nupdate requests. The URL must use HTTPS and must not include userinfo.\nOptionally configure either `basic_auth` or `bearer_token` (not both),\ncustom headers, and a signing secret.\n\n`url` is not a secret and is returned in full on read. Credential fields\n(`basic_auth.password`, `bearer_token.token`, `signature.secret`) are\nwrite-only: send the full value to set or rotate. Omit a secret field on\nupdate to keep the existing value. Responses return nested `*_status`\nobjects instead of secret values.\n",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "HTTPS URL that receives webhook deliveries. Returned in full on read.",
+            "example": "https://example.com/hook"
+          },
+          "basic_auth": {
+            "$ref": "#/components/schemas/webhook_basic_auth"
+          },
+          "bearer_token": {
+            "$ref": "#/components/schemas/webhook_bearer_token"
+          },
+          "headers": {
+            "type": "object",
+            "maxProperties": 20,
+            "additionalProperties": {
+              "type": "string",
+              "example": "1"
+            },
+            "description": "Optional custom HTTP headers to include on webhook deliveries. At most\n20 headers are allowed. Reserved header names such as `host`,\n`content-type`, and `proxy-*` are rejected.\n",
+            "example": {
+              "X-Custom": "1"
+            }
+          },
+          "signature": {
+            "$ref": "#/components/schemas/webhook_signature_config"
           }
         }
       },
@@ -101271,14 +101406,16 @@
                 }
               },
               "slack": {
-                "summary": "Slack channel with masked webhook",
+                "summary": "Slack channel with webhook status",
                 "value": {
                   "notification_channel": {
                     "id": "660e8400-e29b-41d4-a716-446655440001",
                     "name": "Platform alerts",
                     "channel_type": "CHANNEL_TYPE_SLACK",
                     "slack": {
-                      "webhook_url": "********",
+                      "webhook_url_status": {
+                        "configured": true
+                      },
                       "channel": "#platform-alerts"
                     },
                     "usage": {
@@ -101290,7 +101427,7 @@
                 }
               },
               "webhook": {
-                "summary": "Webhook channel with masked credentials",
+                "summary": "Webhook channel with credential status",
                 "value": {
                   "notification_channel": {
                     "id": "770e8400-e29b-41d4-a716-446655440002",
@@ -101299,13 +101436,17 @@
                     "webhook": {
                       "url": "https://example.com/hook",
                       "bearer_token": {
-                        "token": "********"
+                        "token_status": {
+                          "configured": true
+                        }
                       },
                       "headers": {
                         "X-Custom": "1"
                       },
                       "signature": {
-                        "secret": "********"
+                        "secret_status": {
+                          "configured": true
+                        }
                       }
                     },
                     "usage": {
