@@ -208,6 +208,10 @@
       "description": "Security CSPM endpoints for scans, scan findings, and settings."
     },
     {
+      "name": "Signals",
+      "description": "The DigitalOcean Signals API provides observability for agent\nconversations, such as Harness Runtime sessions and Serverless\nInference chat completions, detecting behavioral signals such as\nuser disengagement, execution failures, and satisfaction indicators.\n\nUse the consent endpoints to manage whether signals collection is\nenabled for each agent, the session endpoints to browse agent\nconversations and their detected signals, and the export endpoints\nto create downloadable archives of signals data for offline analysis."
+    },
+    {
       "name": "Sizes",
       "description": "The sizes objects represent different packages of hardware resources that\ncan be used for Droplets. When a Droplet is created, a size must be\nselected so that the correct resources can be allocated.\n\nEach size represents a plan that bundles together specific sets of\nresources. This includes the amount of RAM, the number of virtual CPUs,\ndisk space, and transfer. The size object also includes the pricing\ndetails and the regions that the size is available in."
     },
@@ -323,6 +327,7 @@
         "Reserved IPv6",
         "Reserved IPv6 Actions",
         "Security",
+        "Signals",
         "Sizes",
         "Snapshots",
         "Spaces Keys",
@@ -21809,6 +21814,532 @@
           {
             "bearer_auth": [
               "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/consent": {
+      "get": {
+        "operationId": "signals_list_consents",
+        "summary": "List All Consent Records",
+        "description": "To list all signals consent records for your team, send a GET request to\n`/v1/consent`. Each record indicates whether signals collection is enabled\nfor a specific agent.\n",
+        "tags": [
+          "Signals"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_consents_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/consent\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/consent/{agent_id}": {
+      "get": {
+        "operationId": "signals_get_consent",
+        "summary": "Retrieve Consent for an Agent",
+        "description": "To retrieve the consent record for a specific agent, send a GET\nrequest to `/v1/consent/{agent_id}`. The response includes an `allowed`\nfield indicating whether the team is permitted to use signals for this agent.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/agent_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/agent_consent_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/consent/019fb3d2-8a56-72cc-8bf9-9d21510b2a99\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "signals_update_consent",
+        "summary": "Update Consent for an Agent",
+        "description": "To enable or disable signals collection for a specific agent, send a\nPUT request to `/v1/consent/{agent_id}` with an `enabled` boolean in the\nrequest body.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/agent_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether to enable signals collection for this agent."
+                  }
+                },
+                "required": [
+                  "enabled"
+                ]
+              },
+              "example": {
+                "enabled": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/update_consent_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"enabled\":true}' \\\n  \"https://api.digitalocean.com/v1/consent/019fb3d2-8a56-72cc-8bf9-9d21510b2a99\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/agents/{agent_id}/sessions": {
+      "get": {
+        "operationId": "signals_list_agent_sessions",
+        "summary": "List Sessions for an Agent",
+        "description": "To list signals sessions for a specific agent, send a GET request to\n`/v1/signals/agents/{agent_id}/sessions`. Results are paginated using cursor-based\npagination with `limit` and `after` parameters.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/agent_id"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/after"
+          },
+          {
+            "$ref": "#/components/parameters/start_time"
+          },
+          {
+            "$ref": "#/components/parameters/end_time"
+          },
+          {
+            "$ref": "#/components/parameters/signal_type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_sessions_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/agents/019fb3d2-8a56-72cc-8bf9-9d21510b2a99/sessions?limit=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/sessions/{session_id}/dialogues": {
+      "get": {
+        "operationId": "signals_list_session_dialogues",
+        "summary": "List Dialogues for a Session",
+        "description": "To list the dialogue turns within a specific session, send a GET request to\n`/v1/signals/sessions/{session_id}/dialogues`. Each dialogue represents a\nsingle turn of conversation between a user and the agent, along with\nany signals detected. Results are paginated using cursor-based pagination.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/session_id"
+          },
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/after"
+          },
+          {
+            "$ref": "#/components/parameters/start_time"
+          },
+          {
+            "$ref": "#/components/parameters/end_time"
+          },
+          {
+            "$ref": "#/components/parameters/signal_type"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_dialogues_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/sessions/01a0f3d5-d5f1-798a-9352-2cd8f8b81e78/dialogues?limit=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/exports": {
+      "get": {
+        "operationId": "signals_list_exports",
+        "summary": "List Export Jobs",
+        "description": "To list signals export jobs for your team, send a GET request to\n`/v1/signals/exports`. Results are paginated using cursor-based pagination\nwith `limit` and `after` parameters.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/limit"
+          },
+          {
+            "$ref": "#/components/parameters/after"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_exports_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/exports?limit=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "signals_create_export",
+        "summary": "Create an Export Job",
+        "description": "To create a new signals data export, send a POST request to\n`/v1/signals/exports` with an `agent_id` in the request body. You may\noptionally filter the export by `signal_type`, `session_ids`, `start_time`,\nand `end_time`. Use the export options endpoint to discover available signal\ntypes.\n\nThe export job runs asynchronously. Poll the get export endpoint to check\nits status. When complete, use the download endpoint to retrieve a\npre-signed URL.\n",
+        "tags": [
+          "Signals"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_export_request"
+              },
+              "example": {
+                "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
+                "signal_type": [
+                  "ExecutionFailureToolNotFound"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "$ref": "#/components/responses/export_job_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"agent_id\":\"01a0f3d5-b58d-7c99-a743-7ca0397b7f5d\",\"signal_type\":[\"ExecutionFailureToolNotFound\"]}' \\\n  \"https://api.digitalocean.com/v1/signals/exports\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/exports/options": {
+      "get": {
+        "operationId": "signals_get_export_options",
+        "summary": "Get Export Options",
+        "description": "To retrieve the available filter options for creating an export, send a GET\nrequest to `/v1/signals/exports/options`. The response lists valid signal\ntypes that can be used in the `signal_type` filter when creating an export.\n",
+        "tags": [
+          "Signals"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/export_options_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/exports/options\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/exports/{export_id}": {
+      "get": {
+        "operationId": "signals_get_export",
+        "summary": "Retrieve an Export Job",
+        "description": "To retrieve the status and details of a signals export job, send a GET\nrequest to `/v1/signals/exports/{export_id}`.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/export_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/export_job_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/exports/9f13c09c-c877-436b-9863-dcc39c9dd737\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v1/signals/exports/{export_id}/download": {
+      "get": {
+        "operationId": "signals_get_export_download",
+        "summary": "Get Export Download URL",
+        "description": "To retrieve a pre-signed download URL for a completed export, send a GET\nrequest to `/v1/signals/exports/{export_id}/download`. The export must have\na `complete` status. The URL is temporary and will expire.\n",
+        "tags": [
+          "Signals"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/export_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/export_download_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v1/signals/exports/9f13c09c-c877-436b-9863-dcc39c9dd737/download\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "signals:read"
             ]
           }
         ]
@@ -54256,6 +54787,94 @@
           "{__name__=\"do.droplets.cpu_time\"}"
         ]
       },
+      "agent_id": {
+        "in": "path",
+        "name": "agent_id",
+        "description": "A unique identifier for an agent. For Harness Runtime, this is the Environment Config ID.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99"
+      },
+      "limit": {
+        "in": "query",
+        "name": "limit",
+        "description": "Maximum number of items to return per page.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        },
+        "example": 20
+      },
+      "after": {
+        "in": "query",
+        "name": "after",
+        "description": "An opaque cursor string returned from a previous page. Pass this value to retrieve the next page of results.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0="
+      },
+      "start_time": {
+        "in": "query",
+        "name": "start_time",
+        "description": "Filter results to those occurring at or after this timestamp (RFC 3339).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "example": "2026-09-01T00:00:00Z"
+      },
+      "end_time": {
+        "in": "query",
+        "name": "end_time",
+        "description": "Filter results to those occurring at or before this timestamp (RFC 3339).",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "example": "2026-10-01T00:00:00Z"
+      },
+      "signal_type": {
+        "in": "query",
+        "name": "signal_type",
+        "description": "Filter results by signal type. Use the export options endpoint to list available signal types.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "DisengagementEscalation"
+      },
+      "session_id": {
+        "in": "path",
+        "name": "session_id",
+        "description": "A unique identifier for a signals session.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+      },
+      "export_id": {
+        "in": "path",
+        "name": "export_id",
+        "description": "A unique identifier for an export job.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "9f13c09c-c877-436b-9863-dcc39c9dd737"
+      },
       "kubernetes_cluster_id": {
         "in": "path",
         "name": "cluster_id",
@@ -72479,6 +73098,374 @@
             "$ref": "#/components/schemas/logs_pagination_response"
           }
         }
+      },
+      "consent_record": {
+        "type": "object",
+        "description": "A consent record indicating whether signals collection is enabled for an agent.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique numeric identifier for the consent record.",
+            "example": 13
+          },
+          "team_id": {
+            "type": "integer",
+            "description": "The team ID that owns this consent record.",
+            "example": 39449946
+          },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the agent. For Harness Runtime, this is the Environment Config ID.",
+            "example": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether signals collection is enabled for this agent.",
+            "example": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "A time value given in ISO8601 combined date and time format.",
+            "example": "2026-08-10T10:09:25.738533Z"
+          }
+        },
+        "required": [
+          "id",
+          "team_id",
+          "agent_id",
+          "enabled",
+          "updated_at"
+        ]
+      },
+      "list_consents": {
+        "type": "object",
+        "description": "A wrapper for a list of consent records.",
+        "properties": {
+          "consents": {
+            "type": "array",
+            "description": "A list of consent records for the team's agents.",
+            "items": {
+              "$ref": "#/components/schemas/consent_record"
+            }
+          }
+        },
+        "required": [
+          "consents"
+        ]
+      },
+      "agent_consent": {
+        "type": "object",
+        "description": "Consent details for a specific agent, including an allowed flag.",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "The unique numeric identifier for the consent record.",
+            "example": 13
+          },
+          "team_id": {
+            "type": "integer",
+            "description": "The team ID that owns this consent record.",
+            "example": 39449946
+          },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier of the agent. For Harness Runtime, this is the Environment Config ID.",
+            "example": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether signals collection is enabled for this agent.",
+            "example": true
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "Whether the team is permitted to use signals for this agent. This is determined by the platform and cannot be set by the user.",
+            "example": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "A time value given in ISO8601 combined date and time format.",
+            "example": "2026-08-10T10:09:25.738533Z"
+          }
+        },
+        "required": [
+          "id",
+          "team_id",
+          "agent_id",
+          "enabled",
+          "allowed",
+          "updated_at"
+        ]
+      },
+      "session-2": {
+        "type": "object",
+        "description": "A session represents a conversation monitored by Signals, such as a Harness Runtime agent session or a Serverless Inference chat completion.",
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier for the session.",
+            "example": "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+          },
+          "total_turns": {
+            "type": "integer",
+            "description": "The total number of conversation turns in this session.",
+            "example": 5
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the session started.",
+            "example": "2026-09-15T14:30:00Z"
+          },
+          "duration_seconds": {
+            "type": "number",
+            "description": "The duration of the session in seconds.",
+            "example": 120.5
+          },
+          "signal_count": {
+            "type": "integer",
+            "description": "The number of signals detected in this session.",
+            "example": 3
+          }
+        },
+        "required": [
+          "session_id"
+        ]
+      },
+      "session_dialogue": {
+        "type": "object",
+        "description": "A dialogue entry within a session, representing a single turn of conversation.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the dialogue.",
+            "example": "01a0f3d6-1234-7abc-def0-123456789abc"
+          },
+          "sequence": {
+            "type": "integer",
+            "description": "The sequence number of this dialogue within the session.",
+            "example": 1
+          },
+          "run_status": {
+            "type": "string",
+            "description": "The execution status of this dialogue turn.",
+            "example": "completed"
+          },
+          "user_message": {
+            "type": "string",
+            "description": "The user's message in this dialogue turn.",
+            "example": "How do I create a Droplet?"
+          },
+          "signals": {
+            "type": "array",
+            "description": "A list of signal types detected in this dialogue.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "SatisfactionConfirmation"
+            ]
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "export_job": {
+        "type": "object",
+        "description": "An export job that produces a downloadable archive of signals data.",
+        "properties": {
+          "export_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The unique identifier for the export job.",
+            "example": "9f13c09c-c877-436b-9863-dcc39c9dd737"
+          },
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The agent whose data is being exported. For Harness Runtime, this is the Environment Config ID.",
+            "example": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d"
+          },
+          "status": {
+            "type": "string",
+            "description": "The current status of the export job.",
+            "enum": [
+              "pending",
+              "processing",
+              "complete",
+              "failed"
+            ],
+            "example": "complete"
+          },
+          "filters": {
+            "type": "object",
+            "description": "The filters applied to this export.",
+            "properties": {
+              "signal_type": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Signal types included in the export.",
+                "example": [
+                  "ExecutionFailureToolNotFound"
+                ]
+              },
+              "session_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Specific session IDs included in the export.",
+                "example": [
+                  "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+                ]
+              }
+            }
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Unix timestamp when the export was created.",
+            "example": 1791036405
+          },
+          "completed_at": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Unix timestamp when the export completed, or null if still in progress.",
+            "example": 1791036405
+          },
+          "expires_at": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Unix timestamp when the export download link expires.",
+            "example": 1791641205
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if the export failed, or null on success.",
+            "example": null
+          }
+        },
+        "required": [
+          "export_id",
+          "agent_id",
+          "status",
+          "created_at"
+        ]
+      },
+      "create_export_request": {
+        "type": "object",
+        "description": "Request body to create a new signals data export.",
+        "properties": {
+          "agent_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The agent whose data should be exported. For Harness Runtime, this is the Environment Config ID.",
+            "example": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d"
+          },
+          "signal_type": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Filter the export to only include the specified signal types. Use the export options endpoint to list available values.",
+            "example": [
+              "ExecutionFailureToolNotFound"
+            ]
+          },
+          "session_ids": {
+            "type": "array",
+            "description": "Optional list of specific session IDs to include in the export.",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "example": [
+              "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+            ]
+          },
+          "start_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Include only sessions that started at or after this timestamp.",
+            "example": "2026-09-01T00:00:00Z"
+          },
+          "end_time": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Include only sessions that started at or before this timestamp.",
+            "example": "2026-10-01T00:00:00Z"
+          }
+        },
+        "required": [
+          "agent_id"
+        ]
+      },
+      "export_options": {
+        "type": "object",
+        "description": "Available filter options for creating exports.",
+        "properties": {
+          "filters": {
+            "type": "object",
+            "properties": {
+              "signal_type": {
+                "type": "array",
+                "description": "The list of valid signal type values that can be used when creating an export.",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "DisengagementEscalation",
+                  "DisengagementNegativeStance",
+                  "DisengagementQuit",
+                  "EnvironmentExhaustionApiError",
+                  "EnvironmentExhaustionContextOverflow",
+                  "ExecutionFailureToolNotFound",
+                  "ExecutionLoopsRetry",
+                  "MisalignmentCorrection",
+                  "SatisfactionConfirmation",
+                  "SatisfactionGratitude",
+                  "SatisfactionSuccess",
+                  "StagnationRepetition"
+                ]
+              }
+            },
+            "required": [
+              "signal_type"
+            ]
+          }
+        },
+        "required": [
+          "filters"
+        ]
+      },
+      "export_download": {
+        "type": "object",
+        "description": "A pre-signed download URL for a completed export.",
+        "properties": {
+          "download_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "A temporary pre-signed URL to download the export archive.",
+            "example": "https://example-bucket.nyc3.digitaloceanspaces.com/exports/3f2a1c4e-5b6d-4e7f-8a9b-0c1d2e3f4a5b/9f13c09c-c877-436b-9863-dcc39c9dd737.json.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=EXAMPLE"
+          },
+          "expires_at": {
+            "type": "integer",
+            "description": "Unix timestamp when the download URL expires. The URL is valid for 15 minutes.",
+            "example": 1791390640
+          }
+        },
+        "required": [
+          "download_url",
+          "expires_at"
+        ]
       },
       "kubernetes_node_pool_size": {
         "type": "object",
@@ -102002,6 +102989,420 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/logs_search_response"
+            }
+          }
+        }
+      },
+      "list_consents_response": {
+        "description": "A list of consent records.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/list_consents"
+            },
+            "example": {
+              "consents": [
+                {
+                  "id": 13,
+                  "team_id": 39449946,
+                  "agent_id": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99",
+                  "enabled": true,
+                  "updated_at": "2026-08-10T10:09:25.738533Z"
+                },
+                {
+                  "id": 6,
+                  "team_id": 39449946,
+                  "agent_id": "019fb6b1-aad4-7d54-a74e-c5570d768148",
+                  "enabled": true,
+                  "updated_at": "2026-08-07T10:10:16.385447Z"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "agent_consent_response": {
+        "description": "A single agent consent record.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/agent_consent"
+            },
+            "example": {
+              "id": 13,
+              "team_id": 39449946,
+              "agent_id": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99",
+              "enabled": true,
+              "allowed": true,
+              "updated_at": "2026-08-10T10:09:25.738533Z"
+            }
+          }
+        }
+      },
+      "update_consent_response": {
+        "description": "The consent record was updated successfully.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "consent": {
+                  "$ref": "#/components/schemas/consent_record"
+                }
+              },
+              "required": [
+                "consent"
+              ]
+            },
+            "example": {
+              "consent": {
+                "id": 13,
+                "team_id": 39449946,
+                "agent_id": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99",
+                "enabled": true,
+                "updated_at": "2026-10-07T11:06:32.280572Z"
+              }
+            }
+          }
+        }
+      },
+      "list_sessions_response": {
+        "description": "A paginated list of sessions.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "edges": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cursor": {
+                        "type": "string",
+                        "description": "An opaque cursor for pagination.",
+                        "example": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0="
+                      },
+                      "node": {
+                        "$ref": "#/components/schemas/session-2"
+                      }
+                    }
+                  }
+                },
+                "page_info": {
+                  "type": "object",
+                  "properties": {
+                    "has_next_page": {
+                      "type": "boolean",
+                      "description": "Whether there are more results after this page."
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "edges": [
+                {
+                  "cursor": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0=",
+                  "node": {
+                    "session_id": "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78",
+                    "total_turns": 5,
+                    "started_at": "2026-09-15T14:30:00Z",
+                    "duration_seconds": 120.5,
+                    "signal_count": 3
+                  }
+                }
+              ],
+              "page_info": {
+                "has_next_page": false
+              }
+            }
+          }
+        }
+      },
+      "list_dialogues_response": {
+        "description": "A paginated list of session dialogues.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "edges": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cursor": {
+                        "type": "string",
+                        "description": "An opaque cursor for pagination.",
+                        "example": "eyJzZXF1ZW5jZSI6MX0="
+                      },
+                      "node": {
+                        "$ref": "#/components/schemas/session_dialogue"
+                      }
+                    }
+                  }
+                },
+                "page_info": {
+                  "type": "object",
+                  "properties": {
+                    "has_next_page": {
+                      "type": "boolean",
+                      "description": "Whether there are more results after this page."
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "edges": [
+                {
+                  "cursor": "eyJzZXF1ZW5jZSI6MX0=",
+                  "node": {
+                    "id": "01a0f3d6-1234-7abc-def0-123456789abc",
+                    "sequence": 1,
+                    "run_status": "completed",
+                    "user_message": "How do I create a Droplet?",
+                    "signals": [
+                      "SatisfactionConfirmation"
+                    ]
+                  }
+                }
+              ],
+              "page_info": {
+                "has_next_page": false
+              }
+            }
+          }
+        }
+      },
+      "list_exports_response": {
+        "description": "A paginated list of export jobs.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "edges": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "cursor": {
+                        "type": "string",
+                        "description": "An opaque cursor for pagination.",
+                        "example": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0="
+                      },
+                      "node": {
+                        "$ref": "#/components/schemas/export_job"
+                      }
+                    }
+                  }
+                },
+                "page_info": {
+                  "type": "object",
+                  "properties": {
+                    "has_next_page": {
+                      "type": "boolean",
+                      "description": "Whether there are more results after this page."
+                    }
+                  }
+                }
+              }
+            },
+            "example": {
+              "edges": [
+                {
+                  "cursor": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0=",
+                  "node": {
+                    "export_id": "9f13c09c-c877-436b-9863-dcc39c9dd737",
+                    "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
+                    "status": "complete",
+                    "filters": {
+                      "signal_type": [
+                        "ExecutionFailureToolNotFound"
+                      ],
+                      "session_ids": [
+                        "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+                      ]
+                    },
+                    "created_at": 1791036405,
+                    "completed_at": 1791036405,
+                    "expires_at": 1791641205,
+                    "error_message": null
+                  }
+                }
+              ],
+              "page_info": {
+                "has_next_page": false
+              }
+            }
+          }
+        }
+      },
+      "export_job_response": {
+        "description": "A single export job.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/export_job"
+            },
+            "example": {
+              "export_id": "9f13c09c-c877-436b-9863-dcc39c9dd737",
+              "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
+              "status": "complete",
+              "filters": {
+                "signal_type": [
+                  "ExecutionFailureToolNotFound"
+                ],
+                "session_ids": [
+                  "01a0f3d5-d5f1-798a-9352-2cd8f8b81e78"
+                ]
+              },
+              "created_at": 1791036405,
+              "completed_at": 1791036405,
+              "expires_at": 1791641205,
+              "error_message": null
+            }
+          }
+        }
+      },
+      "export_options_response": {
+        "description": "Available export filter options.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/export_options"
+            },
+            "example": {
+              "filters": {
+                "signal_type": [
+                  "DisengagementEscalation",
+                  "DisengagementNegativeStance",
+                  "DisengagementQuit",
+                  "EnvironmentExhaustionApiError",
+                  "ExecutionFailureToolNotFound",
+                  "ExecutionLoopsRetry",
+                  "MisalignmentCorrection",
+                  "SatisfactionConfirmation",
+                  "SatisfactionGratitude",
+                  "SatisfactionSuccess",
+                  "StagnationRepetition"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "export_download_response": {
+        "description": "A download URL for a completed export.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/export_download"
+            },
+            "example": {
+              "download_url": "https://example-bucket.nyc3.digitaloceanspaces.com/exports/3f2a1c4e-5b6d-4e7f-8a9b-0c1d2e3f4a5b/9f13c09c-c877-436b-9863-dcc39c9dd737.json.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=EXAMPLE",
+              "expires_at": 1791390640
             }
           }
         }
