@@ -213,7 +213,7 @@
     },
     {
       "name": "Signals",
-      "description": "The DigitalOcean Signals API provides observability for agent\nconversations, such as Harness Runtime sessions and Serverless\nInference chat completions, detecting behavioral signals such as\nuser disengagement, execution failures, and satisfaction indicators.\n\nUse the consent endpoints to manage whether signals collection is\nenabled — per agent for Harness Runtime (`source=agent`) and per team\nfor Serverless Inference chat completions (`source=inference`) — the\nsession endpoints to browse agent conversations and their detected\nsignals, the export endpoints to create downloadable archives of\nsignals data for offline analysis, and the deletion endpoints to\npermanently delete signals data."
+      "description": "The DigitalOcean Signals API provides observability for agent\nconversations, such as Harness Runtime conversations and Serverless\nInference chat completions, detecting behavioral signals such as\nuser disengagement, execution failures, and satisfaction indicators.\n\nUse the consent endpoints to manage whether signals collection is\nenabled — per agent for Harness Runtime (`source=agent`) and per team\nfor Serverless Inference chat completions (`source=inference`) — the\nsession endpoints to browse conversations and their detected signals,\nthe export endpoints to create downloadable archives of signals data\nfor offline analysis, and the deletion endpoints to permanently delete\nSignals conversations for an agent or Serverless Inference\nconversations for a whole team (aggregated Insights or metrics\nsummaries may still remain)."
     },
     {
       "name": "Sizes",
@@ -22799,7 +22799,7 @@
       "post": {
         "operationId": "signals_create_deletion",
         "summary": "Create a Data Deletion Job",
-        "description": "To permanently delete signals data, send a POST request to\n`/v1/signals/deletions`.\n\nTwo deletion types are supported:\n\n- `agent` — deletes sessions, dialogues, and signal reports for one agent.\n  Requires `agent_id`. The agent's data is hidden immediately and signals\n  collection is disabled for the agent, even if the job later fails. Wait\n  until the job is complete before enabling signals for the agent again.\n- `inference` — deletes sessions, dialogues, and signal reports for the\n  team's Serverless Inference requests made before the deletion. Signals\n  continues to analyze new requests.\n\nDeletion is permanent and cannot be undone. The job runs asynchronously;\npoll the get endpoint to check status. To retry a failed job, send the same\nrequest again. Export files created earlier are not deleted and remain\navailable until they expire.\n\nThe endpoint is idempotent: if a queued or running job already exists for\nthe same target, it is returned with `200 OK`. A new job returns\n`202 Accepted`. Each team can have a limited number of active jobs;\nrequests beyond that limit return `429 Too Many Requests`.\n",
+        "description": "To permanently delete Signals conversation data, send a POST request to\n`/v1/signals/deletions`. Deletion cannot be undone.\n\nTwo deletion types are supported:\n\n- `agent` — deletes Signals conversations for one Harness Runtime agent and\n  turns off collection for that agent. Requires `agent_id`, which is the\n  agent's Environment Config ID (the agent UUID). On create, matching\n  conversations are hidden from Signals reads immediately. Wait until the\n  job is `complete` before enabling Signals for the agent again.\n- `inference` — deletes Serverless Inference Signals conversations for your\n  whole team (team-wide; not limited to one endpoint or model) that were\n  collected at or before the deletion request, and turns off team inference\n  collection (`source=inference`). Do not send `agent_id`. On create,\n  matching conversations are hidden from Signals reads immediately.\n\nThe job runs asynchronously; poll the get endpoint until `status` is\n`complete` or `failed`. DigitalOcean may retry transient processing errors\nwhile a job is still active. If a job ends as `failed`, matching\nconversations stay hidden and collection stays off; send the same create\nrequest again to retry. Earlier export files are not deleted and remain\navailable until they expire.\n\nNote: Deletion removes Signals conversation data for the requested scope.\nAggregated Insights or metrics charts may still show historical summary\ndatapoints after deletion. Those summaries are not the same as recoverable\nconversation content.\n\nThe endpoint is idempotent: if a queued or running job already exists for\nthe same target, it is returned with `200 OK`. A new job returns\n`202 Accepted`. Each team can have a limited number of active jobs;\nrequests beyond that limit return `429 Too Many Requests`.\n",
         "tags": [
           "Signals"
         ],
@@ -51401,7 +51401,7 @@
             }
           },
           {
-            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Journeys are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All journeys finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Journeys finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
+            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Episodes are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All episodes finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Episodes finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
             "example": [
               "SIMULATION_RUN_STATUS_RUNNING"
             ],
@@ -51897,13 +51897,13 @@
         ]
       }
     },
-    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys": {
+    "/v2/gen-ai/simulation_runs/{run_uuid}/episodes": {
       "get": {
-        "description": "To list the journeys within a simulation run, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys`.",
-        "operationId": "genai_list_simulation_journeys",
+        "description": "To list the episodes within a simulation run, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/episodes`.",
+        "operationId": "genai_list_simulation_episodes",
         "parameters": [
           {
-            "description": "UUID of the run whose journeys to list.",
+            "description": "UUID of the run whose episodes to list.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
             "name": "run_uuid",
@@ -51940,20 +51940,20 @@
             }
           },
           {
-            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_JOURNEY_STATUS_RUNNING: The journey is executing and a trajectory is available to retrieve.\n - SIMULATION_JOURNEY_STATUS_FINISHED: The journey reached a stop condition and produced a verdict.\n - SIMULATION_JOURNEY_STATUS_FAILED: The journey failed because of a cancel, timeout, or error.\n - SIMULATION_JOURNEY_STATUS_PREPARING: The journey is allocated but its trajectory is not available yet.",
+            "description": "Filter by one or more statuses. Empty means no status filter.\n\n - SIMULATION_EPISODE_STATUS_RUNNING: The episode is executing and a trajectory is available to retrieve.\n - SIMULATION_EPISODE_STATUS_FINISHED: The episode reached a stop condition and produced a verdict.\n - SIMULATION_EPISODE_STATUS_FAILED: The episode failed because of a cancel, timeout, or error.\n - SIMULATION_EPISODE_STATUS_PREPARING: The episode is allocated but its trajectory is not available yet.",
             "example": [
-              "SIMULATION_JOURNEY_STATUS_FINISHED"
+              "SIMULATION_EPISODE_STATUS_FINISHED"
             ],
             "in": "query",
             "name": "statuses",
             "schema": {
               "items": {
                 "enum": [
-                  "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
-                  "SIMULATION_JOURNEY_STATUS_RUNNING",
-                  "SIMULATION_JOURNEY_STATUS_FINISHED",
-                  "SIMULATION_JOURNEY_STATUS_FAILED",
-                  "SIMULATION_JOURNEY_STATUS_PREPARING"
+                  "SIMULATION_EPISODE_STATUS_UNSPECIFIED",
+                  "SIMULATION_EPISODE_STATUS_RUNNING",
+                  "SIMULATION_EPISODE_STATUS_FINISHED",
+                  "SIMULATION_EPISODE_STATUS_FAILED",
+                  "SIMULATION_EPISODE_STATUS_PREPARING"
                 ],
                 "type": "string"
               },
@@ -51961,19 +51961,19 @@
             }
           },
           {
-            "description": "Filter by one or more verdicts. Empty means no verdict filter.\n\n - SIMULATION_JOURNEY_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
+            "description": "Filter by one or more verdicts. Empty means no verdict filter.\n\n - SIMULATION_EPISODE_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_EPISODE_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_EPISODE_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
             "example": [
-              "SIMULATION_JOURNEY_VERDICT_SUCCESS"
+              "SIMULATION_EPISODE_VERDICT_SUCCESS"
             ],
             "in": "query",
             "name": "verdicts",
             "schema": {
               "items": {
                 "enum": [
-                  "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
-                  "SIMULATION_JOURNEY_VERDICT_SUCCESS",
-                  "SIMULATION_JOURNEY_VERDICT_FAILURE",
-                  "SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE"
+                  "SIMULATION_EPISODE_VERDICT_UNSPECIFIED",
+                  "SIMULATION_EPISODE_VERDICT_SUCCESS",
+                  "SIMULATION_EPISODE_VERDICT_FAILURE",
+                  "SIMULATION_EPISODE_VERDICT_INCONCLUSIVE"
                 ],
                 "type": "string"
               },
@@ -51990,18 +51990,18 @@
             }
           },
           {
-            "description": "Field to sort by. Defaults to scenario ordering when unspecified.\n\n - SIMULATION_JOURNEY_SORT_FIELD_SCENARIO: Sort by scenario_uuid then journey_index. Default.\n - SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_JOURNEY_SORT_FIELD_STATUS: Sort by journey status using lifecycle order.\n - SIMULATION_JOURNEY_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
-            "example": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+            "description": "Field to sort by. Defaults to scenario ordering when unspecified.\n\n - SIMULATION_EPISODE_SORT_FIELD_SCENARIO: Sort by scenario_uuid then episode_index. Default.\n - SIMULATION_EPISODE_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_EPISODE_SORT_FIELD_STATUS: Sort by episode status using lifecycle order.\n - SIMULATION_EPISODE_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
+            "example": "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
             "in": "query",
             "name": "sort_by",
             "schema": {
-              "default": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+              "default": "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
               "enum": [
-                "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
-                "SIMULATION_JOURNEY_SORT_FIELD_SCENARIO",
-                "SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT",
-                "SIMULATION_JOURNEY_SORT_FIELD_STATUS",
-                "SIMULATION_JOURNEY_SORT_FIELD_VERDICT"
+                "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
+                "SIMULATION_EPISODE_SORT_FIELD_SCENARIO",
+                "SIMULATION_EPISODE_SORT_FIELD_CREATED_AT",
+                "SIMULATION_EPISODE_SORT_FIELD_STATUS",
+                "SIMULATION_EPISODE_SORT_FIELD_VERDICT"
               ],
               "type": "string"
             }
@@ -52027,7 +52027,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/apiListSimulationJourneysOutput"
+                  "$ref": "#/components/schemas/apiListSimulationEpisodesOutput"
                 }
               }
             },
@@ -52067,25 +52067,25 @@
             ]
           }
         ],
-        "summary": "List Simulation Journeys",
+        "summary": "List Simulation Episodes",
         "tags": [
           "Agent Platform API"
         ],
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys\""
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/episodes\""
           }
         ]
       }
     },
-    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}": {
+    "/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}": {
       "get": {
-        "description": "To retrieve a single journey, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}`.",
-        "operationId": "genai_get_simulation_journey",
+        "description": "To retrieve a single episode, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}`.",
+        "operationId": "genai_get_simulation_episode",
         "parameters": [
           {
-            "description": "UUID of the run the journey belongs to.",
+            "description": "UUID of the run the episode belongs to.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
             "name": "run_uuid",
@@ -52095,10 +52095,10 @@
             }
           },
           {
-            "description": "UUID of the journey.",
+            "description": "UUID of the episode.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
-            "name": "journey_uuid",
+            "name": "episode_uuid",
             "required": true,
             "schema": {
               "type": "string"
@@ -52110,7 +52110,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/apiGetSimulationJourneyOutput"
+                  "$ref": "#/components/schemas/apiGetSimulationEpisodeOutput"
                 }
               }
             },
@@ -52150,25 +52150,25 @@
             ]
           }
         ],
-        "summary": "Retrieve Simulation Journey",
+        "summary": "Retrieve Simulation Episode",
         "tags": [
           "Agent Platform API"
         ],
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789\""
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/episodes/abcdef01-2345-6789-abcd-ef0123456789\""
           }
         ]
       }
     },
-    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory": {
+    "/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}/trajectory": {
       "get": {
-        "description": "To retrieve a journey's live trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory`. Poll while the journey is running to watch turn-by-turn progress.",
-        "operationId": "genai_get_simulation_journey_trajectory",
+        "description": "To retrieve an episode's live trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}/trajectory`. Poll while the episode is running to watch turn-by-turn progress.",
+        "operationId": "genai_get_simulation_episode_trajectory",
         "parameters": [
           {
-            "description": "UUID of the run the journey belongs to.",
+            "description": "UUID of the run the episode belongs to.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
             "name": "run_uuid",
@@ -52178,10 +52178,10 @@
             }
           },
           {
-            "description": "UUID of the journey.",
+            "description": "UUID of the episode.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
-            "name": "journey_uuid",
+            "name": "episode_uuid",
             "required": true,
             "schema": {
               "type": "string"
@@ -52193,7 +52193,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/apiGetSimulationJourneyTrajectoryOutput"
+                  "$ref": "#/components/schemas/apiGetSimulationEpisodeTrajectoryOutput"
                 }
               }
             },
@@ -52233,25 +52233,25 @@
             ]
           }
         ],
-        "summary": "Retrieve Journey Trajectory",
+        "summary": "Retrieve Episode Trajectory",
         "tags": [
           "Agent Platform API"
         ],
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789/trajectory\""
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/episodes/abcdef01-2345-6789-abcd-ef0123456789/trajectory\""
           }
         ]
       }
     },
-    "/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory_url": {
+    "/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}/trajectory_url": {
       "get": {
-        "description": "To retrieve a presigned download URL for a journey's trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/journeys/{journey_uuid}/trajectory_url`.",
-        "operationId": "genai_get_simulation_journey_trajectory_url",
+        "description": "To retrieve a presigned download URL for an episode's trajectory, send a GET request to `/v2/gen-ai/simulation_runs/{run_uuid}/episodes/{episode_uuid}/trajectory_url`.",
+        "operationId": "genai_get_simulation_episode_trajectory_url",
         "parameters": [
           {
-            "description": "UUID of the run the journey belongs to.",
+            "description": "UUID of the run the episode belongs to.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
             "name": "run_uuid",
@@ -52261,10 +52261,10 @@
             }
           },
           {
-            "description": "UUID of the journey.",
+            "description": "UUID of the episode.",
             "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
             "in": "path",
-            "name": "journey_uuid",
+            "name": "episode_uuid",
             "required": true,
             "schema": {
               "type": "string"
@@ -52276,7 +52276,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/apiGetSimulationJourneyTrajectoryURLOutput"
+                  "$ref": "#/components/schemas/apiGetSimulationEpisodeTrajectoryURLOutput"
                 }
               }
             },
@@ -52316,14 +52316,14 @@
             ]
           }
         ],
-        "summary": "Retrieve Journey Trajectory Download URL",
+        "summary": "Retrieve Episode Trajectory Download URL",
         "tags": [
           "Agent Platform API"
         ],
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/journeys/abcdef01-2345-6789-abcd-ef0123456789/trajectory_url\""
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/simulation_runs/12345678-1234-1234-1234-123456789012/episodes/abcdef01-2345-6789-abcd-ef0123456789/trajectory_url\""
           }
         ]
       }
@@ -75865,7 +75865,7 @@
       },
       "deletion_job": {
         "type": "object",
-        "description": "A deletion job that permanently removes signals data for an agent or for a team's Serverless Inference usage.",
+        "description": "A deletion job that permanently removes Signals conversations for one Harness Runtime agent, or Serverless Inference Signals conversations for a whole team. Aggregated Insights or metrics summaries may still remain.",
         "properties": {
           "team_id": {
             "type": "integer",
@@ -75880,7 +75880,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The scope of the deletion. `agent` deletes data for one agent. `inference` deletes data for the team's Serverless Inference requests.",
+            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime agent. `inference` deletes Serverless Inference Signals conversations for the whole team.",
             "enum": [
               "agent",
               "inference"
@@ -75890,7 +75890,7 @@
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The agent whose data is being deleted. For Harness Runtime, this is the Environment Config ID. Only present for `agent` deletions.",
+            "description": "The Harness Runtime Environment Config ID (agent UUID) whose conversations are being deleted. Only present for `agent` deletions.",
             "example": "01a10d3f-2c09-764f-99f8-458e521627f3"
           },
           "status": {
@@ -75945,7 +75945,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "The scope of the deletion. `agent` deletes data for one agent and requires `agent_id`. `inference` deletes data for the team's Serverless Inference requests.",
+            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime agent and requires `agent_id`. `inference` deletes Serverless Inference Signals conversations for the whole team (team-wide; omit `agent_id`).",
             "enum": [
               "agent",
               "inference"
@@ -75961,7 +75961,7 @@
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The agent whose data should be deleted. For Harness Runtime, this is the Environment Config ID. Required when `type` is `agent`; must be omitted when `type` is `inference`.",
+            "description": "The Harness Runtime Environment Config ID of the agent whose conversations should be deleted. This is the agent UUID (`agent_id`). Required when `type` is `agent`; must be omitted when `type` is `inference`.",
             "example": "01a10d3f-2c09-764f-99f8-458e521627f3"
           }
         },
@@ -92472,7 +92472,7 @@
             "type": "string"
           },
           "exploration_budget": {
-            "description": "Number of journeys to explore for this scenario. Defaults to 1 if unset.",
+            "description": "Number of episodes to explore for this scenario. Defaults to 1 if unset.",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -92907,7 +92907,7 @@
       },
       "apiSimulationRunStatus": {
         "default": "SIMULATION_RUN_STATUS_UNSPECIFIED",
-        "description": "Lifecycle status of a simulation run.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Journeys are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All journeys finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Journeys finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
+        "description": "Lifecycle status of a simulation run.\n\n - SIMULATION_RUN_STATUS_PENDING: Accepted and queued, not yet executing.\n - SIMULATION_RUN_STATUS_RUNNING: Episodes are executing.\n - SIMULATION_RUN_STATUS_SUCCEEDED: All episodes finished successfully.\n - SIMULATION_RUN_STATUS_FAILED: The run failed, for example because of a timeout or workflow error.\n - SIMULATION_RUN_STATUS_CANCELLED: The run was cancelled.\n - SIMULATION_RUN_STATUS_EVALUATING: Episodes finished and an attached evaluation is running. Only reachable\nwhen the create request included evaluation_config. When the evaluation\nreaches a terminal status, its outcome is reflected in the simulation run\nstatus.\n - SIMULATION_RUN_STATUS_PARTIALLY_SUCCESSFUL: The simulation or its attached evaluation completed with a mixture of\nsuccessful and failed results.",
         "enum": [
           "SIMULATION_RUN_STATUS_UNSPECIFIED",
           "SIMULATION_RUN_STATUS_PENDING",
@@ -92943,7 +92943,7 @@
         "type": "object"
       },
       "apiSimulationTokenUsage": {
-        "description": "Per-actor token accounting for a run or journey.",
+        "description": "Per-actor token accounting for a run or episode.",
         "properties": {
           "candidate_agent_tokens": {
             "description": "Tokens consumed by the candidate agent.",
@@ -92978,23 +92978,23 @@
         },
         "type": "object"
       },
-      "apiSimulationJourneyCounts": {
-        "description": "Breakdown of journey outcomes by judge verdict. Reused wherever a\nsuccess / failure / inconclusive tally is reported (run row, result summary,\nper-scenario rollup).",
+      "apiSimulationEpisodeCounts": {
+        "description": "Breakdown of episode outcomes by judge verdict. Reused wherever a\nsuccess / failure / inconclusive tally is reported (run row, result summary,\nper-scenario rollup).",
         "properties": {
           "failure_count": {
-            "description": "Number of journeys with a FAILURE verdict.",
+            "description": "Number of episodes with a FAILURE verdict.",
             "example": 123,
             "format": "int64",
             "type": "integer"
           },
           "inconclusive_count": {
-            "description": "Number of journeys with an INCONCLUSIVE verdict.",
+            "description": "Number of episodes with an INCONCLUSIVE verdict.",
             "example": 123,
             "format": "int64",
             "type": "integer"
           },
           "success_count": {
-            "description": "Number of journeys with a SUCCESS verdict.",
+            "description": "Number of episodes with a SUCCESS verdict.",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93015,7 +93015,7 @@
             "type": "string"
           },
           "verdict_counts": {
-            "$ref": "#/components/schemas/apiSimulationJourneyCounts"
+            "$ref": "#/components/schemas/apiSimulationEpisodeCounts"
           }
         },
         "type": "object"
@@ -93055,7 +93055,7 @@
             "type": "string"
           },
           "exploration_budget": {
-            "description": "Optional run-level journeys-per-scenario override. When set, overrides each scenario's exploration_budget.",
+            "description": "Optional run-level episodes-per-scenario override. When set, overrides each scenario's exploration_budget.",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93065,8 +93065,8 @@
             "example": "example string",
             "type": "string"
           },
-          "journeys_finished": {
-            "description": "Number of journeys that have finished (successfully or not).",
+          "episodes_finished": {
+            "description": "Number of episodes that have finished (successfully or not).",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93114,8 +93114,8 @@
           "status": {
             "$ref": "#/components/schemas/apiSimulationRunStatus"
           },
-          "total_journeys": {
-            "description": "Total number of journeys (sum of exploration budgets).",
+          "total_episodes": {
+            "description": "Total number of episodes (sum of exploration budgets).",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93218,7 +93218,7 @@
             "$ref": "#/components/schemas/apiSimulationEvaluationConfig"
           },
           "exploration_budget": {
-            "description": "Optional run-level journeys-per-scenario override. When set, overrides each scenario's exploration_budget.",
+            "description": "Optional run-level episodes-per-scenario override. When set, overrides each scenario's exploration_budget.",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93266,10 +93266,10 @@
         "type": "object"
       },
       "apiSimulationScenarioResult": {
-        "description": "Per-scenario rollup of journey outcomes within a run, aggregated from the\nrun's journey rows.",
+        "description": "Per-scenario rollup of episode outcomes within a run, aggregated from the\nrun's episode rows.",
         "properties": {
-          "journeys_finished": {
-            "description": "Journeys that have finished (successfully or not).",
+          "episodes_finished": {
+            "description": "Episodes that have finished (successfully or not).",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93279,14 +93279,14 @@
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
-          "total_journeys": {
-            "description": "Total journeys for this scenario (its exploration budget).",
+          "total_episodes": {
+            "description": "Total episodes for this scenario (its exploration budget).",
             "example": 123,
             "format": "int64",
             "type": "integer"
           },
           "verdict_counts": {
-            "$ref": "#/components/schemas/apiSimulationJourneyCounts"
+            "$ref": "#/components/schemas/apiSimulationEpisodeCounts"
           }
         },
         "type": "object"
@@ -93295,7 +93295,7 @@
         "description": "Output for getting a simulation run.",
         "properties": {
           "scenario_results": {
-            "description": "Per-scenario breakdown of journey outcomes, aggregated from journey rows.",
+            "description": "Per-scenario breakdown of episode outcomes, aggregated from episode rows.",
             "items": {
               "$ref": "#/components/schemas/apiSimulationScenarioResult"
             },
@@ -93363,45 +93363,45 @@
         },
         "type": "object"
       },
-      "apiSimulationJourneySortField": {
-        "default": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
-        "description": "Sortable fields for listing simulation journeys.\n\n - SIMULATION_JOURNEY_SORT_FIELD_SCENARIO: Sort by scenario_uuid then journey_index. Default.\n - SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_JOURNEY_SORT_FIELD_STATUS: Sort by journey status using lifecycle order.\n - SIMULATION_JOURNEY_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
+      "apiSimulationEpisodeSortField": {
+        "default": "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
+        "description": "Sortable fields for listing simulation episodes.\n\n - SIMULATION_EPISODE_SORT_FIELD_SCENARIO: Sort by scenario_uuid then episode_index. Default.\n - SIMULATION_EPISODE_SORT_FIELD_CREATED_AT: Sort by creation date.\n - SIMULATION_EPISODE_SORT_FIELD_STATUS: Sort by episode status using lifecycle order.\n - SIMULATION_EPISODE_SORT_FIELD_VERDICT: Sort by verdict (nulls last).",
         "enum": [
-          "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
-          "SIMULATION_JOURNEY_SORT_FIELD_SCENARIO",
-          "SIMULATION_JOURNEY_SORT_FIELD_CREATED_AT",
-          "SIMULATION_JOURNEY_SORT_FIELD_STATUS",
-          "SIMULATION_JOURNEY_SORT_FIELD_VERDICT"
+          "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
+          "SIMULATION_EPISODE_SORT_FIELD_SCENARIO",
+          "SIMULATION_EPISODE_SORT_FIELD_CREATED_AT",
+          "SIMULATION_EPISODE_SORT_FIELD_STATUS",
+          "SIMULATION_EPISODE_SORT_FIELD_VERDICT"
         ],
-        "example": "SIMULATION_JOURNEY_SORT_FIELD_UNSPECIFIED",
+        "example": "SIMULATION_EPISODE_SORT_FIELD_UNSPECIFIED",
         "type": "string"
       },
-      "apiSimulationJourneyStatus": {
-        "default": "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
-        "description": "Lifecycle status of a single journey.\n\n - SIMULATION_JOURNEY_STATUS_RUNNING: The journey is executing and a trajectory is available to retrieve.\n - SIMULATION_JOURNEY_STATUS_FINISHED: The journey reached a stop condition and produced a verdict.\n - SIMULATION_JOURNEY_STATUS_FAILED: The journey failed because of a cancel, timeout, or error.\n - SIMULATION_JOURNEY_STATUS_PREPARING: The journey is allocated but its trajectory is not available yet.",
+      "apiSimulationEpisodeStatus": {
+        "default": "SIMULATION_EPISODE_STATUS_UNSPECIFIED",
+        "description": "Lifecycle status of a single episode.\n\n - SIMULATION_EPISODE_STATUS_RUNNING: The episode is executing and a trajectory is available to retrieve.\n - SIMULATION_EPISODE_STATUS_FINISHED: The episode reached a stop condition and produced a verdict.\n - SIMULATION_EPISODE_STATUS_FAILED: The episode failed because of a cancel, timeout, or error.\n - SIMULATION_EPISODE_STATUS_PREPARING: The episode is allocated but its trajectory is not available yet.",
         "enum": [
-          "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
-          "SIMULATION_JOURNEY_STATUS_RUNNING",
-          "SIMULATION_JOURNEY_STATUS_FINISHED",
-          "SIMULATION_JOURNEY_STATUS_FAILED",
-          "SIMULATION_JOURNEY_STATUS_PREPARING"
+          "SIMULATION_EPISODE_STATUS_UNSPECIFIED",
+          "SIMULATION_EPISODE_STATUS_RUNNING",
+          "SIMULATION_EPISODE_STATUS_FINISHED",
+          "SIMULATION_EPISODE_STATUS_FAILED",
+          "SIMULATION_EPISODE_STATUS_PREPARING"
         ],
-        "example": "SIMULATION_JOURNEY_STATUS_UNSPECIFIED",
+        "example": "SIMULATION_EPISODE_STATUS_UNSPECIFIED",
         "type": "string"
       },
-      "apiSimulationJourneyVerdict": {
-        "default": "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
-        "description": "The judge's verdict for a journey.\n\n - SIMULATION_JOURNEY_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
+      "apiSimulationEpisodeVerdict": {
+        "default": "SIMULATION_EPISODE_VERDICT_UNSPECIFIED",
+        "description": "The judge's verdict for an episode.\n\n - SIMULATION_EPISODE_VERDICT_SUCCESS: The candidate agent satisfied the scenario's stopping criteria.\n - SIMULATION_EPISODE_VERDICT_FAILURE: The candidate agent did not satisfy the stopping criteria.\n - SIMULATION_EPISODE_VERDICT_INCONCLUSIVE: No conclusive verdict (e.g. max_turns reached without the judge finishing).",
         "enum": [
-          "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
-          "SIMULATION_JOURNEY_VERDICT_SUCCESS",
-          "SIMULATION_JOURNEY_VERDICT_FAILURE",
-          "SIMULATION_JOURNEY_VERDICT_INCONCLUSIVE"
+          "SIMULATION_EPISODE_VERDICT_UNSPECIFIED",
+          "SIMULATION_EPISODE_VERDICT_SUCCESS",
+          "SIMULATION_EPISODE_VERDICT_FAILURE",
+          "SIMULATION_EPISODE_VERDICT_INCONCLUSIVE"
         ],
-        "example": "SIMULATION_JOURNEY_VERDICT_UNSPECIFIED",
+        "example": "SIMULATION_EPISODE_VERDICT_UNSPECIFIED",
         "type": "string"
       },
-      "apiSimulationJourney": {
+      "apiSimulationEpisode": {
         "description": "One independent execution within a simulation run, including its trajectory and verdict.",
         "properties": {
           "created_at": {
@@ -93411,7 +93411,7 @@
             "type": "string"
           },
           "duration_sec": {
-            "description": "Wall-clock time taken for the journey to complete, in seconds.",
+            "description": "Wall-clock time taken for the episode to complete, in seconds.",
             "example": "12345",
             "format": "uint64",
             "type": "string"
@@ -93421,14 +93421,14 @@
             "example": "example string",
             "type": "string"
           },
-          "journey_index": {
-            "description": "Zero-based index of this journey within its scenario's exploration budget.",
+          "episode_index": {
+            "description": "Zero-based index of this episode within its scenario's exploration budget.",
             "example": 123,
             "format": "int64",
             "type": "integer"
           },
-          "journey_uuid": {
-            "description": "UUID of the journey.",
+          "episode_uuid": {
+            "description": "UUID of the episode.",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
@@ -93438,38 +93438,38 @@
             "type": "string"
           },
           "run_uuid": {
-            "description": "UUID of the run this journey belongs to.",
+            "description": "UUID of the run this episode belongs to.",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
           "scenario_uuid": {
-            "description": "UUID of the scenario this journey executed.",
+            "description": "UUID of the scenario this episode executed.",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
           "session_id": {
-            "description": "Session identifier for this journey.",
+            "description": "Session identifier for this episode.",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
           "status": {
-            "$ref": "#/components/schemas/apiSimulationJourneyStatus"
+            "$ref": "#/components/schemas/apiSimulationEpisodeStatus"
           },
           "token_usage": {
             "$ref": "#/components/schemas/apiSimulationTokenUsage"
           },
           "trajectory_bucket_name": {
-            "description": "Object storage bucket holding the trajectory JSON. Set when the journey finishes.",
+            "description": "Object storage bucket holding the trajectory JSON. Set when the episode finishes.",
             "example": "example name",
             "type": "string"
           },
           "trajectory_bucket_region": {
-            "description": "Object storage bucket region for the trajectory JSON. Set when the journey finishes.",
+            "description": "Object storage bucket region for the trajectory JSON. Set when the episode finishes.",
             "example": "example string",
             "type": "string"
           },
           "trajectory_spaces_key": {
-            "description": "Object storage key for the trajectory JSON. Set when the journey finishes.",
+            "description": "Object storage key for the trajectory JSON. Set when the episode finishes.",
             "example": "example string",
             "type": "string"
           },
@@ -93480,18 +93480,18 @@
             "type": "string"
           },
           "verdict": {
-            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+            "$ref": "#/components/schemas/apiSimulationEpisodeVerdict"
           }
         },
         "type": "object"
       },
-      "apiListSimulationJourneysOutput": {
-        "description": "Output for listing the journeys within a simulation run.",
+      "apiListSimulationEpisodesOutput": {
+        "description": "Output for listing the episodes within a simulation run.",
         "properties": {
           "available_sort_by": {
             "description": "Sort-by values available for this list request.",
             "items": {
-              "$ref": "#/components/schemas/apiSimulationJourneySortField"
+              "$ref": "#/components/schemas/apiSimulationEpisodeSortField"
             },
             "type": "array"
           },
@@ -93505,21 +93505,21 @@
           "available_statuses": {
             "description": "Statuses available for filtering this list request.",
             "items": {
-              "$ref": "#/components/schemas/apiSimulationJourneyStatus"
+              "$ref": "#/components/schemas/apiSimulationEpisodeStatus"
             },
             "type": "array"
           },
           "available_verdicts": {
             "description": "Verdicts available for filtering this list request.",
             "items": {
-              "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+              "$ref": "#/components/schemas/apiSimulationEpisodeVerdict"
             },
             "type": "array"
           },
-          "journeys": {
-            "description": "The journeys for the current page.",
+          "episodes": {
+            "description": "The episodes for the current page.",
             "items": {
-              "$ref": "#/components/schemas/apiSimulationJourney"
+              "$ref": "#/components/schemas/apiSimulationEpisode"
             },
             "type": "array"
           },
@@ -93532,11 +93532,11 @@
         },
         "type": "object"
       },
-      "apiGetSimulationJourneyOutput": {
-        "description": "Output for getting a single journey.",
+      "apiGetSimulationEpisodeOutput": {
+        "description": "Output for getting a single episode.",
         "properties": {
-          "journey": {
-            "$ref": "#/components/schemas/apiSimulationJourney"
+          "episode": {
+            "$ref": "#/components/schemas/apiSimulationEpisode"
           }
         },
         "type": "object"
@@ -93573,7 +93573,7 @@
             "type": "string"
           },
           "verdict": {
-            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+            "$ref": "#/components/schemas/apiSimulationEpisodeVerdict"
           }
         },
         "type": "object"
@@ -93666,7 +93666,7 @@
       },
       "apiSimulationTrajectoryStatus": {
         "default": "SIMULATION_TRAJECTORY_STATUS_UNSPECIFIED",
-        "description": "Lifecycle status of the trajectory. Distinct from journey status: the\ntrajectory is updated on every turn while the journey is executing.\n\n - SIMULATION_TRAJECTORY_STATUS_RUNNING: The journey loop is in progress; messages may grow on each poll.\n - SIMULATION_TRAJECTORY_STATUS_COMPLETED: The journey reached a stop condition and the trajectory is complete.\n - SIMULATION_TRAJECTORY_STATUS_FAILED: The journey failed before or during execution.\n - SIMULATION_TRAJECTORY_STATUS_CANCELLED: The journey was cancelled.",
+        "description": "Lifecycle status of the trajectory. Distinct from episode status: the\ntrajectory is updated on every turn while the episode is executing.\n\n - SIMULATION_TRAJECTORY_STATUS_RUNNING: The episode loop is in progress; messages may grow on each poll.\n - SIMULATION_TRAJECTORY_STATUS_COMPLETED: The episode reached a stop condition and the trajectory is complete.\n - SIMULATION_TRAJECTORY_STATUS_FAILED: The episode failed before or during execution.\n - SIMULATION_TRAJECTORY_STATUS_CANCELLED: The episode was cancelled.",
         "enum": [
           "SIMULATION_TRAJECTORY_STATUS_UNSPECIFIED",
           "SIMULATION_TRAJECTORY_STATUS_RUNNING",
@@ -93678,10 +93678,10 @@
         "type": "string"
       },
       "apiSimulationTrajectory": {
-        "description": "Turn-by-turn trajectory for one journey. Poll this resource while the journey is running to watch live progress.",
+        "description": "Turn-by-turn trajectory for one episode. Poll this resource while the episode is running to watch live progress.",
         "properties": {
           "agent_id": {
-            "description": "Identifier of the candidate agent under test for this journey.",
+            "description": "Identifier of the candidate agent under test for this episode.",
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
@@ -93705,12 +93705,12 @@
             "example": "example string",
             "type": "string"
           },
-          "journey_index": {
+          "episode_index": {
             "example": 123,
             "format": "int64",
             "type": "integer"
           },
-          "journey_uuid": {
+          "episode_uuid": {
             "example": "123e4567-e89b-12d3-a456-426614174000",
             "type": "string"
           },
@@ -93718,7 +93718,7 @@
             "$ref": "#/components/schemas/apiSimulationTrajectoryJudgeResult"
           },
           "max_turns": {
-            "description": "Turn budget configured for this journey (per-scenario max_turns, after\nany run-level override). Compare with turn_count to see how many of the\nbudgeted turns actually ran.",
+            "description": "Turn budget configured for this episode (per-scenario max_turns, after\nany run-level override). Compare with turn_count to see how many of the\nbudgeted turns actually ran.",
             "example": 123,
             "format": "int64",
             "type": "integer"
@@ -93757,12 +93757,12 @@
             "type": "integer"
           },
           "verdict": {
-            "$ref": "#/components/schemas/apiSimulationJourneyVerdict"
+            "$ref": "#/components/schemas/apiSimulationEpisodeVerdict"
           }
         },
         "type": "object"
       },
-      "apiGetSimulationJourneyTrajectoryOutput": {
+      "apiGetSimulationEpisodeTrajectoryOutput": {
         "description": "Output containing the parsed trajectory JSON.",
         "properties": {
           "trajectory": {
@@ -93771,8 +93771,8 @@
         },
         "type": "object"
       },
-      "apiGetSimulationJourneyTrajectoryURLOutput": {
-        "description": "Output containing a presigned download URL for a journey's trajectory JSON.",
+      "apiGetSimulationEpisodeTrajectoryURLOutput": {
+        "description": "Output containing a presigned download URL for an episode's trajectory JSON.",
         "properties": {
           "download_url": {
             "description": "The presigned URL to download the trajectory JSON file.",
