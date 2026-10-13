@@ -213,7 +213,7 @@
     },
     {
       "name": "Signals",
-      "description": "The DigitalOcean Signals API provides observability for agent\nconversations, such as Harness Runtime conversations and Serverless\nInference chat completions, detecting behavioral signals such as\nuser disengagement, execution failures, and satisfaction indicators.\n\nUse the consent endpoints to manage whether signals collection is\nenabled — per agent for Harness Runtime (`source=agent`) and per team\nfor Serverless Inference chat completions (`source=inference`) — the\nsession endpoints to browse conversations and their detected signals,\nthe export endpoints to create downloadable archives of signals data\nfor offline analysis, and the deletion endpoints to permanently delete\nSignals conversations for an agent or Serverless Inference\nconversations for a whole team (aggregated Insights or metrics\nsummaries may still remain)."
+      "description": "The DigitalOcean Signals API provides observability for environment\nconversations, such as Harness Runtime conversations and Serverless\nInference chat completions, detecting behavioral signals such as\nuser disengagement, execution failures, and satisfaction indicators.\n\nUse the consent endpoints to manage whether signals collection is\nenabled — per environment for Harness Runtime (`source=agent`) and per team\nfor Serverless Inference chat completions (`source=inference`) — the\nsession endpoints to browse conversations and their detected signals,\nthe export endpoints to create downloadable archives of signals data\nfor offline analysis, and the deletion endpoints to permanently delete\nSignals conversations for an environment or Serverless Inference\nconversations for a whole team (aggregated Insights or metrics\nsummaries may still remain)."
     },
     {
       "name": "Sizes",
@@ -22142,7 +22142,7 @@
       "get": {
         "operationId": "signals_list_consents",
         "summary": "List All Consent Records",
-        "description": "To list all signals consent records for your team, send a GET request to\n`/v1/consent`. Each record indicates whether signals collection is enabled\nfor a source: per-agent records (`source: agent`) for Harness Runtime, and\nthe team-level record (`source: inference`) for Serverless Inference chat\ncompletions.\n\nPass `?source=agent` or `?source=inference` to return only that source's\nrecords. When filtered, the response also echoes the `source`.\n",
+        "description": "To list all signals consent records for your team, send a GET request to\n`/v1/consent`. Each record indicates whether signals collection is enabled\nfor a source: per-environment records (`source: agent`) for Harness Runtime, and\nthe team-level record (`source: inference`) for Serverless Inference chat\ncompletions.\n\nPass `?source=agent` or `?source=inference` to return only that source's\nrecords. When filtered, the response also echoes the `source`.\n",
         "tags": [
           "Signals"
         ],
@@ -22188,7 +22188,7 @@
       "put": {
         "operationId": "signals_update_team_consent",
         "summary": "Update Team-Level Consent",
-        "description": "To enable or disable signals collection for a source that is consented at\nthe team level, send a PUT request to `/v1/consent?source=inference` with\nan `enabled` boolean in the request body. Currently the only team-level\nsource is `inference`, which covers Serverless Inference chat completions\nmade by your team.\n\nTo revoke consent, send the same request with `enabled` set to `false`.\nThe `source` query parameter is required. Per-agent consent for Harness\nRuntime agents is managed with `PUT /v1/consent/{agent_id}` instead.\n",
+        "description": "To enable or disable signals collection for a source that is consented at\nthe team level, send a PUT request to `/v1/consent?source=inference` with\nan `enabled` boolean in the request body. Currently the only team-level\nsource is `inference`, which covers Serverless Inference chat completions\nmade by your team.\n\nTo revoke consent, send the same request with `enabled` set to `false`.\nThe `source` query parameter is required. Per-environment consent for Harness\nRuntime environments is managed with `PUT /v1/consent/{agent_id}` instead.\n",
         "tags": [
           "Signals"
         ],
@@ -22257,8 +22257,8 @@
     "/v1/consent/{agent_id}": {
       "get": {
         "operationId": "signals_get_consent",
-        "summary": "Retrieve Consent for an Agent",
-        "description": "To retrieve the consent record for a specific agent, send a GET\nrequest to `/v1/consent/{agent_id}`. The response includes an `enabled`\nfield indicating whether signals collection is on for this agent.\n\nThis endpoint only serves per-agent (`source: agent`) records. Team-level\ninference consent is read from `GET /v1/consent?source=inference`.\n",
+        "summary": "Retrieve Consent for an Environment",
+        "description": "To retrieve the consent record for a specific environment, send a GET\nrequest to `/v1/consent/{agent_id}`. The response includes an `enabled`\nfield indicating whether signals collection is on for this environment.\n\nThis endpoint only serves per-environment (`source: agent`) records. Team-level\ninference consent is read from `GET /v1/consent?source=inference`.\n",
         "tags": [
           "Signals"
         ],
@@ -22306,8 +22306,8 @@
       },
       "put": {
         "operationId": "signals_update_consent",
-        "summary": "Update Consent for an Agent",
-        "description": "To enable or disable signals collection for a specific agent, send a\nPUT request to `/v1/consent/{agent_id}` with an `enabled` boolean in the\nrequest body.\n\nThis endpoint only manages per-agent (`source: agent`) consent. To manage\nteam-level consent for Serverless Inference, use\n`PUT /v1/consent?source=inference` instead.\n",
+        "summary": "Update Consent for an Environment",
+        "description": "To enable or disable signals collection for a specific environment, send a\nPUT request to `/v1/consent/{agent_id}` with an `enabled` boolean in the\nrequest body.\n\nThis endpoint only manages per-environment (`source: agent`) consent. To manage\nteam-level consent for Serverless Inference, use\n`PUT /v1/consent?source=inference` instead.\n",
         "tags": [
           "Signals"
         ],
@@ -22325,7 +22325,7 @@
                 "properties": {
                   "enabled": {
                     "type": "boolean",
-                    "description": "Whether to enable signals collection for this agent."
+                    "description": "Whether to enable signals collection for this environment."
                   }
                 },
                 "required": [
@@ -22379,8 +22379,8 @@
     "/v1/signals/agents/{agent_id}/sessions": {
       "get": {
         "operationId": "signals_list_agent_sessions",
-        "summary": "List Sessions for an Agent",
-        "description": "To list signals sessions for a specific agent, send a GET request to\n`/v1/signals/agents/{agent_id}/sessions`. Results are paginated using cursor-based\npagination with `limit` and `after` parameters.\n",
+        "summary": "List Sessions for an Environment",
+        "description": "To list signals sessions for a specific environment, send a GET request to\n`/v1/signals/agents/{agent_id}/sessions`. Results are paginated using cursor-based\npagination with `limit` and `after` parameters.\n",
         "tags": [
           "Signals"
         ],
@@ -22443,7 +22443,7 @@
       "get": {
         "operationId": "signals_list_session_dialogues",
         "summary": "List Dialogues for a Session",
-        "description": "To list the dialogue turns within a specific session, send a GET request to\n`/v1/signals/sessions/{session_id}/dialogues`. Each dialogue represents a\nsingle turn of conversation between a user and the agent, along with\nany signals detected. Results are paginated using cursor-based pagination.\n",
+        "description": "To list the dialogue turns within a specific session, send a GET request to\n`/v1/signals/sessions/{session_id}/dialogues`. Each dialogue represents a\nsingle turn of conversation between a user and the environment, along with\nany signals detected. Results are paginated using cursor-based pagination.\n",
         "tags": [
           "Signals"
         ],
@@ -22552,7 +22552,7 @@
       "post": {
         "operationId": "signals_create_export",
         "summary": "Create an Export Job",
-        "description": "To create a new signals data export, send a POST request to\n`/v1/signals/exports` with an `agent_id` in the request body. You may\noptionally filter the export by `signal_type`, `session_ids`, `start_time`,\nand `end_time`. Use the export options endpoint to discover available signal\ntypes.\n\nThe export job runs asynchronously. Poll the get export endpoint to check\nits status. When complete, use the download endpoint to retrieve a\npre-signed URL.\n",
+        "description": "To create a new signals data export, send a POST request to\n`/v1/signals/exports`. To export one Harness Runtime environment, include its\n`agent_id` (`type` defaults to `agent`). To export the team's Serverless\nInference Signals conversations, set `type` to `inference` and omit\n`agent_id`. You may optionally filter the export by `signal_type`,\n`session_ids`, `start_time`, and `end_time`. Use the export options endpoint\nto discover available signal types.\n\nThe export job runs asynchronously. Poll the get export endpoint to check\nits status. When complete, use the download endpoint to retrieve a\npre-signed URL.\n",
         "tags": [
           "Signals"
         ],
@@ -22563,11 +22563,25 @@
               "schema": {
                 "$ref": "#/components/schemas/create_export_request"
               },
-              "example": {
-                "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
-                "signal_type": [
-                  "ExecutionFailureToolNotFound"
-                ]
+              "examples": {
+                "agent": {
+                  "summary": "Export one Harness Runtime environment",
+                  "value": {
+                    "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
+                    "signal_type": [
+                      "ExecutionFailureToolNotFound"
+                    ]
+                  }
+                },
+                "inference": {
+                  "summary": "Export the team's Serverless Inference Signals",
+                  "value": {
+                    "type": "inference",
+                    "signal_type": [
+                      "MisalignmentCorrection"
+                    ]
+                  }
+                }
               }
             }
           }
@@ -22598,7 +22612,7 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"agent_id\":\"01a0f3d5-b58d-7c99-a743-7ca0397b7f5d\",\"signal_type\":[\"ExecutionFailureToolNotFound\"]}' \\\n  \"https://api.digitalocean.com/v1/signals/exports\""
+            "source": "# Export one Harness Runtime environment\ncurl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"agent_id\":\"01a0f3d5-b58d-7c99-a743-7ca0397b7f5d\",\"signal_type\":[\"ExecutionFailureToolNotFound\"]}' \\\n  \"https://api.digitalocean.com/v1/signals/exports\"\n\n# Export the team's Serverless Inference Signals (no agent_id)\ncurl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"type\":\"inference\",\"signal_type\":[\"MisalignmentCorrection\"]}' \\\n  \"https://api.digitalocean.com/v1/signals/exports\""
           }
         ],
         "security": [
@@ -22799,7 +22813,7 @@
       "post": {
         "operationId": "signals_create_deletion",
         "summary": "Create a Data Deletion Job",
-        "description": "To permanently delete Signals conversation data, send a POST request to\n`/v1/signals/deletions`. Deletion cannot be undone.\n\nTwo deletion types are supported:\n\n- `agent` — deletes Signals conversations for one Harness Runtime agent and\n  turns off collection for that agent. Requires `agent_id`, which is the\n  agent's Environment Config ID (the agent UUID). On create, matching\n  conversations are hidden from Signals reads immediately. Wait until the\n  job is `complete` before enabling Signals for the agent again.\n- `inference` — deletes Serverless Inference Signals conversations for your\n  whole team (team-wide; not limited to one endpoint or model) that were\n  collected at or before the deletion request, and turns off team inference\n  collection (`source=inference`). Do not send `agent_id`. On create,\n  matching conversations are hidden from Signals reads immediately.\n\nThe job runs asynchronously; poll the get endpoint until `status` is\n`complete` or `failed`. DigitalOcean may retry transient processing errors\nwhile a job is still active. If a job ends as `failed`, matching\nconversations stay hidden and collection stays off; send the same create\nrequest again to retry. Earlier export files are not deleted and remain\navailable until they expire.\n\nNote: Deletion removes Signals conversation data for the requested scope.\nAggregated Insights or metrics charts may still show historical summary\ndatapoints after deletion. Those summaries are not the same as recoverable\nconversation content.\n\nThe endpoint is idempotent: if a queued or running job already exists for\nthe same target, it is returned with `200 OK`. A new job returns\n`202 Accepted`. Each team can have a limited number of active jobs;\nrequests beyond that limit return `429 Too Many Requests`.\n",
+        "description": "To permanently delete Signals conversation data, send a POST request to\n`/v1/signals/deletions`. Deletion cannot be undone.\n\nTwo deletion types are supported:\n\n- `agent` — deletes Signals conversations for one Harness Runtime environment and\n  turns off collection for that environment. Requires `agent_id`, which is the\n  environment's Environment Config ID (the environment's `agent_id`). On create, matching\n  conversations are hidden from Signals reads immediately. Wait until the\n  job is `complete` before enabling Signals for the environment again.\n- `inference` — deletes Serverless Inference Signals conversations for your\n  whole team (team-wide; not limited to one endpoint or model) that were\n  collected at or before the deletion request, and turns off team inference\n  collection (`source=inference`). Do not send `agent_id`. On create,\n  matching conversations are hidden from Signals reads immediately.\n\nThe job runs asynchronously; poll the get endpoint until `status` is\n`complete` or `failed`. DigitalOcean may retry transient processing errors\nwhile a job is still active. If a job ends as `failed`, matching\nconversations stay hidden and collection stays off; send the same create\nrequest again to retry. Earlier export files are not deleted and remain\navailable until they expire.\n\nNote: Deletion removes Signals conversation data for the requested scope.\nAggregated Insights or metrics charts may still show historical summary\ndatapoints after deletion. Those summaries are not the same as recoverable\nconversation content.\n\nThe endpoint is idempotent: if a queued or running job already exists for\nthe same target, it is returned with `200 OK`. A new job returns\n`202 Accepted`. Each team can have a limited number of active jobs;\nrequests beyond that limit return `429 Too Many Requests`.\n",
         "tags": [
           "Signals"
         ],
@@ -56158,7 +56172,7 @@
       "source": {
         "in": "query",
         "name": "source",
-        "description": "Filter consent records by source. `agent` returns per-agent records (Harness Runtime); `inference` returns the team-level record for Serverless Inference chat completions. When omitted, records for all sources are returned.",
+        "description": "Filter consent records by source. `agent` returns per-environment records (Harness Runtime); `inference` returns the team-level record for Serverless Inference chat completions. When omitted, records for all sources are returned.",
         "required": false,
         "schema": {
           "type": "string",
@@ -56172,7 +56186,7 @@
       "source_required": {
         "in": "query",
         "name": "source",
-        "description": "The consent source to update. Only team-level sources are accepted on this endpoint; currently `inference` (Serverless Inference chat completions). Per-agent consent (`agent`) is managed with `PUT /v1/consent/{agent_id}` instead.",
+        "description": "The consent source to update. Only team-level sources are accepted on this endpoint; currently `inference` (Serverless Inference chat completions). Per-environment consent (`agent`) is managed with `PUT /v1/consent/{agent_id}` instead.",
         "required": true,
         "schema": {
           "type": "string",
@@ -56185,7 +56199,7 @@
       "agent_id": {
         "in": "path",
         "name": "agent_id",
-        "description": "A unique identifier for an agent. For Harness Runtime, this is the Environment Config ID.",
+        "description": "A unique identifier for an environment. For Harness Runtime, this is the Environment Config ID.",
         "required": true,
         "schema": {
           "type": "string",
@@ -75478,7 +75492,7 @@
       },
       "consent_record": {
         "type": "object",
-        "description": "A consent record indicating whether signals collection is enabled for a source. Records with `source: agent` apply to one agent; the record with `source: inference` applies to the whole team.",
+        "description": "A consent record indicating whether signals collection is enabled for a source. Records with `source: agent` apply to one environment; the record with `source: inference` applies to the whole team.",
         "properties": {
           "id": {
             "type": "integer",
@@ -75496,12 +75510,12 @@
               "agent",
               "inference"
             ],
-            "description": "The source this consent applies to. `agent` is per-agent consent for Harness Runtime; `inference` is team-level consent for Serverless Inference chat completions.",
+            "description": "The source this consent applies to. `agent` is per-environment consent for Harness Runtime; `inference` is team-level consent for Serverless Inference chat completions.",
             "example": "agent"
           },
           "agent_id": {
             "type": "string",
-            "description": "The unique identifier of the agent. For Harness Runtime, this is the Environment Config ID. Empty for team-level records (`source: inference`), which are not tied to an agent.",
+            "description": "The unique identifier of the environment. For Harness Runtime, this is the Environment Config ID. Empty for team-level records (`source: inference`), which are not tied to an environment.",
             "example": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99"
           },
           "enabled": {
@@ -75531,7 +75545,7 @@
         "properties": {
           "consents": {
             "type": "array",
-            "description": "A list of consent records for the team. Includes per-agent records (`source: agent`) and, when set, the team-level inference record (`source: inference`).",
+            "description": "A list of consent records for the team. Includes per-environment records (`source: agent`) and, when set, the team-level inference record (`source: inference`).",
             "items": {
               "$ref": "#/components/schemas/consent_record"
             }
@@ -75552,7 +75566,7 @@
       },
       "agent_consent": {
         "type": "object",
-        "description": "Consent details for a specific agent.",
+        "description": "Consent details for a specific environment.",
         "properties": {
           "id": {
             "type": "integer",
@@ -75569,18 +75583,18 @@
             "enum": [
               "agent"
             ],
-            "description": "The source this consent applies to. Always `agent` for per-agent records returned by this endpoint.",
+            "description": "The source this consent applies to. Always `agent` for per-environment records returned by this endpoint.",
             "example": "agent"
           },
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The unique identifier of the agent. For Harness Runtime, this is the Environment Config ID.",
+            "description": "The unique identifier of the environment. For Harness Runtime, this is the Environment Config ID.",
             "example": "019fb3d2-8a56-72cc-8bf9-9d21510b2a99"
           },
           "enabled": {
             "type": "boolean",
-            "description": "Whether signals collection is enabled for this agent.",
+            "description": "Whether signals collection is enabled for this environment.",
             "example": true
           },
           "updated_at": {
@@ -75599,7 +75613,7 @@
       },
       "session-2": {
         "type": "object",
-        "description": "A session represents a conversation monitored by Signals, such as a Harness Runtime agent session or a Serverless Inference chat completion.",
+        "description": "A session represents a conversation monitored by Signals, such as a Harness Runtime environment session or a Serverless Inference chat completion.",
         "properties": {
           "session_id": {
             "type": "string",
@@ -75682,10 +75696,19 @@
             "description": "The unique identifier for the export job.",
             "example": "9f13c09c-c877-436b-9863-dcc39c9dd737"
           },
+          "type": {
+            "type": "string",
+            "description": "The scope of the export. `agent` covers one Harness Runtime environment; `inference` covers the team's Serverless Inference Signals conversations.",
+            "enum": [
+              "agent",
+              "inference"
+            ],
+            "example": "agent"
+          },
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The agent whose data is being exported. For Harness Runtime, this is the Environment Config ID.",
+            "description": "The environment whose data is being exported. For Harness Runtime, this is the Environment Config ID. Not meaningful for `inference` exports; use `type` to distinguish the export scope.",
             "example": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d"
           },
           "status": {
@@ -75760,10 +75783,19 @@
         "type": "object",
         "description": "Request body to create a new signals data export.",
         "properties": {
+          "type": {
+            "type": "string",
+            "description": "The scope of the export. `agent` exports Signals conversations for one Harness Runtime environment and requires `agent_id`. `inference` exports Serverless Inference Signals conversations for the whole team (team-wide; omit `agent_id`). Defaults to `agent` when `agent_id` is provided and to `inference` when it is omitted.",
+            "enum": [
+              "agent",
+              "inference"
+            ],
+            "example": "agent"
+          },
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The agent whose data should be exported. For Harness Runtime, this is the Environment Config ID.",
+            "description": "The environment whose data should be exported. For Harness Runtime, this is the Environment Config ID. Required when `type` is `agent`; must be omitted when `type` is `inference`.",
             "example": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d"
           },
           "signal_type": {
@@ -75799,10 +75831,7 @@
             "description": "Include only sessions that started at or before this timestamp.",
             "example": "2026-10-01T00:00:00Z"
           }
-        },
-        "required": [
-          "agent_id"
-        ]
+        }
       },
       "export_options": {
         "type": "object",
@@ -75865,7 +75894,7 @@
       },
       "deletion_job": {
         "type": "object",
-        "description": "A deletion job that permanently removes Signals conversations for one Harness Runtime agent, or Serverless Inference Signals conversations for a whole team. Aggregated Insights or metrics summaries may still remain.",
+        "description": "A deletion job that permanently removes Signals conversations for one Harness Runtime environment, or Serverless Inference Signals conversations for a whole team. Aggregated Insights or metrics summaries may still remain.",
         "properties": {
           "team_id": {
             "type": "integer",
@@ -75880,7 +75909,7 @@
           },
           "type": {
             "type": "string",
-            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime agent. `inference` deletes Serverless Inference Signals conversations for the whole team.",
+            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime environment. `inference` deletes Serverless Inference Signals conversations for the whole team.",
             "enum": [
               "agent",
               "inference"
@@ -75945,7 +75974,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime agent and requires `agent_id`. `inference` deletes Serverless Inference Signals conversations for the whole team (team-wide; omit `agent_id`).",
+            "description": "The scope of the deletion. `agent` deletes Signals conversations for one Harness Runtime environment and requires `agent_id`. `inference` deletes Serverless Inference Signals conversations for the whole team (team-wide; omit `agent_id`).",
             "enum": [
               "agent",
               "inference"
@@ -75961,7 +75990,7 @@
           "agent_id": {
             "type": "string",
             "format": "uuid",
-            "description": "The Harness Runtime Environment Config ID of the agent whose conversations should be deleted. This is the agent UUID (`agent_id`). Required when `type` is `agent`; must be omitted when `type` is `inference`.",
+            "description": "The Harness Runtime Environment Config ID of the environment whose conversations should be deleted. This is the environment's `agent_id`. Required when `type` is `agent`; must be omitted when `type` is `inference`.",
             "example": "01a10d3f-2c09-764f-99f8-458e521627f3"
           }
         },
@@ -106363,7 +106392,7 @@
         }
       },
       "agent_consent_response": {
-        "description": "A single agent consent record.",
+        "description": "A single environment consent record.",
         "headers": {
           "ratelimit-limit": {
             "$ref": "#/components/headers/ratelimit-limit"
@@ -106613,6 +106642,7 @@
                   "cursor": "eyJ0ZWFtX2lkIjozOTQ0OTk0Nn0=",
                   "node": {
                     "export_id": "9f13c09c-c877-436b-9863-dcc39c9dd737",
+                    "type": "agent",
                     "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
                     "status": "complete",
                     "filters": {
@@ -106657,6 +106687,7 @@
             },
             "example": {
               "export_id": "9f13c09c-c877-436b-9863-dcc39c9dd737",
+              "type": "agent",
               "agent_id": "01a0f3d5-b58d-7c99-a743-7ca0397b7f5d",
               "status": "complete",
               "filters": {
