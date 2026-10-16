@@ -31037,19 +31037,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\": \"prod-cluster-01\",\"region\": \"nyc1\",\"version\": \"1.14.1-do.4\",\"vpc_uuid\": \"c33931f2-a26a-4e61-b85c-4e95a2ec431b\",\"worker_subnet_uuid\": \"cbd79771-23eb-49be-b5ea-59cc56222622\",\"isolated_workers\": false,\"tags\": [\"production\",\"web-team\"],\"node_pools\": [{\"size\": \"s-1vcpu-2gb\",\"count\": 3,\"name\": \"frontend-pool\",\"tags\": [\"frontend\"],\"labels\": {\"service\": \"frontend\", \"priority\": \"high\"}},{\"size\": \"c-4\",\"count\": 2,\"name\": \"backend-pool\"}]}' \\\n  \"https://api.digitalocean.com/v2/kubernetes/clusters\""
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\": \"prod-cluster-01\",\"region\": \"nyc1\",\"version\": \"1.14.1-do.4\",\"vpc_uuid\": \"c33931f2-a26a-4e61-b85c-4e95a2ec431b\",\"worker_subnet_uuid\": \"cbd79771-23eb-49be-b5ea-59cc56222622\",\"isolated_workers\": false,\"gpu_operator_ready\": false,\"tags\": [\"production\",\"web-team\"],\"node_pools\": [{\"size\": \"s-1vcpu-2gb\",\"count\": 3,\"name\": \"frontend-pool\",\"tags\": [\"frontend\"],\"labels\": {\"service\": \"frontend\", \"priority\": \"high\"}},{\"size\": \"c-4\",\"count\": 2,\"name\": \"backend-pool\"}]}' \\\n  \"https://api.digitalocean.com/v2/kubernetes/clusters\""
           },
           {
             "lang": "Go",
-            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    createRequest := &godo.KubernetesClusterCreateRequest{\n        Name:        \"prod-cluster-01\",\n        RegionSlug:  \"nyc1\",\n        VersionSlug: \"1.14.1-do.4\",\n        IsolatedWorkers: false,\n        Tags:        []string{\"production\", \"web-team\"},\n        NodePools: []*godo.KubernetesNodePoolCreateRequest{\n            &godo.KubernetesNodePoolCreateRequest{\n                Name:  \"frontend-pool\",\n                Size:  \"s-2vcpu-2gb\",\n                Count: 3,\n                Tags:  []string{\"frontend\"},\n                Labels:  map[string]string{\"service\": \"frontend\", \"priority\": \"high\"},\n            },\n            &godo.KubernetesNodePoolCreateRequest{\n                Name:  \"backend-pool\",\n                Size:  \"c-4\",\n                Count: 2,\n            },\n        },\n    }\n\n    cluster, _, err := client.Kubernetes.Create(ctx, createRequest)\n}"
+            "source": "import (\n    \"context\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    token := os.Getenv(\"DIGITALOCEAN_TOKEN\")\n\n    client := godo.NewFromToken(token)\n    ctx := context.TODO()\n\n    createRequest := &godo.KubernetesClusterCreateRequest{\n        Name:        \"prod-cluster-01\",\n        RegionSlug:  \"nyc1\",\n        VersionSlug: \"1.14.1-do.4\",\n        IsolatedWorkers: false,\n        GPUOperatorReady: false,\n        Tags:        []string{\"production\", \"web-team\"},\n        NodePools: []*godo.KubernetesNodePoolCreateRequest{\n            &godo.KubernetesNodePoolCreateRequest{\n                Name:  \"frontend-pool\",\n                Size:  \"s-2vcpu-2gb\",\n                Count: 3,\n                Tags:  []string{\"frontend\"},\n                Labels:  map[string]string{\"service\": \"frontend\", \"priority\": \"high\"},\n            },\n            &godo.KubernetesNodePoolCreateRequest{\n                Name:  \"backend-pool\",\n                Size:  \"c-4\",\n                Count: 2,\n            },\n        },\n    }\n\n    cluster, _, err := client.Kubernetes.Create(ctx, createRequest)\n}"
           },
           {
             "lang": "Ruby",
-            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ncluster = DropletKit::KubernetesCluster.new(\n  name: 'prod-cluster-01',\n  region: 'nyc1',\n  version: '1.14.1-do.4',\n  isolated_workers: false,\n  tags: ['production', 'web-team'],\n  node_pools: [\n    {\n      name: 'frontend-pool',\n      size: 's-2vcpu-2gb',\n      count: 3,\n      tags: ['frontend'],\n      labels: {service: 'frontend', priority: 'high'}\n    },\n    {\n      name: 'backend-pool',\n      size: 'c-4',\n      count: 2\n    }\n  ]\n)\n\nclient.kubernetes_clusters.create(cluster)"
+            "source": "require 'droplet_kit'\ntoken = ENV['DIGITALOCEAN_TOKEN']\nclient = DropletKit::Client.new(access_token: token)\n\ncluster = DropletKit::KubernetesCluster.new(\n  name: 'prod-cluster-01',\n  region: 'nyc1',\n  version: '1.14.1-do.4',\n  isolated_workers: false,\n  gpu_operator_ready: false,\n  tags: ['production', 'web-team'],\n  node_pools: [\n    {\n      name: 'frontend-pool',\n      size: 's-2vcpu-2gb',\n      count: 3,\n      tags: ['frontend'],\n      labels: {service: 'frontend', priority: 'high'}\n    },\n    {\n      name: 'backend-pool',\n      size: 'c-4',\n      count: 2\n    }\n  ]\n)\n\nclient.kubernetes_clusters.create(cluster)"
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"prod-cluster-01\",\n  \"region\": \"nyc1\",\n  \"version\": \"1.18.6-do.0\",\n  \"isolated_workers\": False,\n  \"node_pools\": [\n    {\n      \"size\": \"s-1vcpu-2gb\",\n      \"count\": 3,\n      \"name\": \"worker-pool\"\n    }\n  ]\n}\n\nresp = client.kubernetes.create_cluster(body=req)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nreq = {\n  \"name\": \"prod-cluster-01\",\n  \"region\": \"nyc1\",\n  \"version\": \"1.18.6-do.0\",\n  \"isolated_workers\": False,\n  \"gpu_operator_ready\": False,\n  \"node_pools\": [\n    {\n      \"size\": \"s-1vcpu-2gb\",\n      \"count\": 3,\n      \"name\": \"worker-pool\"\n    }\n  ]\n}\n\nresp = client.kubernetes.create_cluster(body=req)"
           }
         ],
         "security": [
@@ -61022,6 +61022,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.chat.completions.create(\n    model=\"llama3.3-70b-instruct\",\n    messages=[\n        {\"role\": \"user\", \"content\": \"What is the capital of Portugal?\"},\n    ],\n)\n\nprint(resp.choices[0].message.content)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    completion, _, err := client.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"llama3.3-70b-instruct\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessage(\"What is the capital of Portugal?\"),\n        },\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(*msg)\n    }\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst completion = await client.chat.completions.create({\n    model: \"llama3.3-70b-instruct\",\n    messages: [\n        { role: \"user\", content: \"What is the capital of Portugal?\" },\n    ],\n});\n\nconsole.log(completion.choices[0].message.content);"
           }
@@ -61129,6 +61133,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.messages.create(\n    model=\"claude-opus-4-6\",\n    max_tokens=1024,\n    messages=[\n        {\"role\": \"user\", \"content\": \"What is the capital of Portugal?\"},\n    ],\n)\n\nprint(resp.content[0].text)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"encoding/json\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    content, err := json.Marshal(\"What is the capital of Portugal?\")\n    if err != nil {\n        panic(err)\n    }\n\n    msg, _, err := client.Messages.New(ctx, &godo.MessageNewParams{\n        Model:     \"claude-opus-4-6\",\n        MaxTokens: 1024,\n        Messages: []godo.MessageParam{\n            {Role: \"user\", Content: content},\n        },\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    for _, block := range msg.Content {\n        if block.Type == \"text\" {\n            fmt.Println(block.Text)\n        }\n    }\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst resp = await client.messages.create({\n    model: \"claude-opus-4-6\",\n    max_tokens: 1024,\n    messages: [\n        { role: \"user\", content: \"What is the capital of Portugal?\" },\n    ],\n});\n\nconsole.log(resp.content[0].text);"
           }
@@ -61208,6 +61216,10 @@
           {
             "lang": "Python",
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.embeddings.create(\n    model=\"qwen3-embedding-0.6b\",\n    input=[\"hello world\", \"goodbye world\"],\n    encoding_format=\"float\",\n    user=\"user-1234\",\n)\n\nfor item in resp.data:\n    print(item.index, item.embedding[:8])"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"encoding/json\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Embeddings.New(ctx, &godo.EmbeddingNewParams{\n        Model:          \"qwen3-embedding-0.6b\",\n        Input:          []string{\"hello world\", \"goodbye world\"},\n        EncodingFormat: \"float\",\n        User:           \"user-1234\",\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    for _, item := range resp.Data {\n        var vec []float32\n        if err := json.Unmarshal(item.Embedding, &vec); err != nil {\n            panic(err)\n        }\n        head := vec\n        if len(head) > 8 {\n            head = head[:8]\n        }\n        fmt.Println(item.Index, head)\n    }\n}"
           },
           {
             "lang": "JavaScript",
@@ -61314,6 +61326,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(\n    token=os.environ.get(\"AGENT_ACCESS_KEY\"),\n    agent_endpoint=os.environ.get(\"AGENT_ENDPOINT\"),\n)\n\nresp = client.agent.chat.completions.create(\n    model=\"llama3.3-70b-instruct\",\n    messages=[\n        {\"role\": \"user\", \"content\": \"What is the capital of Portugal?\"},\n    ],\n)\n\nprint(resp.choices[0].message.content)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    agent, err := godo.NewAgentInferenceClient(\n        os.Getenv(\"AGENT_ENDPOINT\"),\n        os.Getenv(\"AGENT_ACCESS_KEY\"),\n    )\n    if err != nil {\n        panic(err)\n    }\n\n    ctx := context.Background()\n\n    completion, _, err := agent.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"llama3.3-70b-instruct\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessage(\"What is the capital of Portugal?\"),\n        },\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(*msg)\n    }\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.AGENT_ACCESS_KEY,\n    baseURL: `https://${process.env.AGENT_URL}/api`,\n});\n\nconst completion = await client.chat.completions.create({\n    model: \"llama3.3-70b-instruct\",\n    messages: [\n        { role: \"user\", content: \"What is the capital of Portugal?\" },\n    ],\n});\n\nconsole.log(completion.choices[0].message.content);"
           }
@@ -61399,6 +61415,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.images.generate(\n    model=\"openai-gpt-image-1\",\n    prompt=\"A cute baby sea otter floating on its back in calm blue water\",\n    size=\"auto\",\n    quality=\"auto\",\n    n=1,\n)\n\nprint(resp.data[0].b64_json)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.ImageGenerations.Generate(ctx, &godo.ImageGenerateParams{\n        Model:   \"openai-gpt-image-1\",\n        Prompt:  \"A cute baby sea otter floating on its back in calm blue water\",\n        Size:    godo.PtrTo(\"auto\"),\n        Quality: godo.PtrTo(\"auto\"),\n        N:       1,\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.Data[0].B64JSON)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst resp = await client.images.generate({\n    model: \"openai-gpt-image-1\",\n    prompt: \"A cute baby sea otter floating on its back in calm blue water\",\n    size: \"auto\",\n    quality: \"auto\",\n    n: 1,\n});\n\nconsole.log(resp.data[0].b64_json);"
           }
@@ -61467,6 +61487,10 @@
           {
             "lang": "Python",
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.models.list()\n\nfor model in resp.data:\n    print(model.id)"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    page, _, err := client.Models.List(ctx)\n    if err != nil {\n        panic(err)\n    }\n\n    for _, model := range page.Data {\n        fmt.Println(model.ID)\n    }\n}"
           },
           {
             "lang": "JavaScript",
@@ -61694,6 +61718,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.responses.create(\n    model=\"openai-gpt-oss-20b\",\n    input=\"What is the capital of France?\",\n    max_output_tokens=50,\n    temperature=0.7,\n)\n\nprint(resp.output[0].content[0].text)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model:           \"openai-gpt-oss-20b\",\n        Input:           \"What is the capital of France?\",\n        MaxOutputTokens: godo.PtrTo(50),\n        Temperature:     godo.PtrTo(0.7),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst resp = await client.responses.create({\n    model: \"openai-gpt-oss-20b\",\n    input: \"What is the capital of France?\",\n    max_output_tokens: 50,\n    temperature: 0.7,\n});\n\nconsole.log(resp.output_text);"
           }
@@ -61834,6 +61862,10 @@
             "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\n# Image Generation\nresp = client.async_images.generate(\n    model_id=\"fal-ai/flux/schnell\",\n    prompt=\"A futuristic city at sunset\",\n)\nprint(resp.request_id, resp.status)\n\n# Audio Generation\nresp = client.audio.generate(\n    model_id=\"fal-ai/stable-audio-25/text-to-audio\",\n    prompt=\"Techno song with futuristic sounds\",\n    seconds_total=60,\n)\nprint(resp.request_id, resp.status)\n\n# Text-to-Speech\nresp = client.audio.speech.create(\n    input=\"This text-to-speech example uses DigitalOcean multilingual voice.\",\n    model_id=\"fal-ai/elevenlabs/tts/multilingual-v2\",\n)\nprint(resp.request_id, resp.status)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    // Async invoke uses model_id + a free-form input map. Shape of input\n    // depends on the model (image, audio, TTS, and so on).\n    invocation, _, err := client.AsyncInvocations.New(ctx, &godo.AsyncInvocationNewParams{\n        ModelID: \"fal-ai/flux/schnell\",\n        Input: map[string]interface{}{\n            \"prompt\": \"A futuristic city at sunset\",\n        },\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(invocation.RequestID, invocation.Status)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\n// Image Generation\nconst imgResp = await client.async_images.generate({\n    model_id: \"fal-ai/flux/schnell\",\n    prompt: \"A futuristic city at sunset\",\n});\nconsole.log(imgResp.request_id, imgResp.status);\n\n// Audio Generation\nconst audioResp = await client.audio.generate({\n    model_id: \"fal-ai/stable-audio-25/text-to-audio\",\n    prompt: \"Techno song with futuristic sounds\",\n    seconds_total: 60,\n});\nconsole.log(audioResp.request_id, audioResp.status);\n\n// Text-to-Speech\nconst ttsResp = await client.audio.speech.create({\n    model_id: \"fal-ai/elevenlabs/tts/multilingual-v2\",\n    input: \"This text-to-speech example uses DigitalOcean multilingual voice.\",\n});\nconsole.log(ttsResp.request_id, ttsResp.status);"
           }
@@ -61931,6 +61963,10 @@
             "source": "import json\nimport os\nfrom pathlib import Path\n\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\ninput_path = Path(\"batch_requests.jsonl\")\nrequests = [\n    {\n        \"custom_id\": \"q-1\",\n        \"method\": \"POST\",\n        \"url\": \"/v1/chat/completions\",\n        \"body\": {\n            \"model\": \"llama3.3-70b-instruct\",\n            \"messages\": [\n                {\"role\": \"user\", \"content\": \"One fun fact about octopuses.\"}\n            ],\n            \"max_tokens\": 128,\n        },\n    },\n    {\n        \"custom_id\": \"q-2\",\n        \"method\": \"POST\",\n        \"url\": \"/v1/chat/completions\",\n        \"body\": {\n            \"model\": \"llama3.3-70b-instruct\",\n            \"messages\": [\n                {\"role\": \"user\", \"content\": \"One fun fact about sharks.\"}\n            ],\n            \"max_tokens\": 128,\n        },\n    },\n]\ninput_path.write_text(\"\\n\".join(json.dumps(r) for r in requests) + \"\\n\")\n\nuploaded = client.files.create(file=input_path, purpose=\"batch\")\n\nprint(\"file_id: \", uploaded.file_id)\nprint(\"filename:\", uploaded.filename)\nprint(\"bytes:   \", uploaded.bytes)"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    intent, _, err := client.BatchInference.CreatePresignedUploadURL(ctx, &godo.CreateBatchFileRequest{\n        FileName: \"batch_requests.jsonl\",\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"file_id:   \", intent.FileID)\n    fmt.Println(\"upload_url:\", intent.UploadURL)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst intent = await client.files.create({\n    file_name: \"batch_requests.jsonl\",\n});\n\nconsole.log(\"file_id:   \", intent.file_id);\nconsole.log(\"upload_url:\", intent.upload_url);"
           }
@@ -62018,6 +62054,10 @@
           {
             "lang": "Python",
             "source": "# Two-step upload flow:\n#   1. Reserve a file_id + presigned upload_url via client.batches.files.create.\n#   2. PUT the raw JSONL bytes to upload_url.\n#\n# The presigned URL is short-lived (~15 minutes) and signature-sensitive —\n# use it verbatim and prefer Content-Type application/octet-stream (or\n# omit the header entirely). A custom value such as application/jsonl\n# can break signature matching.\nimport os\nfrom pathlib import Path\n\nimport requests\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\ninput_path = Path(\"batch_requests.jsonl\")\n\n# Step 1: reserve the upload slot.\nintent = client.batches.files.create(file_name=input_path.name)\nupload_url = intent[\"upload_url\"]\nfile_id = intent[\"file_id\"]\n\n# Step 2: PUT the JSONL bytes to the presigned URL.\nwith input_path.open(\"rb\") as fh:\n    put = requests.put(\n        upload_url,\n        data=fh,\n        headers={\"Content-Type\": \"application/octet-stream\"},\n        timeout=60,\n    )\nput.raise_for_status()\n\nprint(\"uploaded file_id:\", file_id)"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    // Two-step upload flow:\n    //   1. Reserve a file_id + presigned upload_url via CreatePresignedUploadURL.\n    //   2. PUT the raw JSONL bytes with UploadInputFile.\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    intent, _, err := client.BatchInference.CreatePresignedUploadURL(ctx, &godo.CreateBatchFileRequest{\n        FileName: \"batch_requests.jsonl\",\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fh, err := os.Open(\"batch_requests.jsonl\")\n    if err != nil {\n        panic(err)\n    }\n    defer fh.Close()\n\n    if _, err := client.BatchInference.UploadInputFile(ctx, intent.UploadURL, fh); err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"uploaded file_id:\", intent.FileID)\n}"
           },
           {
             "lang": "JavaScript",
@@ -62144,6 +62184,10 @@
             "source": "import os\nimport uuid\n\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nbatch = client.batches.create(\n    file_id=os.environ[\"BATCH_INPUT_FILE_ID\"],\n    provider=\"openai\",\n    endpoint=\"/v1/chat/completions\",\n    completion_window=\"24h\",\n    request_id=str(uuid.uuid4()),\n)\n\nprint(\"batch_id:\", batch.get(\"batch_id\"))\nprint(\"status:  \", batch.get(\"status\"))"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"crypto/rand\"\n    \"encoding/hex\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    id := make([]byte, 16)\n    if _, err := rand.Read(id); err != nil {\n        panic(err)\n    }\n\n    batch, _, err := client.BatchInference.CreateJob(ctx, &godo.CreateBatchRequest{\n        FileID:           os.Getenv(\"BATCH_INPUT_FILE_ID\"),\n        Provider:         \"openai\",\n        Endpoint:         \"/v1/chat/completions\",\n        CompletionWindow: \"24h\",\n        RequestID:        hex.EncodeToString(id),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"batch_id:\", batch.BatchID)\n    fmt.Println(\"status:  \", batch.Status)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { randomUUID } from \"node:crypto\";\nimport { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst batch = await client.batches.create({\n    file_id: process.env.BATCH_INPUT_FILE_ID,\n    provider: \"openai\",\n    endpoint: \"/v1/chat/completions\",\n    completion_window: \"24h\",\n    request_id: randomUUID(),\n});\n\nconsole.log(\"batch_id:\", batch.batch_id);\nconsole.log(\"status:  \", batch.status);"
           }
@@ -62262,6 +62306,10 @@
             "source": "import os\n\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.batches.list(limit=20)\n\nfor b in resp.get(\"data\") or []:\n    print(f\"{b.get('batch_id'):40}  {b.get('status'):12}  {b.get('created_at')}\")\n\nprint(\"has_more:\", resp.get(\"has_more\"))\nprint(\"last_id: \", resp.get(\"last_id\"))"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.BatchInference.ListJobs(ctx, &godo.ListBatchesOptions{\n        Limit: 20,\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    for _, edge := range resp.Edges {\n        b := edge.Node\n        fmt.Printf(\"%s\\t%s\\t%s\\n\", b.BatchID, b.Status, b.CreatedAt)\n    }\n\n    fmt.Println(\"has_next_page:\", resp.PageInfo.HasNextPage)\n    fmt.Println(\"end_cursor:   \", resp.PageInfo.EndCursor)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst page = await client.batches.list({ limit: 20 });\n\nfor (const b of page.data ?? []) {\n    console.log(`${b.batch_id}\\t${b.status}\\t${b.created_at}`);\n}\n\nconsole.log(\"has_more:\", page.has_more);\nconsole.log(\"last_id: \", page.last_id);"
           }
@@ -62350,6 +62398,10 @@
           {
             "lang": "Python",
             "source": "import os\n\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nbatch = client.batches.retrieve(os.environ[\"BATCH_ID\"])\n\nprint(\"batch_id:      \", batch.get(\"batch_id\"))\nprint(\"status:        \", batch.get(\"status\"))\nprint(\"request_counts:\", batch.get(\"request_counts\"))\nprint(\"output_file_id:\", batch.get(\"output_file_id\"))"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    batch, _, err := client.BatchInference.GetJob(ctx, os.Getenv(\"BATCH_ID\"))\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"batch_id:        \", batch.BatchID)\n    fmt.Println(\"status:          \", batch.Status)\n    fmt.Println(\"result_available:\", batch.ResultAvailable)\n    if batch.RequestCounts != nil {\n        fmt.Printf(\"request_counts:   %+v\\n\", *batch.RequestCounts)\n    }\n}"
           },
           {
             "lang": "JavaScript",
@@ -62467,6 +62519,10 @@
             "source": "import os\nfrom pathlib import Path\n\nimport requests\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nbatch_id = os.environ[\"BATCH_ID\"]\n\nlinks = client.batches.results.retrieve(batch_id)\n\nif not links.get(\"result_available\"):\n    print(\"results not ready yet; poll batch status and retry\")\n    raise SystemExit(0)\n\nresp = requests.get(links[\"output_file_url\"], timeout=60)\nresp.raise_for_status()\n\nout = Path(\"batch_output.jsonl\")\nout.write_bytes(resp.content)\n\nprint(\"wrote:\", out)\nprint(\"----- preview -----\")\nprint(resp.text[:500])"
           },
           {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"io\"\n    \"net/http\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    batchID := os.Getenv(\"BATCH_ID\")\n\n    batch, _, err := client.BatchInference.GetJob(ctx, batchID)\n    if err != nil {\n        panic(err)\n    }\n    if !batch.ResultAvailable {\n        fmt.Println(\"results not ready yet; poll batch status and retry\")\n        os.Exit(0)\n    }\n\n    links, _, err := client.BatchInference.GetJobResult(ctx, batchID)\n    if err != nil {\n        panic(err)\n    }\n\n    resp, err := http.Get(links.Download.PresignedURL)\n    if err != nil {\n        panic(err)\n    }\n    defer resp.Body.Close()\n\n    out, err := os.Create(\"batch_output.jsonl\")\n    if err != nil {\n        panic(err)\n    }\n    defer out.Close()\n\n    if _, err := io.Copy(out, resp.Body); err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"wrote: batch_output.jsonl\")\n    fmt.Println(\"output_file_id:\", links.OutputFileID)\n}"
+          },
+          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst batchId = process.env.BATCH_ID;\n\n// client.files.content resolves the result envelope and follows the\n// presigned URL for you, returning the raw fetch Response.\nconst resp = await client.files.content(batchId);\nif (!resp.ok) {\n    throw new Error(`results not ready: HTTP ${resp.status}`);\n}\n\nconst body = await resp.text();\nconst lines = body.split(\"\\n\").filter(Boolean);\n\nconsole.log(`got ${lines.length} line(s); first entry:`);\nconsole.log(lines[0]);"
           }
@@ -62558,6 +62614,10 @@
           {
             "lang": "Python",
             "source": "import os\n\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresult = client.batches.cancel(os.environ[\"BATCH_ID\"])\n\nprint(\"batch_id:    \", result.get(\"batch_id\"))\nprint(\"status:      \", result.get(\"status\"))\nprint(\"cancelled_at:\", result.get(\"cancelled_at\"))"
+          },
+          {
+            "lang": "Go",
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    batch, _, err := client.BatchInference.CancelJob(ctx, os.Getenv(\"BATCH_ID\"))\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(\"batch_id:\", batch.BatchID)\n    fmt.Println(\"status:  \", batch.Status)\n    if batch.CancelRequestedAt != nil {\n        fmt.Println(\"cancel_requested_at:\", *batch.CancelRequestedAt)\n    }\n}"
           },
           {
             "lang": "JavaScript",
@@ -87327,6 +87387,12 @@
             "example": false,
             "description": "A boolean value indicating whether worker nodes in the cluster are not assigned public IP addresses. When omitted on create, the default value is false. When enabled, a NAT gateway must exist in the VPC where the cluster is created."
           },
+          "gpu_operator_ready": {
+            "type": "boolean",
+            "default": false,
+            "example": false,
+            "description": "A boolean value indicating whether GPU nodes in the cluster are launched with images that do not include pre-installed GPU drivers, allowing GPU drivers to be managed by a GPU operator instead. Mutually exclusive with other GPU-related cluster options, such as `nvidia_gpu_dra_driver` and `amd_gpu_dra_driver`. When omitted on create, the default value is false."
+          },
           "status": {
             "type": "object",
             "readOnly": true,
@@ -87395,7 +87461,7 @@
               "registry-a",
               "registry-b"
             ],
-            "description": "An array of integrated DOCR registries."
+            "description": "A boolean value indicating whether GPU nodes in the cluster are launched with images that do not include pre-installed GPU drivers, allowing GPU drivers to be managed by a GPU operator instead. Mutually exclusive with other GPU-related cluster options, such as `nvidia_gpu_dra_driver` and `amd_gpu_dra_driver`. When omitted on create, the default value is false."
           },
           "control_plane_firewall": {
             "$ref": "#/components/schemas/control_plane_firewall"
@@ -87540,6 +87606,12 @@
             "example": false,
             "description": "A boolean value indicating whether worker nodes in the cluster are not assigned public IP addresses. When omitted on create, the default value is false. When enabled, a NAT gateway must exist in the VPC where the cluster is created."
           },
+          "gpu_operator_ready": {
+            "type": "boolean",
+            "default": false,
+            "example": false,
+            "description": "A boolean value indicating whether GPU nodes in the cluster are launched with images that do not include pre-installed GPU drivers, allowing GPU drivers to be managed by a GPU operator instead. Mutually exclusive with other GPU-related cluster options, such as `nvidia_gpu_dra_driver` and `amd_gpu_dra_driver`. When omitted on create, the default value is false."
+          },
           "status": {
             "type": "object",
             "readOnly": true,
@@ -87595,7 +87667,7 @@
             "type": "boolean",
             "readOnly": true,
             "example": true,
-            "description": "A read-only boolean value indicating if a container registry is integrated with the cluster."
+            "description": "A boolean value indicating whether GPU nodes in the cluster are launched with images that do not include pre-installed GPU drivers, allowing GPU drivers to be managed by a GPU operator instead. Mutually exclusive with other GPU-related cluster options, such as `nvidia_gpu_dra_driver` and `amd_gpu_dra_driver`. When omitted on create, the default value is false."
           },
           "control_plane_firewall": {
             "$ref": "#/components/schemas/control_plane_firewall"
@@ -87684,6 +87756,11 @@
             "type": "boolean",
             "example": true,
             "description": "A boolean value indicating whether the control plane is run in a highly available configuration in the cluster. Highly available control planes incur less downtime. The property cannot be disabled. When omitted on create, the default is version-dependent; for DOKS 1.36.0 and later, the default is true; for earlier versions, the default is false."
+          },
+          "gpu_operator_ready": {
+            "type": "boolean",
+            "example": false,
+            "description": "A boolean value indicating whether GPU nodes in the cluster are launched with images that do not include pre-installed GPU drivers, allowing GPU drivers to be managed by a GPU operator instead. Mutually exclusive with other GPU-related cluster options, such as `nvidia_gpu_dra_driver` and `amd_gpu_dra_driver`. When omitted, the current value is left unchanged."
           },
           "control_plane_firewall": {
             "$ref": "#/components/schemas/control_plane_firewall"
@@ -128780,6 +128857,7 @@
               },
               "auto_upgrade": false,
               "isolated_workers": false,
+              "gpu_operator_ready": false,
               "status": {
                 "state": "provisioning",
                 "message": "provisioning"
@@ -128857,6 +128935,7 @@
           "region": "nyc1",
           "version": "1.18.6-do.0",
           "isolated_workers": false,
+          "gpu_operator_ready": false,
           "node_pools": [
             {
               "size": "s-1vcpu-2gb",
@@ -128873,6 +128952,7 @@
           "region": "nyc1",
           "version": "1.18.6-do.0",
           "isolated_workers": false,
+          "gpu_operator_ready": false,
           "tags": [
             "production",
             "web-team"
@@ -128978,6 +129058,7 @@
             },
             "auto_upgrade": false,
             "isolated_workers": false,
+            "gpu_operator_ready": false,
             "status": {
               "state": "provisioning",
               "message": "provisioning"
@@ -129167,6 +129248,7 @@
             },
             "auto_upgrade": false,
             "isolated_workers": false,
+            "gpu_operator_ready": false,
             "status": {
               "state": "provisioning",
               "message": "provisioning"
@@ -129319,6 +129401,7 @@
             },
             "auto_upgrade": false,
             "isolated_workers": false,
+            "gpu_operator_ready": false,
             "status": {
               "state": "running"
             },
@@ -129505,6 +129588,7 @@
             },
             "auto_upgrade": true,
             "isolated_workers": false,
+            "gpu_operator_ready": false,
             "status": {
               "state": "running"
             },
