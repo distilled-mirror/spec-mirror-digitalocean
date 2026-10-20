@@ -153,7 +153,7 @@
     },
     {
       "name": "Insights",
-      "description": "The DigitalOcean Insights API provides observability resources for\nmonitoring your infrastructure, including alert rules that evaluate\nmetrics, notification channels that deliver alert events, read-only\nalert instances that record when alert rules fire, and PromQL and logs\nquery interfaces."
+      "description": "The DigitalOcean Insights API provides observability resources for\nmonitoring your infrastructure, including alert rules that evaluate\nmetrics, notification channels that deliver alert events, read-only\nalert instances that record when alert rules fire, PromQL, logs, spans,\nand traces query interfaces, and per-resource enablement of the metrics,\nlogs, and traces signals."
     },
     {
       "name": "Kubernetes",
@@ -30829,6 +30829,187 @@
           {
             "bearer_auth": [
               "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/resources": {
+      "get": {
+        "operationId": "insights_list_resources",
+        "summary": "List Resource Signal Enablement",
+        "description": "To list the resources in your account that have telemetry signal enablement\nrecorded, along with the current state of their metrics, logs, and traces\nsignals, send a GET request to `/v2/insights/resources`.\n\nResults are paginated with `pagination.page` and `pagination.per_page`\n(default `20`, maximum `200`) and can be sorted with `pagination.sort` and\n`pagination.sort_direction`. Optionally filter by `filter.product_types` and\n`filter.regions`.\n\nA signal is omitted from a resource when no explicit enablement has ever been\nrecorded for it.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/resources_product_types"
+          },
+          {
+            "$ref": "#/components/parameters/resources_regions"
+          },
+          {
+            "$ref": "#/components/parameters/resources_page"
+          },
+          {
+            "$ref": "#/components/parameters/resources_per_page"
+          },
+          {
+            "$ref": "#/components/parameters/resources_sort"
+          },
+          {
+            "$ref": "#/components/parameters/resources_sort_direction"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_resources"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/resources?filter.product_types=droplet&pagination.per_page=50\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/resources/{resource_urn}": {
+      "get": {
+        "operationId": "insights_get_resource",
+        "summary": "Retrieve Resource Signal Enablement",
+        "description": "To retrieve the current metrics, logs, and traces signal enablement for a\nsingle resource, send a GET request to\n`/v2/insights/resources/{resource_urn}`.\n\nA `404` is returned when no signal enablement has been recorded for the\nresource.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/resource_urn_path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resource"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/resources/do:droplet:12345\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/resources/{resource_urn}/signals": {
+      "put": {
+        "operationId": "insights_update_resourceSignals",
+        "summary": "Update Resource Signal Enablement",
+        "description": "To enable or disable telemetry signals for a resource, send a PUT request to\n`/v2/insights/resources/{resource_urn}/signals`.\n\nThis endpoint uses merge semantics. Set `metrics`, `logs`, or `traces` to\n`true` or `false` to change that signal; omit a signal to leave it unchanged.\nAt least one signal must be set.\n\n`region` is only used when the resource has no existing enablement. On later\nupdates, omit it or send the stored value; changing the region is rejected\nwith a `400`.\n\nRequires both the `insights:update` and `insights:create` scopes.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/resource_urn_path"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/resource_signals_update_request"
+              },
+              "example": {
+                "region": "nyc3",
+                "metrics": true,
+                "logs": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/resource"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"region\":\"nyc3\",\"metrics\":true,\"logs\":true}' \\\n  \"https://api.digitalocean.com/v2/insights/resources/do:droplet:12345/signals\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:update",
+              "insights:create"
             ]
           }
         ]
@@ -61723,21 +61904,6 @@
             "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    completion, _, err := client.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"llama3.3-70b-instruct\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessage(\"What is the capital of Portugal?\"),\n        },\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(msg.Text())\n    }\n}"
           },
           {
-            "lang": "Go",
-            "label": "MCP tool",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"encoding/json\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    completion, _, err := client.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"openai-gpt-oss-20b\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessage(\"Fetch my DigitalOcean account information and summarize it in 2 bullets.\"),\n        },\n        Tools: []godo.ChatCompletionTool{\n            godo.ChatMCPTool(godo.MCPToolParams{\n                ServerLabel:   \"digitalocean\",\n                ServerURL:     \"https://accounts.mcp.digitalocean.com/mcp\",\n                Authorization: \"Bearer \" + os.Getenv(\"DIGITALOCEAN_API_TOKEN\"),\n                AllowedTools:  []string{\"account-get-information\"},\n            }),\n        },\n        ToolChoice: json.RawMessage(`\"required\"`),\n        MaxTokens:  godo.PtrTo(512),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(msg.Text())\n    }\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Vision (VLM)",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    // IMAGE_URL may be an HTTPS URL or a data:image/...;base64,... URI.\n    imageURL := os.Getenv(\"IMAGE_URL\")\n    if imageURL == \"\" {\n        imageURL = \"https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Online_Bicycles.jpg/640px-Online_Bicycles.jpg\"\n    }\n\n    completion, _, err := client.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"nemotron-nano-12b-v2-vl\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessageParts(\n                godo.TextPart(\"Describe this image.\"),\n                godo.ImageURLPart(imageURL),\n            ),\n        },\n        MaxTokens: godo.PtrTo(512),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(msg.Text())\n    }\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Knowledge base",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"encoding/json\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    completion, _, err := client.Chat.Completions.New(ctx, &godo.ChatCompletionNewParams{\n        Model: \"openai-gpt-oss-20b\",\n        Messages: []godo.ChatCompletionMessage{\n            godo.UserMessage(\"What are some features of DigitalOcean Inference?\"),\n        },\n        Tools: []godo.ChatCompletionTool{\n            godo.ChatKnowledgeBaseRetrievalTool(os.Getenv(\"KNOWLEDGE_BASE_ID\")),\n        },\n        ToolChoice: json.RawMessage(`\"auto\"`),\n        MaxTokens:  godo.PtrTo(1024),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    if msg := completion.Choices[0].Message.Content; msg != nil {\n        fmt.Println(msg.Text())\n    }\n}"
-          },
-          {
             "lang": "JavaScript",
             "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst completion = await client.chat.completions.create({\n    model: \"llama3.3-70b-instruct\",\n    messages: [\n        { role: \"user\", content: \"What is the capital of Portugal?\" },\n    ],\n});\n\nconsole.log(completion.choices[0].message.content);"
           }
@@ -62432,26 +62598,6 @@
           {
             "lang": "Go",
             "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model:           \"openai-gpt-oss-20b\",\n        Input:           \"What is the capital of France?\",\n        MaxOutputTokens: godo.PtrTo(50),\n        Temperature:     godo.PtrTo(0.7),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Web search",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model: \"openai-gpt-oss-20b\",\n        Input: \"What are the latest pricing changes for DigitalOcean Droplets?\",\n        Tools: []godo.ResponseTool{\n            godo.WebSearchTool(godo.PtrTo(3), godo.PtrTo(5)),\n        },\n        MaxOutputTokens: godo.PtrTo(1024),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Web fetch",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model: \"openai-gpt-oss-20b\",\n        Input: \"Summarize https://www.digitalocean.com/pricing\",\n        Tools: []godo.ResponseTool{\n            godo.WebFetchTool(godo.PtrTo(3)),\n        },\n        MaxOutputTokens: godo.PtrTo(1024),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Model synthesis",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model: \"openai-gpt-oss-20b\",\n        Input: \"Compare approaches for reducing inference latency.\",\n        Tools: []godo.ResponseTool{\n            godo.ModelSynthesisTool(godo.ModelSynthesisToolParams{\n                Preset: \"balanced\",\n            }),\n        },\n        MaxOutputTokens: godo.PtrTo(1024),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
-          },
-          {
-            "lang": "Go",
-            "label": "Tool search",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.Responses.New(ctx, &godo.ResponseNewParams{\n        Model: \"openai-gpt-5.5\",\n        Input: \"Compare the current weather in zip code 94107 and 10001.\",\n        Tools: []godo.ResponseTool{\n            godo.FunctionTool(\"get_weather\", \"Get weather for a zip code\", map[string]interface{}{\n                \"type\": \"object\",\n                \"properties\": map[string]interface{}{\n                    \"zip\": map[string]interface{}{\"type\": \"string\"},\n                },\n                \"required\": []string{\"zip\"},\n            }),\n            godo.ToolSearchTool(),\n        },\n        MaxOutputTokens: godo.PtrTo(1024),\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.OutputText())\n}"
           },
           {
             "lang": "JavaScript",
@@ -65394,6 +65540,103 @@
           "type": "string"
         },
         "example": "now"
+      },
+      "resources_product_types": {
+        "in": "query",
+        "name": "filter.product_types",
+        "required": false,
+        "description": "Optional filter. When set, only resources of these product types are returned. Repeat the parameter for multiple product types.",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": "form",
+        "explode": true,
+        "example": [
+          "droplet"
+        ]
+      },
+      "resources_regions": {
+        "in": "query",
+        "name": "filter.regions",
+        "required": false,
+        "description": "Optional filter. When set, only resources in these regions are returned. Repeat the parameter for multiple regions.",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "style": "form",
+        "explode": true,
+        "example": [
+          "nyc3"
+        ]
+      },
+      "resources_page": {
+        "in": "query",
+        "name": "pagination.page",
+        "required": false,
+        "description": "Which 'page' of paginated results to return.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "example": 1
+      },
+      "resources_per_page": {
+        "in": "query",
+        "name": "pagination.per_page",
+        "required": false,
+        "description": "Number of items returned per page.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 20
+        },
+        "example": 20
+      },
+      "resources_sort": {
+        "in": "query",
+        "name": "pagination.sort",
+        "required": false,
+        "description": "Field to sort by. Defaults to `resource_urn`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "resource_urn",
+            "effective_at"
+          ]
+        },
+        "example": "effective_at"
+      },
+      "resources_sort_direction": {
+        "in": "query",
+        "name": "pagination.sort_direction",
+        "required": false,
+        "description": "Sort direction. Defaults to `asc`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        },
+        "example": "desc"
+      },
+      "resource_urn_path": {
+        "in": "path",
+        "name": "resource_urn",
+        "description": "The uniform resource name (URN) of the resource, for example `do:droplet:12345`.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "do:droplet:12345"
       },
       "source": {
         "in": "query",
@@ -88080,6 +88323,137 @@
           },
           "pagination": {
             "$ref": "#/components/schemas/spans_pagination_response"
+          }
+        }
+      },
+      "resource_signal_state": {
+        "type": "object",
+        "description": "The enablement state of a single telemetry signal (metrics, logs, or traces) for a resource. A signal state is omitted from a resource when no explicit enablement has ever been recorded for that signal.",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the signal is enabled for the resource.",
+            "example": true
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this signal state last changed.",
+            "example": "2026-10-01T12:00:00Z"
+          }
+        }
+      },
+      "enablement_resource": {
+        "type": "object",
+        "description": "The current telemetry signal enablement for a single resource.",
+        "required": [
+          "resource_urn",
+          "product_type"
+        ],
+        "properties": {
+          "resource_urn": {
+            "type": "string",
+            "description": "The uniform resource name (URN) of the resource.",
+            "example": "do:droplet:12345"
+          },
+          "product_type": {
+            "type": "string",
+            "description": "The product type of the resource, for example `droplet` or `kubernetes`.",
+            "example": "droplet"
+          },
+          "region": {
+            "type": "string",
+            "description": "The region slug for region-specific resources. Omitted when the resource has no region.",
+            "example": "nyc3"
+          },
+          "metrics": {
+            "$ref": "#/components/schemas/resource_signal_state"
+          },
+          "logs": {
+            "$ref": "#/components/schemas/resource_signal_state"
+          },
+          "traces": {
+            "$ref": "#/components/schemas/resource_signal_state"
+          }
+        }
+      },
+      "resources_pagination_response": {
+        "type": "object",
+        "description": "Page-based pagination metadata for a resources list.",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "The current page number.",
+            "example": 1
+          },
+          "pages": {
+            "type": "integer",
+            "description": "The total number of pages. Omitted when there are no results.",
+            "example": 3
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "The number of items per page.",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "description": "The total number of resources across all pages. Omitted when there are no results.",
+            "example": 42
+          }
+        }
+      },
+      "list_resources_response": {
+        "type": "object",
+        "description": "Response body for listing resource signal enablement.",
+        "properties": {
+          "resources": {
+            "type": "array",
+            "description": "Resources with recorded signal enablement. Omitted when none match.",
+            "items": {
+              "$ref": "#/components/schemas/enablement_resource"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/resources_pagination_response"
+          }
+        }
+      },
+      "resource_response": {
+        "type": "object",
+        "description": "Response body wrapping a single resource's signal enablement.",
+        "required": [
+          "resource"
+        ],
+        "properties": {
+          "resource": {
+            "$ref": "#/components/schemas/enablement_resource"
+          }
+        }
+      },
+      "resource_signals_update_request": {
+        "type": "object",
+        "description": "Request body for updating a resource's signal enablement. At least one of `metrics`, `logs`, or `traces` must be set. Signals that are omitted are left unchanged.",
+        "properties": {
+          "region": {
+            "type": "string",
+            "description": "The region slug for region-specific resources. Only used when the resource has no existing enablement. On later updates, omit it or send the stored value; changing the region is rejected.",
+            "example": "nyc3"
+          },
+          "metrics": {
+            "type": "boolean",
+            "description": "Enable or disable the metrics signal. Omit to leave unchanged.",
+            "example": true
+          },
+          "logs": {
+            "type": "boolean",
+            "description": "Enable or disable the logs signal. Omit to leave unchanged.",
+            "example": true
+          },
+          "traces": {
+            "type": "boolean",
+            "description": "Enable or disable the traces signal. Omit to leave unchanged.",
+            "example": false
           }
         }
       },
@@ -119329,6 +119703,103 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/spans_search_response"
+            }
+          }
+        }
+      },
+      "list_resources": {
+        "description": "A paginated list of resources and their signal enablement.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/list_resources_response"
+            },
+            "example": {
+              "resources": [
+                {
+                  "resource_urn": "do:droplet:12345",
+                  "product_type": "droplet",
+                  "region": "nyc3",
+                  "metrics": {
+                    "enabled": true,
+                    "effective_at": "2026-10-01T12:00:00Z"
+                  },
+                  "logs": {
+                    "enabled": true,
+                    "effective_at": "2026-10-01T12:00:00Z"
+                  },
+                  "traces": {
+                    "enabled": false,
+                    "effective_at": "2026-10-03T08:30:00Z"
+                  }
+                },
+                {
+                  "resource_urn": "do:kubernetes:8d91d5e0-1c2b-4f3a-9e7d-6a5b4c3d2e1f",
+                  "product_type": "kubernetes",
+                  "region": "sfo3",
+                  "metrics": {
+                    "enabled": true,
+                    "effective_at": "2026-09-20T09:15:00Z"
+                  }
+                }
+              ],
+              "pagination": {
+                "page": 1,
+                "pages": 1,
+                "per_page": 20,
+                "total": 2
+              }
+            }
+          }
+        }
+      },
+      "resource": {
+        "description": "The resource's current signal enablement.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/resource_response"
+            },
+            "example": {
+              "resource": {
+                "resource_urn": "do:droplet:12345",
+                "product_type": "droplet",
+                "region": "nyc3",
+                "metrics": {
+                  "enabled": true,
+                  "effective_at": "2026-10-01T12:00:00Z"
+                },
+                "logs": {
+                  "enabled": true,
+                  "effective_at": "2026-10-01T12:00:00Z"
+                },
+                "traces": {
+                  "enabled": false,
+                  "effective_at": "2026-10-03T08:30:00Z"
+                }
+              }
             }
           }
         }
