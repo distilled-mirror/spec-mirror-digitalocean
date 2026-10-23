@@ -30524,7 +30524,7 @@
       "post": {
         "operationId": "insights_post_tracesSearch",
         "summary": "Search traces",
-        "description": "To search traces in a region, send a POST request to `/v2/insights/query/{region}/traces/search` with a JSON body describing the time range, optional filter, ordering, and pagination.\nEach result is one trace, aggregated from all of its spans in the time range. A trace is included when at least one of its spans matches `filter`. The time range must not exceed 7 days (`168h`). `pagination.limit` defaults to 100 (also used when `limit` is `0`) and must be between 0 and 1000. Results are ordered by `started` descending unless `orderBy` is set.\nJSON field names are camelCase (`timeRange`, `orderBy`, `hasMore`, `traceId`). Unknown request properties, invalid filters, and out-of-range values are rejected with `400`.\nEach request searches a single region; there is no multi-region search. Supported regions are `ams2`, `ams3`, `atl1`, `blr1`, `fra1`, `lon1`, `mem1`, `nyc1`, `nyc2`, `nyc3`, `ric1`, `sfo1`, `sfo2`, `sfo3`, `sgp1`, `syd1`, and `tor1`. Requests time out after 60 seconds.\nErrors produced by the traces service (`400`) have a `text/plain` body containing a short message. Authentication and authorization errors (`401`, `403`), rate limiting (`429`), and routing errors (for example, `404` for an unknown region) come from the API gateway and use the standard JSON error object with `id` and `message`. `403` is also returned for accounts that are in a trial or not in good standing. If the regional traces backend cannot be reached, the response is `502` with a `text/plain` body.",
+        "description": "To search traces in a region, send a POST request to `/v2/insights/query/{region}/traces/search` with a JSON body describing the time range, optional filter, ordering, and pagination.\nEach result is one trace, aggregated from all of its spans in the time range. A trace is included when at least one of its spans matches `filter`. The time range must not exceed 7 days (`168h`). `pagination.limit` defaults to 100 (also used when `limit` is `0`) and must be between 0 and 1000. Results are ordered by `started` descending unless `order_by` is set.\nJSON field names use snake_case (`time_range`, `order_by`, `has_more`, `trace_id`). Unknown request properties, invalid filters, and out-of-range values are rejected with `400`.\nEach request searches a single region; there is no multi-region search. Supported regions are `ams2`, `ams3`, `atl1`, `blr1`, `fra1`, `lon1`, `mem1`, `nyc1`, `nyc2`, `nyc3`, `ric1`, `sfo1`, `sfo2`, `sfo3`, `sgp1`, `syd1`, and `tor1`. Requests time out after 60 seconds.\nErrors produced by the traces service (`400`) have a `text/plain` body containing a short message. Authentication and authorization errors (`401`, `403`), rate limiting (`429`), and routing errors (for example, `404` for an unknown region) come from the API gateway and use the standard JSON error object with `id` and `message`. `403` is also returned for accounts that are in a trial or not in good standing. If the regional traces backend cannot be reached, the response is `502` with a `text/plain` body.",
         "tags": [
           "Insights"
         ],
@@ -30544,7 +30544,7 @@
                 "recent": {
                   "summary": "Most recent traces in the last 15 minutes",
                   "value": {
-                    "timeRange": {
+                    "time_range": {
                       "from": {
                         "relative": "15m"
                       },
@@ -30560,7 +30560,7 @@
                 "filtered": {
                   "summary": "Traces from one service whose spans mention \"timeout\"",
                   "value": {
-                    "timeRange": {
+                    "time_range": {
                       "from": {
                         "relative": "24h"
                       },
@@ -30569,21 +30569,26 @@
                       }
                     },
                     "filter": {
-                      "type": "and",
-                      "expressions": [
-                        {
-                          "type": "condition",
-                          "field": {
-                            "name": "service.name"
+                      "and": {
+                        "expressions": [
+                          {
+                            "condition": {
+                              "field": {
+                                "name": "service.name"
+                              },
+                              "operator": "FILTER_OPERATOR_EQ",
+                              "value": {
+                                "string_value": "checkout-api"
+                              }
+                            }
                           },
-                          "operator": "eq",
-                          "value": "checkout-api"
-                        },
-                        {
-                          "type": "text_search",
-                          "query": "timeout"
-                        }
-                      ]
+                          {
+                            "text_search": {
+                              "query": "timeout"
+                            }
+                          }
+                        ]
+                      }
                     },
                     "pagination": {
                       "limit": 100
@@ -30593,7 +30598,7 @@
                 "attributeIn": {
                   "summary": "Traces with error spans from either of two hosts",
                   "value": {
-                    "timeRange": {
+                    "time_range": {
                       "from": {
                         "absolute": "2026-10-09T00:00:00Z"
                       },
@@ -30602,34 +30607,45 @@
                       }
                     },
                     "filter": {
-                      "type": "and",
-                      "expressions": [
-                        {
-                          "field": {
-                            "name": "statusCode"
+                      "and": {
+                        "expressions": [
+                          {
+                            "condition": {
+                              "field": {
+                                "name": "status_code"
+                              },
+                              "operator": "FILTER_OPERATOR_EQ",
+                              "value": {
+                                "string_value": "Error"
+                              }
+                            }
                           },
-                          "operator": "eq",
-                          "value": "Error"
-                        },
-                        {
-                          "field": {
-                            "name": "host.name",
-                            "scope": "resource"
-                          },
-                          "operator": "in",
-                          "value": [
-                            "web-01",
-                            "web-02"
-                          ]
-                        }
-                      ]
+                          {
+                            "condition": {
+                              "field": {
+                                "name": "host.name",
+                                "scope": "FIELD_SCOPE_RESOURCE"
+                              },
+                              "operator": "FILTER_OPERATOR_IN",
+                              "value": {
+                                "string_array_value": {
+                                  "values": [
+                                    "web-01",
+                                    "web-02"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      }
                     }
                   }
                 },
                 "ordered": {
                   "summary": "Slowest traces first, ties broken by oldest start",
                   "value": {
-                    "timeRange": {
+                    "time_range": {
                       "from": {
                         "relative": "1h"
                       },
@@ -30637,10 +30653,10 @@
                         "relative": "now"
                       }
                     },
-                    "orderBy": [
+                    "order_by": [
                       {
                         "field": {
-                          "name": "durationNs"
+                          "name": "duration_ns"
                         },
                         "direction": "desc"
                       },
@@ -30692,7 +30708,7 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"timeRange\": {\n      \"from\": {\"relative\": \"24h\"},\n      \"to\": {\"relative\": \"now\"}\n    },\n    \"filter\": {\n      \"type\": \"and\",\n      \"expressions\": [\n        {\"type\": \"condition\", \"field\": {\"name\": \"service.name\"}, \"operator\": \"eq\", \"value\": \"checkout-api\"},\n        {\"type\": \"text_search\", \"query\": \"timeout\"}\n      ]\n    },\n    \"orderBy\": [{\"field\": {\"name\": \"durationNs\"}, \"direction\": \"desc\"}],\n    \"pagination\": {\"limit\": 50}\n  }' \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/traces/search\""
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"time_range\": {\n      \"from\": {\"relative\": \"24h\"},\n      \"to\": {\"relative\": \"now\"}\n    },\n    \"filter\": {\n      \"and\": {\n        \"expressions\": [\n          {\"condition\": {\"field\": {\"name\": \"service.name\"}, \"operator\": \"FILTER_OPERATOR_EQ\", \"value\": {\"string_value\": \"checkout-api\"}}},\n          {\"text_search\": {\"query\": \"timeout\"}}\n        ]\n      }\n    },\n    \"order_by\": [{\"field\": {\"name\": \"duration_ns\"}, \"direction\": \"desc\"}],\n    \"pagination\": {\"limit\": 50}\n  }' \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/traces/search\""
           }
         ],
         "security": [
@@ -30708,7 +30724,7 @@
       "get": {
         "operationId": "insights_get_trace",
         "summary": "Retrieve an existing trace",
-        "description": "To retrieve a single trace and all of its spans, send a GET request to `/v2/insights/query/{region}/traces/{trace_id}`.\nOnly spans that started within the lookup window are returned. The window defaults to the last 7 days and can be narrowed with the `from` and `to` query parameters; it must not exceed 7 days, and `from` must not be after `to`. Spans are returned ordered by start time. At most 10,000 spans are returned; `truncated` is `true` when the trace has more.\nA trace ID with no spans in the window returns `404`, as do malformed or uppercase trace IDs. A trace is only resolvable in the region that ingested it; querying another region also returns `404`.\nSupported regions are `ams2`, `ams3`, `atl1`, `blr1`, `fra1`, `lon1`, `mem1`, `nyc1`, `nyc2`, `nyc3`, `ric1`, `sfo1`, `sfo2`, `sfo3`, `sgp1`, `syd1`, and `tor1`. Requests time out after 60 seconds.\nErrors produced by the traces service (`400`, and `404` when no trace is found) have a `text/plain` body containing a short message. Authentication and authorization errors (`401`, `403`), rate limiting (`429`), and routing errors (for example, `404` for an unknown region) come from the API gateway and use the standard JSON error object with `id` and `message`. `403` is also returned for accounts that are in a trial or not in good standing. If the regional traces backend cannot be reached, the response is `502` with a `text/plain` body.\nJSON field names are camelCase (`traceId`, `spanId`, `startTime`, `endTime`, `durationNs`, `serviceName`, `statusCode`, `parentSpanId`).",
+        "description": "To retrieve a single trace and all of its spans, send a GET request to `/v2/insights/query/{region}/traces/{trace_id}`.\nOnly spans that started within the lookup window are returned. The window defaults to the last 7 days and can be narrowed with the `from` and `to` query parameters; it must not exceed 7 days, and `from` must not be after `to`. Spans are returned ordered by start time. At most 10,000 spans are returned; `truncated` is `true` when the trace has more.\nA trace ID with no spans in the window returns `404`, as do malformed or uppercase trace IDs. A trace is only resolvable in the region that ingested it; querying another region also returns `404`.\nSupported regions are `ams2`, `ams3`, `atl1`, `blr1`, `fra1`, `lon1`, `mem1`, `nyc1`, `nyc2`, `nyc3`, `ric1`, `sfo1`, `sfo2`, `sfo3`, `sgp1`, `syd1`, and `tor1`. Requests time out after 60 seconds.\nErrors produced by the traces service (`400`, and `404` when no trace is found) have a `text/plain` body containing a short message. Authentication and authorization errors (`401`, `403`), rate limiting (`429`), and routing errors (for example, `404` for an unknown region) come from the API gateway and use the standard JSON error object with `id` and `message`. `403` is also returned for accounts that are in a trial or not in good standing. If the regional traces backend cannot be reached, the response is `502` with a `text/plain` body.\nJSON field names use snake_case (`trace_id`, `span_id`, `start_time`, `end_time`, `duration_ns`, `service_name`, `status_code`, `parent_span_id`).",
         "tags": [
           "Insights"
         ],
@@ -30774,7 +30790,7 @@
       "post": {
         "operationId": "insights_post_spansSearch",
         "summary": "Search spans",
-        "description": "To search spans in a region, send a POST request to `/v2/insights/query/{region}/spans/search` with a JSON body describing the time range, optional filter, ordering, and pagination.\nThe time range must not exceed 7 days. `pagination.limit` defaults to 100 and must be between 1 and 1000. Results are ordered by `startTime` descending by default. Cursor-based pagination is not yet supported; `pagination.hasMore` indicates whether additional spans matched beyond the returned page.",
+        "description": "To search spans in a region, send a POST request to `/v2/insights/query/{region}/spans/search` with a JSON body describing the time range, optional filter, ordering, and pagination.\nThe time range must not exceed 7 days. `pagination.limit` defaults to 100 and must be between 1 and 1000. Results are ordered by `start_time` descending by default. Cursor-based pagination is not yet supported; `pagination.has_more` indicates whether additional spans matched beyond the returned page.",
         "tags": [
           "Insights"
         ],
@@ -30822,7 +30838,7 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"timeRange\": {\n      \"from\": {\"relative\": \"1h\"},\n      \"to\": {\"relative\": \"now\"}\n    },\n    \"filter\": {\n      \"type\": \"and\",\n      \"expressions\": [\n        {\n          \"type\": \"condition\",\n          \"field\": {\"name\": \"service.name\"},\n          \"operator\": \"eq\",\n          \"value\": {\"type\": \"string\", \"value\": \"api-gateway\"}\n        },\n        {\n          \"type\": \"condition\",\n          \"field\": {\"name\": \"statusCode\"},\n          \"operator\": \"eq\",\n          \"value\": {\"type\": \"string\", \"value\": \"Error\"}\n        }\n      ]\n    },\n    \"orderBy\": [\n      {\"field\": {\"name\": \"startTime\"}, \"direction\": \"desc\"}\n    ],\n    \"pagination\": {\"limit\": 100}\n  }' \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/spans/search\""
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\n    \"time_range\": {\n      \"from\": {\"relative\": \"1h\"},\n      \"to\": {\"relative\": \"now\"}\n    },\n    \"filter\": {\n      \"and\": {\n        \"expressions\": [\n          {\"condition\": {\n            \"field\": {\"name\": \"service.name\"},\n            \"operator\": \"FILTER_OPERATOR_EQ\",\n            \"value\": {\"string_value\": \"api-gateway\"}\n          }},\n          {\"condition\": {\n            \"field\": {\"name\": \"status_code\"},\n            \"operator\": \"FILTER_OPERATOR_EQ\",\n            \"value\": {\"string_value\": \"Error\"}\n          }}\n        ]\n      }\n    },\n    \"order_by\": [\n      {\"field\": {\"name\": \"start_time\"}, \"direction\": \"desc\"}\n    ],\n    \"pagination\": {\"limit\": 100}\n  }' \\\n  \"https://api.digitalocean.com/v2/insights/query/nyc3/spans/search\""
           }
         ],
         "security": [
@@ -79483,6 +79499,11 @@
             "maximum": 31536000,
             "example": 86400
           },
+          "innodb_adaptive_hash_index": {
+            "description": "When enabled, InnoDB uses an adaptive hash index to speed up equality lookups. The optimal setting is workload-dependent: it can improve performance for some workloads, but under high concurrency the associated latch can become a contention point, in which case disabling it may improve throughput. Default is true.",
+            "type": "boolean",
+            "example": true
+          },
           "innodb_ft_enable_stopword": {
             "description": "When enabled, the InnoDB FULLTEXT index stopword list is used. Disabled by default when a custom stopword table is configured.",
             "type": "boolean",
@@ -87491,82 +87512,9 @@
           }
         }
       },
-      "traces_filter_expression": {
-        "type": "object",
-        "description": "A node in a traces filter tree. Every node is the same flat object; `type` selects which other properties apply:\n- `condition` (default when `type` is omitted): compares `field` to `value` using `operator`.\n- `and` / `or`: combines the nodes in `expressions` (1 to 32 children).\n- `not`: negates the single node in `expressions` (exactly one child).\n- `text_search`: case-insensitive substring match of `query` against the span name, service name, and span status message.\n\nA trace matches when at least one of its spans in the time range matches the filter. Trees may be nested at most 16 levels deep and contain at most 256 nodes in total. Unknown properties are rejected.",
-        "additionalProperties": false,
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "The node type. Matching is case-insensitive.",
-            "enum": [
-              "condition",
-              "and",
-              "or",
-              "not",
-              "text_search"
-            ],
-            "default": "condition",
-            "example": "condition"
-          },
-          "expressions": {
-            "type": "array",
-            "description": "Child nodes for `and`, `or`, and `not`. `and` and `or` accept 1 to 32 children; `not` requires exactly one.",
-            "minItems": 1,
-            "maxItems": 32,
-            "items": {
-              "$ref": "#/components/schemas/traces_filter_expression"
-            }
-          },
-          "field": {
-            "$ref": "#/components/schemas/traces_field_ref"
-          },
-          "operator": {
-            "type": "string",
-            "description": "The comparison operator for a `condition` node. Matching is case-insensitive, and the symbol forms `=`, `!=`, `>`, `>=`, `<`, and `<=` are accepted as aliases for `eq`, `neq`, `gt`, `gte`, `lt`, and `lte`. `exists` matches spans where the field is present and non-empty and ignores `value`. `in` requires an array `value` with 1 to 100 entries. `neq` on string fields also matches spans where the field is absent.",
-            "enum": [
-              "eq",
-              "neq",
-              "in",
-              "exists",
-              "gt",
-              "gte",
-              "lt",
-              "lte"
-            ],
-            "example": "eq"
-          },
-          "value": {
-            "$ref": "#/components/schemas/traces_filter_value"
-          },
-          "query": {
-            "type": "string",
-            "description": "The search string for a `text_search` node. Leading and trailing whitespace is trimmed; the trimmed string must be non-empty.",
-            "maxLength": 256,
-            "example": "checkout"
-          }
-        },
-        "example": {
-          "type": "and",
-          "expressions": [
-            {
-              "type": "condition",
-              "field": {
-                "name": "service.name"
-              },
-              "operator": "eq",
-              "value": "checkout-api"
-            },
-            {
-              "type": "text_search",
-              "query": "timeout"
-            }
-          ]
-        }
-      },
       "traces_field_ref": {
         "type": "object",
-        "description": "A reference to a span field, used in filters and `orderBy`.",
+        "description": "A reference to a span field, used in filters and `order_by`.",
         "additionalProperties": false,
         "required": [
           "name"
@@ -87574,116 +87522,66 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "The field name. Without `scope`, these names (case-insensitive) resolve to built-in span columns: `traceId` (`trace.id`, `trace_id`), `spanId` (`span.id`, `span_id`), `parentSpanId` (`parent.span.id`, `parent_span_id`), `startTime` (`start_time`, `timestamp`), `endTime` (`end_time`), `durationNs` (`duration`, in nanoseconds), `name` (`span.name`), `kind` (`span.kind`), `statusCode` (`status.code`, `status_code`), `statusMessage` (`status.message`, `status_message`), and `serviceName` (`service.name`, `service_name`). Any other name is looked up as a span attribute, falling back to a resource attribute. With `scope` set, `name` is always treated as an attribute key. Attribute keys may contain only letters, digits, and `.`, `_`, `-`, `/`, `:`, `@`.\n\nIn traces `orderBy`, `name` must be a trace-level sort field instead; see the `orderBy` field description.",
+            "description": "The field name. Without `scope`, these names (case-insensitive) resolve to built-in span columns: `trace_id`, `span_id`, `parent_span_id`, `start_time`, `end_time`, `duration_ns`, `name` (`span.name`), `kind` (`span.kind`), `status_code` (`status.code`, `status_code`), `status_message`, and `service_name` (`service.name`). Any other name is looked up as a span attribute, falling back to a resource attribute. With `scope` set, `name` is always treated as an attribute key. Attribute keys may contain only letters, digits, and `.`, `_`, `-`, `/`, `:`, `@`.\n\nIn traces `order_by`, `name` must be a trace-level sort field instead; see the `order_by` field description.",
             "example": "service.name"
           },
           "scope": {
             "type": "string",
-            "description": "Restricts the lookup to one attribute map (case-insensitive). `resource` (or `resource.attributes`) reads resource attributes; `attribute` (or `attributes`, `span.attributes`) reads span attributes. Omit to use the built-in column mapping described for `name`. Ignored in traces `orderBy`.",
+            "description": "Restricts the lookup to one attribute map and is matched case-insensitively. `FIELD_SCOPE_RESOURCE` reads resource attributes and accepts `resource` or `resource.attributes` as aliases. `FIELD_SCOPE_ATTRIBUTES` reads span attributes and accepts `attribute`, `attributes`, or `span.attributes` as aliases. Omit to use the built-in column mapping described for `name`. Ignored in traces `order_by`.",
             "enum": [
+              "FIELD_SCOPE_RESOURCE",
+              "FIELD_SCOPE_ATTRIBUTES",
               "resource",
               "resource.attributes",
               "attribute",
               "attributes",
               "span.attributes"
             ],
-            "example": "resource"
+            "example": "FIELD_SCOPE_RESOURCE"
           }
         }
       },
       "traces_filter_value": {
-        "description": "The comparison value for a filter `condition`. Pass either a bare JSON literal (string, number, boolean, or array for `in`) or a typed object `{\"type\": \"...\", \"value\": ...}`. String values are coerced to the field's type: numeric fields such as `durationNs` parse the string as a number, and time fields such as `startTime` accept the same absolute formats as `timeRange` (RFC3339 or Unix seconds/milliseconds/microseconds/nanoseconds).",
-        "example": "checkout-api",
+        "type": "object",
+        "description": "A typed literal or list value for a traces filter condition. Exactly one kind is set per message.",
         "oneOf": [
           {
-            "type": "string",
-            "description": "A bare string literal.",
-            "example": "checkout-api"
-          },
-          {
-            "type": "number",
-            "description": "A bare number literal.",
-            "example": 500000000
-          },
-          {
-            "type": "boolean",
-            "description": "A bare boolean literal.",
-            "example": true
-          },
-          {
-            "type": "array",
-            "description": "A bare array of values, used with the `in` operator.",
-            "minItems": 1,
-            "maxItems": 100,
-            "items": {
-              "oneOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "number"
-                },
-                {
-                  "type": "boolean"
-                }
-              ]
-            },
-            "example": [
-              "checkout-api",
-              "payments-api"
+            "required": [
+              "string_value"
             ]
           },
           {
-            "type": "object",
-            "description": "A typed scalar value. `type` is case-insensitive; `int`, `integer`, and `float` are accepted as aliases for `number`, and `boolean` for `bool`.",
-            "additionalProperties": false,
             "required": [
-              "type",
-              "value"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "string",
-                  "number",
-                  "bool"
-                ],
-                "example": "number"
-              },
-              "value": {
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ],
-                "example": 500000000
-              }
-            }
+              "number_value"
+            ]
           },
           {
-            "type": "object",
-            "description": "A typed string list, used with the `in` operator.",
-            "additionalProperties": false,
             "required": [
-              "type",
-              "value"
+              "string_array_value"
+            ]
+          },
+          {
+            "required": [
+              "number_array_value"
+            ]
+          }
+        ],
+        "properties": {
+          "string_value": {
+            "type": "string",
+            "example": "checkout-api"
+          },
+          "number_value": {
+            "type": "number",
+            "example": 500000000
+          },
+          "string_array_value": {
+            "type": "object",
+            "required": [
+              "values"
             ],
             "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "string_array"
-                ],
-                "example": "string_array"
-              },
-              "value": {
+              "values": {
                 "type": "array",
                 "minItems": 1,
                 "maxItems": 100,
@@ -87696,12 +87594,180 @@
                 ]
               }
             }
+          },
+          "number_array_value": {
+            "type": "object",
+            "required": [
+              "values"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "number"
+                },
+                "example": [
+                  42,
+                  84
+                ]
+              }
+            }
           }
-        ]
+        }
+      },
+      "traces_filter_condition": {
+        "type": "object",
+        "description": "A single field comparison in a traces filter expression.",
+        "required": [
+          "field",
+          "operator"
+        ],
+        "oneOf": [
+          {
+            "properties": {
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "FILTER_OPERATOR_EXISTS"
+                ],
+                "example": "FILTER_OPERATOR_EXISTS"
+              }
+            }
+          },
+          {
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "FILTER_OPERATOR_EQ",
+                  "FILTER_OPERATOR_NEQ",
+                  "FILTER_OPERATOR_IN",
+                  "FILTER_OPERATOR_GTE",
+                  "FILTER_OPERATOR_LTE"
+                ],
+                "example": "FILTER_OPERATOR_EQ"
+              }
+            }
+          }
+        ],
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/traces_field_ref"
+          },
+          "operator": {
+            "type": "string",
+            "description": "The comparison operator.",
+            "enum": [
+              "FILTER_OPERATOR_EQ",
+              "FILTER_OPERATOR_NEQ",
+              "FILTER_OPERATOR_IN",
+              "FILTER_OPERATOR_EXISTS",
+              "FILTER_OPERATOR_GTE",
+              "FILTER_OPERATOR_LTE"
+            ],
+            "example": "FILTER_OPERATOR_EQ"
+          },
+          "value": {
+            "$ref": "#/components/schemas/traces_filter_value"
+          }
+        }
+      },
+      "traces_filter_expression": {
+        "type": "object",
+        "description": "A boolean filter tree for traces queries. Exactly one node is set per message. Trees may be nested at most 16 levels deep and contain at most 256 nodes in total.",
+        "oneOf": [
+          {
+            "required": [
+              "condition"
+            ]
+          },
+          {
+            "required": [
+              "and"
+            ]
+          },
+          {
+            "required": [
+              "or"
+            ]
+          },
+          {
+            "required": [
+              "not"
+            ]
+          },
+          {
+            "required": [
+              "text_search"
+            ]
+          }
+        ],
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/traces_filter_condition"
+          },
+          "and": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "$ref": "#/components/schemas/traces_filter_expression"
+                }
+              }
+            }
+          },
+          "or": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "$ref": "#/components/schemas/traces_filter_expression"
+                }
+              }
+            }
+          },
+          "not": {
+            "$ref": "#/components/schemas/traces_filter_expression"
+          },
+          "text_search": {
+            "type": "object",
+            "description": "A substring search across span names, service names, and status messages.",
+            "required": [
+              "query"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "\\S",
+                "description": "The search string. Leading and trailing whitespace is trimmed, and the remaining string must not be empty.",
+                "example": "timeout"
+              }
+            }
+          }
+        }
       },
       "traces_order_by": {
         "type": "object",
-        "description": "A sort clause for traces search results. Supported `field.name` values (case-insensitive) are `started` (aliases `startTime`, `start_time`, `timestamp`), `durationNs` (`duration`), `serviceName` (`service.name`, `service_name`), `traceId` (`trace.id`, `trace_id`), `errorCount` (`error_count`), `spanCount` (`span_count`), and `status`. Any other name returns `400`.\n\nSorting by `started` is exact. For every other field, the server first selects the most recent matching traces by start time (up to the requested limit) and then sorts only those traces, so results are not a global top-N across the whole time range.",
+        "description": "A sort clause for traces search results. Supported `field.name` values are `started`, `duration_ns`, `service_name`, `trace_id`, `error_count`, `span_count`, and `status`. Any other name returns `400`.\n\nSorting by `started` is exact. For every other field, the server first selects the most recent matching traces by start time (up to the requested limit) and then sorts only those traces, so results are not a global top-N across the whole time range.",
         "additionalProperties": false,
         "required": [
           "field"
@@ -87712,19 +87778,18 @@
           },
           "direction": {
             "type": "string",
-            "description": "The sort direction (case-insensitive). Defaults to `desc`.",
+            "description": "The sort direction, matched case-insensitively. Omit to use the server default.",
             "enum": [
               "asc",
               "desc"
             ],
-            "default": "desc",
             "example": "desc"
           }
         }
       },
       "traces_pagination_request": {
         "type": "object",
-        "description": "Limits the size of a traces search result set. There is no cursor; use `pagination.hasMore` in the response to tell whether more traces matched, and narrow the time range or filter to see them.",
+        "description": "Limits the size of a traces search result set. There is no cursor; use `pagination.has_more` in the response to tell whether more traces matched, and narrow the time range or filter to see them.",
         "additionalProperties": false,
         "properties": {
           "limit": {
@@ -87743,16 +87808,16 @@
         "description": "Request body for searching traces. Unknown properties are rejected.",
         "additionalProperties": false,
         "required": [
-          "timeRange"
+          "time_range"
         ],
         "properties": {
-          "timeRange": {
+          "time_range": {
             "$ref": "#/components/schemas/traces_time_range"
           },
           "filter": {
             "$ref": "#/components/schemas/traces_filter_expression"
           },
-          "orderBy": {
+          "order_by": {
             "type": "array",
             "description": "Sort clauses applied in order. Defaults to `started` descending.",
             "items": {
@@ -87766,12 +87831,12 @@
       },
       "traces_trace_summary": {
         "type": "object",
-        "description": "A single trace returned by a traces search. One row per trace, aggregated from its spans. Every field except `traceId` is omitted when it holds its zero value (for example, `errorCount` is absent when no spans errored).",
+        "description": "A single trace returned by a traces search. One row per trace, aggregated from its spans. Every field except `trace_id` is omitted when it holds its zero value (for example, `error_count` is absent when no spans errored).",
         "required": [
-          "traceId"
+          "trace_id"
         ],
         "properties": {
-          "traceId": {
+          "trace_id": {
             "type": "string",
             "description": "The trace identifier.",
             "example": "bef35030c4024f42fb88041fea062e97"
@@ -87782,24 +87847,24 @@
             "description": "The start time of the earliest span in the trace, in RFC 3339 format.",
             "example": "2026-10-09T09:21:39.99Z"
           },
-          "serviceName": {
+          "service_name": {
             "type": "string",
             "description": "The service that emitted the root span. Omitted when the root span has no service.name resource attribute.",
             "example": "checkout-api"
           },
-          "durationNs": {
+          "duration_ns": {
             "type": "integer",
             "format": "int64",
             "description": "Wall-clock duration of the trace in nanoseconds.",
             "example": 10000000
           },
-          "spanCount": {
+          "span_count": {
             "type": "integer",
             "format": "int32",
             "description": "The number of spans in the trace.",
             "example": 1
           },
-          "errorCount": {
+          "error_count": {
             "type": "integer",
             "format": "int32",
             "description": "The number of spans in the trace with an `Error` status code. Omitted when zero.",
@@ -87814,7 +87879,7 @@
             ],
             "example": "Ok"
           },
-          "spanNames": {
+          "span_names": {
             "type": "array",
             "description": "The distinct span names present in the trace.",
             "items": {
@@ -87830,10 +87895,10 @@
         "type": "object",
         "description": "Pagination response.",
         "required": [
-          "hasMore"
+          "has_more"
         ],
         "properties": {
-          "hasMore": {
+          "has_more": {
             "type": "boolean",
             "description": "Whether more results matched the query than were returned.",
             "example": false
@@ -87864,38 +87929,38 @@
         "type": "object",
         "description": "A single span belonging to a trace.",
         "required": [
-          "traceId",
-          "spanId"
+          "trace_id",
+          "span_id"
         ],
         "properties": {
-          "traceId": {
+          "trace_id": {
             "type": "string",
             "description": "The trace this span belongs to.",
             "example": "7b0b4e56abab38362b24e5498eb9ec64"
           },
-          "spanId": {
+          "span_id": {
             "type": "string",
             "description": "The span identifier.",
             "example": "e7867486e45cda47"
           },
-          "parentSpanId": {
+          "parent_span_id": {
             "type": "string",
             "description": "The parent span identifier. Omitted for the root span.",
             "example": "a2fb4a1d1a96d312"
           },
-          "startTime": {
+          "start_time": {
             "type": "string",
             "format": "date-time",
             "description": "The span start time.",
             "example": "2026-10-09T06:44:37Z"
           },
-          "endTime": {
+          "end_time": {
             "type": "string",
             "format": "date-time",
             "description": "The span end time.",
             "example": "2026-10-09T06:44:39Z"
           },
-          "durationNs": {
+          "duration_ns": {
             "type": "integer",
             "format": "int64",
             "description": "Span duration in nanoseconds.",
@@ -87911,17 +87976,17 @@
             "description": "The OpenTelemetry span kind as a string, for example `Server`, `Client`, or `Internal`.",
             "example": "Server"
           },
-          "statusCode": {
+          "status_code": {
             "type": "string",
             "description": "The OpenTelemetry span status code as a string: `Unset`, `Ok`, or `Error`.",
             "example": "Error"
           },
-          "statusMessage": {
+          "status_message": {
             "type": "string",
             "description": "The status description. Omitted when empty.",
             "example": "upstream timeout"
           },
-          "serviceName": {
+          "service_name": {
             "type": "string",
             "description": "The service that emitted the span. Omitted when the span has no service.name resource attribute.",
             "example": "checkout-api"
@@ -87952,7 +88017,7 @@
         "type": "object",
         "description": "A single trace and all of its spans.",
         "properties": {
-          "traceId": {
+          "trace_id": {
             "type": "string",
             "description": "The trace identifier.",
             "example": "7b0b4e56abab38362b24e5498eb9ec64"
@@ -88014,136 +88079,246 @@
         "properties": {
           "name": {
             "type": "string",
-            "description": "The field name. Well-known span fields include `traceId`, `spanId`, `parentSpanId`, `startTime`, `endTime`, `durationNs`, `name`, `serviceName`, `kind`, `statusCode`, and `statusMessage`. Any other value is treated as a span or resource attribute key.",
+            "description": "The field name. Well-known span fields include `trace_id`, `span_id`, `parent_span_id`, `start_time`, `end_time`, `duration_ns`, `name`, `service_name`, `kind`, `status_code`, and `status_message`. Any other value is treated as a span or resource attribute key.",
             "example": "service.name"
           },
           "scope": {
             "type": "string",
-            "description": "Optional attribute scope. Use `resource` to match a resource attribute or `attributes` to match a span attribute. Omit for well-known fields or to search both attribute maps.",
+            "description": "Optional attribute scope, matched case-insensitively. Use `FIELD_SCOPE_RESOURCE` to match a resource attribute or `FIELD_SCOPE_ATTRIBUTES` to match a span attribute. The aliases `resource` and `resource.attributes` are accepted for resource attributes; `attribute`, `attributes`, and `span.attributes` are accepted for span attributes. Omit for well-known fields or to search both attribute maps.",
             "enum": [
+              "FIELD_SCOPE_RESOURCE",
+              "FIELD_SCOPE_ATTRIBUTES",
               "resource",
-              "attributes"
+              "resource.attributes",
+              "attribute",
+              "attributes",
+              "span.attributes"
             ],
-            "example": "attributes"
+            "example": "FIELD_SCOPE_ATTRIBUTES"
           }
         }
       },
       "spans_filter_value": {
-        "description": "A filter comparison value. Provide either a bare JSON scalar or string array, or a typed wrapper of the form `{ \"type\": \"string\", \"value\": \"...\" }`.",
-        "example": {
-          "type": "string",
-          "value": "api-gateway"
-        },
+        "type": "object",
+        "description": "A typed literal or list value for a spans filter condition. Exactly one kind is set per message.",
         "oneOf": [
           {
-            "type": "string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          {
-            "type": "object",
-            "description": "A typed value wrapper.",
             "required": [
-              "value"
+              "string_value"
+            ]
+          },
+          {
+            "required": [
+              "number_value"
+            ]
+          },
+          {
+            "required": [
+              "string_array_value"
+            ]
+          },
+          {
+            "required": [
+              "number_array_value"
+            ]
+          }
+        ],
+        "properties": {
+          "string_value": {
+            "type": "string",
+            "example": "api-gateway"
+          },
+          "number_value": {
+            "type": "number",
+            "example": 42
+          },
+          "string_array_value": {
+            "type": "object",
+            "required": [
+              "values"
             ],
             "properties": {
-              "type": {
-                "type": "string",
-                "description": "The value type.",
-                "enum": [
-                  "string",
-                  "number",
-                  "bool",
-                  "string_array"
-                ],
-                "example": "string"
-              },
-              "value": {
-                "description": "The scalar or array value, matching `type`.",
-                "example": "api-gateway",
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "number"
-                  },
-                  {
-                    "type": "boolean"
-                  },
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "api-gateway",
+                  "checkout"
+                ]
+              }
+            }
+          },
+          "number_array_value": {
+            "type": "object",
+            "required": [
+              "values"
+            ],
+            "properties": {
+              "values": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 100,
+                "items": {
+                  "type": "number"
+                },
+                "example": [
+                  42,
+                  84
                 ]
               }
             }
           }
-        ]
+        }
       },
-      "spans_filter_expression": {
+      "spans_filter_condition": {
         "type": "object",
-        "description": "A boolean filter tree for spans search. Set `type` to select the node kind: `condition` compares a single field, `and`/`or`/`not` combine child expressions, and `text_search` matches a substring across the span name, service name, and status message.",
+        "description": "A single field comparison in a spans filter expression.",
         "required": [
-          "type"
+          "field",
+          "operator"
+        ],
+        "oneOf": [
+          {
+            "properties": {
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "FILTER_OPERATOR_EXISTS"
+                ],
+                "example": "FILTER_OPERATOR_EXISTS"
+              }
+            }
+          },
+          {
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "FILTER_OPERATOR_EQ",
+                  "FILTER_OPERATOR_NEQ",
+                  "FILTER_OPERATOR_IN",
+                  "FILTER_OPERATOR_GTE",
+                  "FILTER_OPERATOR_LTE"
+                ],
+                "example": "FILTER_OPERATOR_EQ"
+              }
+            }
+          }
         ],
         "properties": {
-          "type": {
-            "type": "string",
-            "description": "The node kind.",
-            "enum": [
-              "condition",
-              "and",
-              "or",
-              "not",
-              "text_search"
-            ],
-            "example": "condition"
-          },
           "field": {
             "$ref": "#/components/schemas/spans_filter_field"
           },
           "operator": {
             "type": "string",
-            "description": "The comparison operator for a `condition` node.",
+            "description": "The comparison operator.",
             "enum": [
-              "eq",
-              "neq",
-              "gt",
-              "gte",
-              "lt",
-              "lte",
-              "in",
-              "exists"
+              "FILTER_OPERATOR_EQ",
+              "FILTER_OPERATOR_NEQ",
+              "FILTER_OPERATOR_IN",
+              "FILTER_OPERATOR_EXISTS",
+              "FILTER_OPERATOR_GTE",
+              "FILTER_OPERATOR_LTE"
             ],
-            "example": "eq"
+            "example": "FILTER_OPERATOR_EQ"
           },
           "value": {
             "$ref": "#/components/schemas/spans_filter_value"
+          }
+        }
+      },
+      "spans_filter_expression": {
+        "type": "object",
+        "description": "A boolean filter tree for spans queries. Exactly one node is set per message. Trees may be nested at most 16 levels deep and contain at most 256 nodes in total.",
+        "oneOf": [
+          {
+            "required": [
+              "condition"
+            ]
           },
-          "expressions": {
-            "type": "array",
-            "description": "Child expressions for `and`, `or`, and `not` nodes.",
-            "items": {
-              "$ref": "#/components/schemas/spans_filter_expression"
+          {
+            "required": [
+              "and"
+            ]
+          },
+          {
+            "required": [
+              "or"
+            ]
+          },
+          {
+            "required": [
+              "not"
+            ]
+          },
+          {
+            "required": [
+              "text_search"
+            ]
+          }
+        ],
+        "properties": {
+          "condition": {
+            "$ref": "#/components/schemas/spans_filter_condition"
+          },
+          "and": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "$ref": "#/components/schemas/spans_filter_expression"
+                }
+              }
             }
           },
-          "query": {
-            "type": "string",
-            "description": "The substring to match for a `text_search` node.",
-            "example": "timeout"
+          "or": {
+            "type": "object",
+            "required": [
+              "expressions"
+            ],
+            "properties": {
+              "expressions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 32,
+                "items": {
+                  "$ref": "#/components/schemas/spans_filter_expression"
+                }
+              }
+            }
+          },
+          "not": {
+            "$ref": "#/components/schemas/spans_filter_expression"
+          },
+          "text_search": {
+            "type": "object",
+            "description": "A substring search across the span name, service name, and status message.",
+            "required": [
+              "query"
+            ],
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "\\S",
+                "description": "The search string. Leading and trailing whitespace is trimmed, and the remaining string must not be empty.",
+                "example": "timeout"
+              }
+            }
           }
         }
       },
@@ -88159,7 +88334,7 @@
           },
           "direction": {
             "type": "string",
-            "description": "The sort direction. Defaults to `desc` when omitted.",
+            "description": "The sort direction, matched case-insensitively. Omit to use the server default.",
             "enum": [
               "asc",
               "desc"
@@ -88187,18 +88362,18 @@
         "type": "object",
         "description": "Request body for searching spans.",
         "required": [
-          "timeRange"
+          "time_range"
         ],
         "properties": {
-          "timeRange": {
+          "time_range": {
             "$ref": "#/components/schemas/spans_time_range"
           },
           "filter": {
             "$ref": "#/components/schemas/spans_filter_expression"
           },
-          "orderBy": {
+          "order_by": {
             "type": "array",
-            "description": "Sort clauses applied to the result set. Defaults to `startTime` descending when omitted.",
+            "description": "Sort clauses applied to the result set. Defaults to `start_time` descending when omitted.",
             "items": {
               "$ref": "#/components/schemas/spans_order_by"
             }
@@ -88212,34 +88387,34 @@
         "type": "object",
         "description": "A single span returned by a spans search.",
         "properties": {
-          "traceId": {
+          "trace_id": {
             "type": "string",
             "description": "The trace identifier the span belongs to.",
             "example": "4bf92f3577b34da6a3ce929d0e0e4736"
           },
-          "spanId": {
+          "span_id": {
             "type": "string",
             "description": "The span identifier.",
             "example": "00f067aa0ba902b7"
           },
-          "parentSpanId": {
+          "parent_span_id": {
             "type": "string",
             "description": "The parent span identifier. Omitted for root spans.",
             "example": "00f067aa0ba902b6"
           },
-          "startTime": {
+          "start_time": {
             "type": "string",
             "format": "date-time",
             "description": "The span start time.",
             "example": "2026-09-30T00:00:00Z"
           },
-          "endTime": {
+          "end_time": {
             "type": "string",
             "format": "date-time",
             "description": "The span end time.",
             "example": "2026-09-30T00:00:01Z"
           },
-          "durationNs": {
+          "duration_ns": {
             "type": "integer",
             "format": "int64",
             "description": "The span duration in nanoseconds.",
@@ -88255,17 +88430,17 @@
             "description": "The span kind.",
             "example": "Server"
           },
-          "statusCode": {
+          "status_code": {
             "type": "string",
             "description": "The span status code.",
             "example": "Ok"
           },
-          "statusMessage": {
+          "status_message": {
             "type": "string",
             "description": "The span status message. Omitted when empty.",
             "example": "connection reset by peer"
           },
-          "serviceName": {
+          "service_name": {
             "type": "string",
             "description": "The name of the service that emitted the span.",
             "example": "api-gateway"
@@ -88303,7 +88478,7 @@
         "type": "object",
         "description": "Pagination metadata for a spans search response.",
         "properties": {
-          "hasMore": {
+          "has_more": {
             "type": "boolean",
             "description": "Whether more spans matched than were returned in this page. Cursor-based continuation is not yet supported.",
             "example": true
@@ -102755,13 +102930,8 @@
         "type": "object"
       },
       "apiCandidateInferenceConfig": {
-        "description": "Inference configuration for the candidate model during evaluation.",
+        "description": "Inference configuration for the candidate model during evaluation.\nThe output token limit is set automatically and cannot be configured.",
         "properties": {
-          "max_tokens": {
-            "example": 123,
-            "format": "int64",
-            "type": "integer"
-          },
           "reasoning_effort": {
             "description": "Reasoning effort for reasoning-capable models (e.g. \"low\", \"medium\",\n\"high\"). Validated against the candidate model's supported values; a model\nthat advertises none rejects this field.",
             "example": "low",
@@ -102797,7 +102967,7 @@
       },
       "apiPresetSaveSection": {
         "default": "PRESET_SAVE_SECTION_UNSPECIFIED",
-        "description": "Sections of an inline evaluation config that can be persisted as a reusable\npreset. Each value names a self-contained group of fields; selecting a\nsection saves exactly the fields it owns and leaves the rest of the preset\nempty so it can be merged with inline values on a future run.\n\n - PRESET_SAVE_SECTION_CANDIDATE: Candidate model identity (`candidate_model_uuid`, `candidate_model_source`,\n`candidate_model_name`) and the non-prompt inference params\n(`max_tokens`, `temperature`, `stop_token`).\n - PRESET_SAVE_SECTION_METRICS: The selected `metric_uuids` and the optional `star_metric`.\n - PRESET_SAVE_SECTION_JUDGE: The `judge_model_uuid`.\n - PRESET_SAVE_SECTION_DATASET: The `dataset_uuid`.\n - PRESET_SAVE_SECTION_SYSTEM_PROMPT: The candidate's `system_prompt` only. Independent of CANDIDATE so the\nmodel + params and the prompt can be saved/replayed separately.",
+        "description": "Sections of an inline evaluation config that can be persisted as a reusable\npreset. Each value names a self-contained group of fields; selecting a\nsection saves exactly the fields it owns and leaves the rest of the preset\nempty so it can be merged with inline values on a future run.\n\n - PRESET_SAVE_SECTION_CANDIDATE: Candidate model identity (`candidate_model_uuid`, `candidate_model_source`,\n`candidate_model_name`) and the non-prompt inference params\n(`temperature`, `stop_token`, `reasoning_effort`).\n - PRESET_SAVE_SECTION_METRICS: The selected `metric_uuids` and the optional `star_metric`.\n - PRESET_SAVE_SECTION_JUDGE: The `judge_model_uuid`.\n - PRESET_SAVE_SECTION_DATASET: The `dataset_uuid`.\n - PRESET_SAVE_SECTION_SYSTEM_PROMPT: The candidate's `system_prompt` only. Independent of CANDIDATE so the\nmodel + params and the prompt can be saved/replayed separately.",
         "enum": [
           "PRESET_SAVE_SECTION_UNSPECIFIED",
           "PRESET_SAVE_SECTION_CANDIDATE",
@@ -119547,19 +119717,19 @@
             "example": {
               "data": [
                 {
-                  "traceId": "bef35030c4024f42fb88041fea062e97",
+                  "trace_id": "bef35030c4024f42fb88041fea062e97",
                   "started": "2026-10-09T09:21:39.99Z",
-                  "serviceName": "checkout-api",
-                  "durationNs": 10000000,
+                  "service_name": "checkout-api",
+                  "duration_ns": 10000000,
                   "status": "Ok",
-                  "spanCount": 1,
-                  "spanNames": [
+                  "span_count": 1,
+                  "span_names": [
                     "checkout-api-root"
                   ]
                 }
               ],
               "pagination": {
-                "hasMore": false
+                "has_more": false
               }
             }
           }
@@ -119590,19 +119760,19 @@
               },
               "search_time_range_too_long": {
                 "summary": "Search time range longer than 7 days",
-                "value": "timeRange exceeds maximum of 168h0m0s"
+                "value": "time_range exceeds maximum of 168h0m0s"
               },
               "trace_window_too_long": {
                 "summary": "Trace lookup window longer than 7 days",
                 "value": "time range exceeds maximum of 168h0m0s"
               },
               "invalid_order_direction": {
-                "summary": "Unsupported orderBy direction",
-                "value": "invalid orderBy direction \"SORT_DIRECTION_ASC\""
+                "summary": "Unsupported order_by direction",
+                "value": "invalid order_by direction \"sideways\""
               },
               "from_after_to": {
                 "summary": "Time range start after end",
-                "value": "timeRange.from must be before or equal to timeRange.to"
+                "value": "time_range.from must be before or equal to time_range.to"
               },
               "unknown_property": {
                 "summary": "Unknown or malformed request body property",
