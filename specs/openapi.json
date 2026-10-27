@@ -62239,7 +62239,7 @@
       "post": {
         "operationId": "inference_create_image",
         "summary": "Generate images from text prompts",
-        "description": "Creates a high-quality image from a text prompt using GPT-IMAGE-1, the latest image generation model with automatic prompt optimization and enhanced visual capabilities.",
+        "description": "Creates a high-quality image from a text prompt using GPT-IMAGE-2, the latest image generation model with automatic prompt optimization and enhanced visual capabilities.",
         "tags": [
           "Serverless Inference"
         ],
@@ -62302,19 +62302,19 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"prompt\": \"A cute baby sea otter floating on its back in calm blue water\", \"model\": \"openai-gpt-image-1\", \"size\": \"auto\", \"quality\": \"auto\"}' \\\n  \"https://inference.do-ai.run/v1/images/generations\""
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"prompt\": \"A cute baby sea otter floating on its back in calm blue water\", \"model\": \"openai-gpt-image-2\", \"size\": \"auto\", \"quality\": \"auto\"}' \\\n  \"https://inference.do-ai.run/v1/images/generations\""
           },
           {
             "lang": "Python",
-            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.images.generate(\n    model=\"openai-gpt-image-1\",\n    prompt=\"A cute baby sea otter floating on its back in calm blue water\",\n    size=\"auto\",\n    quality=\"auto\",\n    n=1,\n)\n\nprint(resp.data[0].b64_json)"
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.images.generate(\n    model=\"openai-gpt-image-2\",\n    prompt=\"A cute baby sea otter floating on its back in calm blue water\",\n    size=\"auto\",\n    quality=\"auto\",\n    n=1,\n)\n\nprint(resp.data[0].b64_json)"
           },
           {
             "lang": "Go",
-            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.ImageGenerations.Generate(ctx, &godo.ImageGenerateParams{\n        Model:   \"openai-gpt-image-1\",\n        Prompt:  \"A cute baby sea otter floating on its back in calm blue water\",\n        Size:    godo.PtrTo(\"auto\"),\n        Quality: godo.PtrTo(\"auto\"),\n        N:       1,\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.Data[0].B64JSON)\n}"
+            "source": "package main\n\nimport (\n    \"context\"\n    \"fmt\"\n    \"os\"\n\n    \"github.com/digitalocean/godo\"\n)\n\nfunc main() {\n    client := godo.NewFromToken(os.Getenv(\"DIGITALOCEAN_TOKEN\"))\n    ctx := context.Background()\n\n    resp, _, err := client.ImageGenerations.Generate(ctx, &godo.ImageGenerateParams{\n        Model:   \"openai-gpt-image-2\",\n        Prompt:  \"A cute baby sea otter floating on its back in calm blue water\",\n        Size:    godo.PtrTo(\"auto\"),\n        Quality: godo.PtrTo(\"auto\"),\n        N:       1,\n    })\n    if err != nil {\n        panic(err)\n    }\n\n    fmt.Println(resp.Data[0].B64JSON)\n}"
           },
           {
             "lang": "JavaScript",
-            "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst resp = await client.images.generate({\n    model: \"openai-gpt-image-1\",\n    prompt: \"A cute baby sea otter floating on its back in calm blue water\",\n    size: \"auto\",\n    quality: \"auto\",\n    n: 1,\n});\n\nconsole.log(resp.data[0].b64_json);"
+            "source": "import { InferenceClient } from \"@digitalocean/dots\";\n\nconst client = new InferenceClient({\n    apiKey: process.env.DIGITALOCEAN_TOKEN,\n});\n\nconst resp = await client.images.generate({\n    model: \"openai-gpt-image-2\",\n    prompt: \"A cute baby sea otter floating on its back in calm blue water\",\n    size: \"auto\",\n    quality: \"auto\",\n    n: 1,\n});\n\nconsole.log(resp.data[0].b64_json);"
           }
         ],
         "security": [
@@ -108789,7 +108789,7 @@
           "model": {
             "type": "string",
             "description": "The model to use for image generation.\n",
-            "example": "openai-gpt-image-1"
+            "example": "openai-gpt-image-2"
           },
           "moderation": {
             "type": "string",
@@ -108831,7 +108831,7 @@
           },
           "size": {
             "type": "string",
-            "description": "The size of the generated images. GPT-IMAGE-1 supports: auto (automatically select best size), 1536x1024 (landscape), 1024x1536 (portrait).\n",
+            "description": "The size of the generated images. GPT-IMAGE-2 supports: auto (automatically select best size), 1536x1024 (landscape), 1024x1536 (portrait).\n",
             "enum": [
               "auto",
               "1536x1024",
