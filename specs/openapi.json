@@ -103315,7 +103315,7 @@
             "type": "string"
           },
           "epochs": {
-            "description": "Number of times to evaluate each dataset row (n-pass/epochs), so the\nresult reports avg@k/pass@k/cons@k instead of a single score. Defaults\nto 1 when unset. Capped at 3 until throughput/sharding work lands, since\neach extra epoch roughly multiplies wall-clock run time. Not persisted\non presets.",
+            "description": "How many times each dataset row is evaluated. Defaults to 1, maximum 10.\nWhen more than 1, the results show how consistent the model is across\nattempts (avg@k, pass@k, cons@k). Each extra attempt makes the run take\nlonger. Not saved in presets.",
             "example": 1,
             "format": "int64",
             "type": "integer"
