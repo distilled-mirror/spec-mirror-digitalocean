@@ -2430,7 +2430,7 @@
       "post": {
         "operationId": "sessions_create",
         "summary": "Create a Session",
-        "description": "Creates a session owned by your team, with a new session URN, and returns the MCP URL an agent connects to. tools selects the tools and toolbelts the session exposes, and policy decides which calls run, need approval, or are refused.",
+        "description": "Creates a session owned by your team, with a new session URN, and returns the MCP URL an agent connects to. tools selects the tools and toolbelts the session exposes, and policy decides which calls run, need approval, or are refused.\n\nSet config.cache to opt into result caching for all eligible tools or a specific list. Caching is off by default and must be enabled for the team.",
         "tags": [
           "Action Gateway"
         ],
@@ -5177,7 +5177,7 @@
       "post": {
         "operationId": "gatewayTools_run",
         "summary": "Invoke Session Tools",
-        "description": "Runs 1 to 10 tool calls in parallel and returns one result per call, in request order. This is the REST form of the `action_invoke` MCP tool.\n\nEach call is checked against the session's tool selection and policy, uses the session actor's connections, and applies any output view bound to the tool in the session. A well-formed request returns `200` even when some calls fail. Check each item's `result.status`, and use `success_count` and `error_count` to branch without scanning every item.\n\nA call whose policy requires approval fails with `_meta.status` set to `requires_approval`. Have the session's owner approve it, then repeat the call with the same arguments. A call that needs the end user to connect a provider fails with `_meta.status` set to `requires_authorization` or `requires_connection_configuration`.",
+        "description": "Runs 1 to 10 tool calls in parallel and returns one result per call, in request order. This is the REST form of the `action_invoke` MCP tool.\n\nEach call is checked against the session's tool selection and policy, uses the session actor's connections, and applies any output view bound to the tool in the session. A well-formed request returns `200` even when some calls fail. Check each item's `result.status`, and use `success_count` and `error_count` to branch without scanning every item.\n\nA call whose policy requires approval fails with `_meta.status` set to `requires_approval`. Have the session's owner approve it, then repeat the call with the same arguments. A call that needs the end user to connect a provider fails with `_meta.status` set to `requires_authorization` or `requires_connection_configuration`.\n\nTools opted into result caching use the session's settings automatically. Set cache on an individual tools entry to bypass caching or require a fresher result. The result's _meta.cache reports cache hits. Hits still incur the standard gateway invocation charge but no additional provider charge, because the provider is not called.",
         "tags": [
           "Action Gateway Data Plane"
         ],
@@ -5246,6 +5246,40 @@
                               ]
                             },
                             "call_id": "call_8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  "cache_hit": {
+                    "summary": "A cached result from a session opted into caching",
+                    "value": {
+                      "total_count": 1,
+                      "success_count": 1,
+                      "error_count": 0,
+                      "results": [
+                        {
+                          "index": 0,
+                          "tool": "exa_web_search",
+                          "version": "1",
+                          "result": {
+                            "status": "succeeded",
+                            "output": {
+                              "provider": "exa",
+                              "results": [
+                                {
+                                  "title": "DigitalOcean",
+                                  "url": "https://www.digitalocean.com/"
+                                }
+                              ]
+                            },
+                            "call_id": "call_8b7c6d5e-4f3a-4b2c-9d1e-0f9a8b7c6d5e",
+                            "_meta": {
+                              "cache": {
+                                "status": "HIT",
+                                "age_seconds": 12
+                              }
+                            }
                           }
                         }
                       ]
@@ -68191,6 +68225,55 @@
           }
         }
       },
+      "session_cache": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Opts the session into result caching. Omit config.cache to leave caching off. Set exactly one of tools or allEligible. Caching must also be enabled for the team. Tool selection and permission rules still apply to every call.",
+        "properties": {
+          "tools": {
+            "type": "array",
+            "maxItems": 100,
+            "description": "Provider-qualified tool slugs to cache. Every listed tool must resolve for the team and have a catalog cache policy, or session creation fails. Use slugs without version suffixes or toolbelt references. An empty array enables no tools.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search"
+            ]
+          },
+          "allEligible": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Enables caching for every called tool version with a catalog cache policy, including tools that become eligible after session creation. Do not combine with tools.",
+            "example": true
+          },
+          "maxAgeSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "description": "Maximum cache lifetime in seconds for this session. Omit to use each tool's lifetime, up to 300 seconds. A smaller tool lifetime or provider response cache header can shorten it. Per-call max_age_seconds can require a fresher result but cannot increase this limit.",
+            "example": 60
+          }
+        },
+        "example": {
+          "allEligible": true,
+          "maxAgeSeconds": 60
+        },
+        "oneOf": [
+          {
+            "required": [
+              "tools"
+            ]
+          },
+          {
+            "required": [
+              "allEligible"
+            ]
+          }
+        ]
+      },
       "session_network": {
         "type": "object",
         "description": "Attaches a session to a VPC.",
@@ -68290,7 +68373,13 @@
           },
           "config": {
             "type": "object",
+            "additionalProperties": true,
             "description": "Session options as supplied at creation. Omitted when none were supplied.",
+            "properties": {
+              "cache": {
+                "$ref": "#/components/schemas/session_cache"
+              }
+            },
             "example": {
               "preloadTools": [
                 "exa_web_search"
@@ -68406,7 +68495,13 @@
           },
           "config": {
             "type": "object",
-            "description": "Optional session options. config.preloadTools may contain concrete tool names (optionally version-pinned) and version-pinned toolbelt references. config.customInstructions is a string of at most 1000 characters. config.outputViews maps up to 100 tool slugs to the name of an output view to apply to that tool's results.",
+            "additionalProperties": true,
+            "description": "Optional session options. config.preloadTools may contain concrete tool names (optionally version-pinned) and version-pinned toolbelt references. config.customInstructions is a string of at most 1000 characters. config.outputViews maps up to 100 tool slugs to the name of an output view to apply to that tool's results. config.cache opts eligible tools into result caching for this session.",
+            "properties": {
+              "cache": {
+                "$ref": "#/components/schemas/session_cache"
+              }
+            },
             "example": {
               "preloadTools": [
                 "exa_web_search"
@@ -69078,6 +69173,22 @@
           }
         }
       },
+      "tool_cache": {
+        "type": "object",
+        "description": "Catalog cache policy for an eligible read-only, non-destructive tool. Omitted when the tool is not eligible. This does not enable caching for a session; opt in through config.cache at session creation.",
+        "properties": {
+          "ttlSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "description": "Maximum cache lifetime in seconds for this tool version.",
+            "example": 120
+          }
+        },
+        "required": [
+          "ttlSeconds"
+        ]
+      },
       "tool_definition": {
         "type": "object",
         "description": "Describes a tool you can call.",
@@ -69086,6 +69197,9 @@
             "type": "string",
             "description": "The opaque identity of this released tool version.",
             "example": "tul_exa_web_search"
+          },
+          "cache": {
+            "$ref": "#/components/schemas/tool_cache"
           },
           "name": {
             "type": "string",
@@ -70179,6 +70293,31 @@
           "queries"
         ]
       },
+      "cache_status": {
+        "type": "object",
+        "description": "Cache outcome. Hits always include this metadata. MISS and BYPASS appear only when the call includes cache controls. Cache hits still incur the gateway invocation charge but not an additional provider charge.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "HIT",
+              "MISS",
+              "BYPASS"
+            ],
+            "description": "HIT returned a cached result without calling the provider. MISS found no usable result and called the provider. BYPASS skipped caching.",
+            "example": "HIT"
+          },
+          "age_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Age of the cached result in seconds. Present only on a hit.",
+            "example": 12
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
       "tool_result": {
         "type": "object",
         "description": "The result of one tool call. Check `status` before reading `output`. A call that needs approval, authorization, or connection setup fails with a `_meta.status` that names the step to complete.",
@@ -70215,7 +70354,12 @@
           },
           "_meta": {
             "type": "object",
-            "description": "Additional result metadata. Keys include:\n\n- `status`: `requires_approval`, `requires_authorization`, or\n  `requires_connection_configuration` when the call stopped before\n  running.\n\n- `approval_id`, `tool_name`, `expires_at`, and `decide`: present with\n  `requires_approval`. `decide` gives the `method`, `path`, and `body`\n  of the approval request to send. Approve the call, then repeat it\n  with the same arguments before `expires_at`.\n\n- `retry`: `{\"attempt_count\": N, \"exhausted\": bool}` when the gateway\n  retried the call.\n\n- `output_view`: the output view applied to the result.",
+            "description": "Additional result metadata. Keys include:\n\n- `status`: `requires_approval`, `requires_authorization`, or\n  `requires_connection_configuration` when the call stopped before\n  running.\n\n- `approval_id`, `tool_name`, `expires_at`, and `decide`: present with\n  `requires_approval`. `decide` gives the `method`, `path`, and `body`\n  of the approval request to send. Approve the call, then repeat it\n  with the same arguments before `expires_at`.\n\n- `retry`: `{\"attempt_count\": N, \"exhausted\": bool}` when the gateway\n  retried the call.\n\n- `output_view`: the output view applied to the result.\n- `cache`: whether the result came from cache, with its age on a hit.",
+            "properties": {
+              "cache": {
+                "$ref": "#/components/schemas/cache_status"
+              }
+            },
             "additionalProperties": true,
             "example": {
               "status": "requires_approval",
@@ -70235,10 +70379,29 @@
           "call_id"
         ]
       },
+      "cache_advertisement": {
+        "type": "object",
+        "description": "Present when this tool accepts cache controls in the session. Unlike the catalog's cache.ttlSeconds, this describes the session's caching opt-in.",
+        "properties": {
+          "maxAgeSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 300,
+            "description": "Maximum result age the session allows, or 300 if the session sets no limit. The tool's own cache lifetime can be shorter. Invoke controls use max_age_seconds, not this field's camelCase spelling.",
+            "example": 60
+          }
+        },
+        "required": [
+          "maxAgeSeconds"
+        ]
+      },
       "search_tools_result": {
         "type": "object",
         "description": "A tool that matched a query.",
         "properties": {
+          "cache": {
+            "$ref": "#/components/schemas/cache_advertisement"
+          },
           "name": {
             "type": "string",
             "description": "The provider-qualified tool name. Pass it as `tool` to invoke the tool.",
@@ -70330,9 +70493,35 @@
           }
         ]
       },
+      "cache_controls": {
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Optional per-call caching controls. Send beside arguments, not inside them. Accepted only for tools opted into caching in this session; tool search advertises these tools with a cache field. Omitting controls uses the session's settings. Direct MCP tools/call requests use session settings without overrides; use action_invoke for per-call controls.",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "bypass"
+            ],
+            "default": "auto",
+            "description": "auto uses a sufficiently recent cached result or calls the provider and can store a successful result. bypass skips lookup and storage without clearing or refreshing existing entries.",
+            "example": "auto"
+          },
+          "max_age_seconds": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Oldest cached result this call accepts, in seconds. Zero bypasses caching. Values above 300 are clamped to 300; larger values cannot increase the session or tool lifetime. This controls accepted result age, not the lifetime of a newly stored entry.",
+            "example": 30
+          }
+        }
+      },
       "tool_call": {
         "type": "object",
         "properties": {
+          "cache": {
+            "$ref": "#/components/schemas/cache_controls"
+          },
           "tool": {
             "type": "string",
             "description": "The tool name, as returned by `GET /tools` or `POST /tools/search`. Names are case-insensitive.",
@@ -72522,7 +72711,7 @@
           "last_event_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Timestamp of the most recent event in this session's canonical stream. Drives the inactivity policy that destroys idle sessions.",
+            "description": "Timestamp of the most recent event in this session's canonical stream. Drives the inactivity policy that pauses idle sessions.",
             "example": "2026-08-01T12:00:00Z"
           },
           "keep_warm": {
