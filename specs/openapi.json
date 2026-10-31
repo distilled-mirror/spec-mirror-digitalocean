@@ -217,7 +217,7 @@
     },
     {
       "name": "Security",
-      "description": "Security CSPM endpoints for scans, scan findings, and settings."
+      "description": "Security endpoints for CSPM scans, scan findings, settings, and Secrets Manager."
     },
     {
       "name": "Signals",
@@ -44908,6 +44908,557 @@
         ]
       }
     },
+    "/v2/security/secrets": {
+      "get": {
+        "operationId": "security_list_secrets",
+        "summary": "List Secrets",
+        "description": "To list secrets across all configured regions, send a GET request to `/v2/security/secrets`.\n\nThe response includes secret metadata only. Secret values are not returned.\nUse `name` to return secrets whose names start with that prefix, and\n`include_deleted` to include secrets that are pending deletion.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_per_page"
+          },
+          {
+            "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/include_deleted"
+          },
+          {
+            "$ref": "#/components/parameters/secret_name_prefix"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/secrets"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/security/secrets?page=1&per_page=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "security_create_secret",
+        "summary": "Create Secret",
+        "description": "To create a secret, send a POST request to `/v2/security/secrets`.\n\nCreating a secret that already exists in the same region returns a `409` response.",
+        "tags": [
+          "Security"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name",
+                  "region",
+                  "values"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "example": "my-database-password",
+                    "description": "The name of the secret to create."
+                  },
+                  "region": {
+                    "type": "string",
+                    "example": "nyc3",
+                    "description": "The region where the secret will be stored."
+                  },
+                  "values": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "password": "s3cr3t"
+                    },
+                    "description": "Key-value pairs to store in the secret."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/create_secret"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"my-database-password\",\"region\":\"nyc3\",\"values\":{\"password\":\"s3cr3t\"}}' \\\n  \"https://api.digitalocean.com/v2/security/secrets\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/security/secrets/{secret}": {
+      "get": {
+        "operationId": "security_get_secret",
+        "summary": "Get Secret",
+        "description": "To retrieve a secret and its values, send a GET request to `/v2/security/secrets/{secret}`.\n\n`region` is required.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          },
+          {
+            "$ref": "#/components/parameters/secret_region"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/secret"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password?region=nyc3\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "security_update_secret",
+        "summary": "Update Secret",
+        "description": "To update a secret, send a PUT request to `/v2/security/secrets/{secret}`.\n\n`version` is the secret's current version. If it does not match, the request\nreturns a `409` response and the secret is not changed.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "region",
+                  "version",
+                  "values"
+                ],
+                "properties": {
+                  "region": {
+                    "type": "string",
+                    "example": "nyc3",
+                    "description": "The region where the secret is stored."
+                  },
+                  "version": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 1,
+                    "description": "The current version of the secret to update."
+                  },
+                  "values": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "example": {
+                      "password": "n3w-s3cr3t"
+                    },
+                    "description": "Updated key-value pairs for the secret."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/create_secret"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"region\":\"nyc3\",\"version\":1,\"values\":{\"password\":\"n3w-s3cr3t\"}}' \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "security_delete_secret",
+        "summary": "Delete Secret",
+        "description": "To schedule a secret for deletion, send a DELETE request to `/v2/security/secrets/{secret}`.\n\n`region` is required. The secret is pending deletion and can be restored\nuntil it is permanently removed.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          },
+          {
+            "$ref": "#/components/parameters/secret_region"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/no_content"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password?region=nyc3\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/security/secrets/{secret}/versions": {
+      "get": {
+        "operationId": "security_list_secret_versions",
+        "summary": "List Secret Versions",
+        "description": "To list all versions of a secret, send a GET request to `/v2/security/secrets/{secret}/versions`.\n\n`region` is required. Version entries do not include secret values.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          },
+          {
+            "$ref": "#/components/parameters/secret_region"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/secret_versions"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password/versions?region=nyc3\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/security/secrets/{secret}/versions/{version}/revert": {
+      "post": {
+        "operationId": "security_revert_secret",
+        "summary": "Revert Secret",
+        "description": "To revert a secret to a prior version, send a POST request to\n`/v2/security/secrets/{secret}/versions/{version}/revert`.\n\n`region` is required. `current_version` must be the secret's current version.\nIf it does not match, the request returns a `409` response. A successful\nrevert creates a new version with the contents of the target version.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          },
+          {
+            "$ref": "#/components/parameters/secret_version"
+          },
+          {
+            "$ref": "#/components/parameters/secret_region"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "current_version"
+                ],
+                "properties": {
+                  "current_version": {
+                    "type": "integer",
+                    "format": "int32",
+                    "minimum": 1,
+                    "example": 3,
+                    "description": "The current version of the secret. Used to reject the request if the secret changed."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/create_secret"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"current_version\":3}' \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password/versions/1/revert?region=nyc3\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/security/secrets/{secret}/restore": {
+      "post": {
+        "operationId": "security_post_restore_secret",
+        "summary": "Restore Secret",
+        "description": "To restore a secret that is pending deletion, send a POST request to `/v2/security/secrets/{secret}/restore`.\n\n`region` is required. The response contains the secret metadata and does not\ninclude secret values.",
+        "tags": [
+          "Security"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/secret"
+          },
+          {
+            "$ref": "#/components/parameters/secret_region"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/secret_list_item"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password/restore?region=nyc3\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "security:create"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/sizes": {
       "get": {
         "operationId": "sizes_list",
@@ -44922,6 +45473,39 @@
           },
           {
             "$ref": "#/components/parameters/page"
+          },
+          {
+            "$ref": "#/components/parameters/cpu_minimum"
+          },
+          {
+            "$ref": "#/components/parameters/cpu_maximum"
+          },
+          {
+            "$ref": "#/components/parameters/gpu_minimum"
+          },
+          {
+            "$ref": "#/components/parameters/gpu_maximum"
+          },
+          {
+            "$ref": "#/components/parameters/gpu_fabric"
+          },
+          {
+            "$ref": "#/components/parameters/memory_minimum"
+          },
+          {
+            "$ref": "#/components/parameters/memory_maximum"
+          },
+          {
+            "$ref": "#/components/parameters/price_hourly_minimum"
+          },
+          {
+            "$ref": "#/components/parameters/price_hourly_maximum"
+          },
+          {
+            "$ref": "#/components/parameters/price_monthly_minimum"
+          },
+          {
+            "$ref": "#/components/parameters/price_monthly_maximum"
           }
         ],
         "responses": {
@@ -66564,6 +67148,177 @@
         },
         "example": "5b3b2b2d-5c9c-4a61-9e2f-4d8f80f30a12"
       },
+      "include_deleted": {
+        "in": "query",
+        "name": "include_deleted",
+        "description": "Whether to include secrets that are pending deletion.",
+        "required": false,
+        "schema": {
+          "type": "boolean",
+          "default": false
+        },
+        "example": false
+      },
+      "secret_name_prefix": {
+        "in": "query",
+        "name": "name",
+        "description": "Only return secrets whose names start with this value.",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "app"
+      },
+      "secret": {
+        "in": "path",
+        "name": "secret",
+        "description": "The name of the secret.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "my-database-password"
+      },
+      "secret_region": {
+        "in": "query",
+        "name": "region",
+        "description": "The region where the secret is stored.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "nyc3"
+      },
+      "secret_version": {
+        "in": "path",
+        "name": "version",
+        "description": "The target version to revert to. Reverting creates a new version with the contents of this version.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "minimum": 1
+        },
+        "example": 1
+      },
+      "cpu_minimum": {
+        "in": "query",
+        "name": "cpu_minimum",
+        "description": "Filter sizes with an inclusive minimum CPU count",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example": 4
+      },
+      "cpu_maximum": {
+        "in": "query",
+        "name": "cpu_maximum",
+        "description": "Filter sizes with an inclusive maximum CPU count",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example": 4
+      },
+      "gpu_minimum": {
+        "in": "query",
+        "name": "gpu_minimum",
+        "description": "Filter sizes with an inclusive minimum GPU count",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "example": 1
+      },
+      "gpu_maximum": {
+        "in": "query",
+        "name": "gpu_maximum",
+        "description": "Filter sizes with an inclusive maximum GPU count. Zero is allowed to filter to sizes without GPUs.",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "example": 8
+      },
+      "gpu_fabric": {
+        "in": "query",
+        "name": "gpu_fabric",
+        "description": "Filter sizes to those with a given GPU fabric setting",
+        "required": false,
+        "schema": {
+          "type": "boolean"
+        },
+        "example": true
+      },
+      "memory_minimum": {
+        "in": "query",
+        "name": "memory_minimum",
+        "description": "Filter sizes with an inclusive minimum memory amount (in megabytes)",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "multipleOf": 8,
+          "minimum": 8
+        },
+        "example": 1024
+      },
+      "memory_maximum": {
+        "in": "query",
+        "name": "memory_maximum",
+        "description": "Filter sizes with an inclusive maximum memory amount (in megabytes)",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "multipleOf": 8,
+          "minimum": 8
+        },
+        "example": 1024
+      },
+      "price_hourly_minimum": {
+        "in": "query",
+        "name": "price_hourly_minimum",
+        "description": "Filter sizes with an inclusive minimum hourly price (in USD)",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "0.50"
+      },
+      "price_hourly_maximum": {
+        "in": "query",
+        "name": "price_hourly_maximum",
+        "description": "Filter sizes with an inclusive maximum hourly price (in USD)",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "1.00"
+      },
+      "price_monthly_minimum": {
+        "in": "query",
+        "name": "price_monthly_minimum",
+        "description": "Filter sizes with an inclusive minimum monthly price (in USD)",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "5.00"
+      },
+      "price_monthly_maximum": {
+        "in": "query",
+        "name": "price_monthly_maximum",
+        "description": "Filter sizes with an inclusive maximum monthly price (in USD)",
+        "required": false,
+        "schema": {
+          "type": "string"
+        },
+        "example": "10.00"
+      },
       "snapshot_resource_type": {
         "in": "query",
         "name": "resource_type",
@@ -71730,6 +72485,11 @@
             "type": "string",
             "format": "date-time",
             "example": "2026-08-01T12:00:00Z"
+          },
+          "region": {
+            "type": "string",
+            "description": "DO region slug the config lives in, e.g. ric1. Stamped once at create from the region whose API host served the request, and never changed. Returned only for teams on the regional routing rollout; omitted otherwise.",
+            "example": "ric1"
           }
         }
       },
@@ -72579,6 +73339,11 @@
             "items": {
               "$ref": "#/components/schemas/agent_config_credential_slot"
             }
+          },
+          "region": {
+            "type": "string",
+            "description": "DO region slug the config lives in, e.g. ric1. Stamped once at create from the region whose API host served the request, and never changed. Returned only for teams on the regional routing rollout; omitted otherwise.",
+            "example": "ric1"
           }
         }
       },
@@ -72716,7 +73481,7 @@
           },
           "keep_warm": {
             "type": "boolean",
-            "description": "Session is exempt from idle auto-pause (manifest keep_warm, or the agent-kind default: hermes sessions keep warm). Pause requests against such a session are rejected with 409. Omitted when false.",
+            "description": "Session is exempt from idle auto-pause (manifest keep_warm, or the agent-kind default: hermes sessions keep warm). It still accepts a manual pause. Omitted when false.",
             "example": false
           },
           "resume_on_topoff": {
@@ -72763,6 +73528,11 @@
             "type": "string",
             "description": "OpenAI Agents API environment id (env_…), captured from the resolved CODEX_ENVIRONMENT_ID guest env value. Populated only for AGENT_KIND_OPENAI_CODEX sessions. Non-secret correlation metadata.",
             "example": "example"
+          },
+          "region": {
+            "type": "string",
+            "description": "DO region slug the session lives in, e.g. ric1. Stamped once at create from the region whose API host served the request, and never changed. Returned only for teams on the regional routing rollout; omitted otherwise.",
+            "example": "ric1"
           }
         }
       },
@@ -72806,6 +73576,11 @@
             "type": "boolean",
             "description": "Opt the new session in to automatic resumption when the team's prepayment balance is restored. Defaults to false. Session-scoped, not config-scoped: the referenced config never confers this, so one shared config cannot enrol every session created from it. Omit to leave the default (or to let the ?resume_on_topoff= query parameter supply it).",
             "example": false
+          },
+          "region": {
+            "type": "string",
+            "description": "Optional placement check, not a placement choice: the session is always created in the region whose API host served the request. If set, it must equal that region, or the request fails with 400 and a region_mismatch message. Honored only for teams on the regional routing rollout; ignored otherwise.",
+            "example": "ric1"
           }
         },
         "description": "Strict application/json CreateSession form. Loads config_id, resolves the config's single internal secret binding, and creates the session. Body capped at 16 KiB; no inline secrets."
@@ -83603,6 +84378,11 @@
                 "example": "gib"
               }
             }
+          },
+          "ephemeral": {
+            "type": "boolean",
+            "description": "Indicates an ephemeral (non-persistent) disk.",
+            "example": false
           }
         }
       },
@@ -95248,6 +96028,157 @@
             "additionalProperties": {
               "$ref": "#/components/schemas/plan_downgrades"
             }
+          }
+        }
+      },
+      "secret_list_item": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "title": "secret",
+            "type": "string",
+            "example": "my-database-password",
+            "description": "The name of the secret."
+          },
+          "region": {
+            "title": "region",
+            "type": "string",
+            "example": "nyc3",
+            "description": "The region where the secret is stored."
+          },
+          "version": {
+            "title": "version",
+            "type": "integer",
+            "format": "int32",
+            "example": 1,
+            "description": "The current version of the secret."
+          },
+          "created_at": {
+            "title": "created_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When the secret was created."
+          },
+          "updated_at": {
+            "title": "updated_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When the secret was last updated."
+          },
+          "delete_requested_at": {
+            "title": "delete_requested_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When deletion was requested for the secret."
+          }
+        }
+      },
+      "create_secret_response": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "title": "name",
+            "type": "string",
+            "example": "my-database-password",
+            "description": "The name of the secret."
+          },
+          "region": {
+            "title": "region",
+            "type": "string",
+            "example": "nyc3",
+            "description": "The region where the secret is stored."
+          },
+          "version": {
+            "title": "version",
+            "type": "integer",
+            "format": "int32",
+            "example": 1,
+            "description": "The version of the secret after the operation."
+          }
+        }
+      },
+      "secret": {
+        "type": "object",
+        "properties": {
+          "secret": {
+            "title": "secret",
+            "type": "string",
+            "example": "my-database-password",
+            "description": "The name of the secret."
+          },
+          "region": {
+            "title": "region",
+            "type": "string",
+            "example": "nyc3",
+            "description": "The region where the secret is stored."
+          },
+          "version": {
+            "title": "version",
+            "type": "integer",
+            "format": "int32",
+            "example": 1,
+            "description": "The current version of the secret."
+          },
+          "values": {
+            "title": "values",
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "password": "s3cr3t"
+            },
+            "description": "Key-value pairs stored in the secret."
+          },
+          "created_at": {
+            "title": "created_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When the secret was created."
+          },
+          "updated_at": {
+            "title": "updated_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When the secret was last updated."
+          },
+          "delete_requested_at": {
+            "title": "delete_requested_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When deletion was requested for the secret."
+          }
+        }
+      },
+      "secret_version": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "title": "version",
+            "type": "integer",
+            "format": "int32",
+            "example": 1,
+            "description": "The version number."
+          },
+          "created_at": {
+            "title": "created_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When this version was created."
+          },
+          "updated_at": {
+            "title": "updated_at",
+            "type": "string",
+            "format": "date-time",
+            "example": "2025-12-04T00:00:00Z",
+            "description": "When this version was last updated."
           }
         }
       },
@@ -125675,6 +126606,190 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/suppressed_resource_root"
+            }
+          }
+        }
+      },
+      "secrets": {
+        "description": "The response will be a JSON object with a key called `secrets`. This will be set to an array of objects, each of which will contain the standard attributes associated with a secret.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "secrets": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/secret_list_item"
+                  }
+                },
+                "meta": {
+                  "type": "object",
+                  "properties": {
+                    "page": {
+                      "type": "integer",
+                      "format": "int32",
+                      "example": 1,
+                      "description": "The current page number."
+                    },
+                    "pages": {
+                      "type": "integer",
+                      "format": "int32",
+                      "example": 5,
+                      "description": "The total number of pages."
+                    },
+                    "total": {
+                      "type": "integer",
+                      "format": "int32",
+                      "example": 42,
+                      "description": "The total number of secrets across all regions."
+                    }
+                  }
+                },
+                "links": {
+                  "type": "object",
+                  "properties": {
+                    "pages": {
+                      "type": "object",
+                      "properties": {
+                        "first": {
+                          "type": "string",
+                          "example": "https://api.digitalocean.com/v2/security/secrets?page=1&per_page=20",
+                          "description": "URL for the first page of results."
+                        },
+                        "prev": {
+                          "type": "string",
+                          "example": "https://api.digitalocean.com/v2/security/secrets?page=1&per_page=20",
+                          "description": "URL for the previous page of results."
+                        },
+                        "next": {
+                          "type": "string",
+                          "example": "https://api.digitalocean.com/v2/security/secrets?page=3&per_page=20",
+                          "description": "URL for the next page of results."
+                        },
+                        "last": {
+                          "type": "string",
+                          "example": "https://api.digitalocean.com/v2/security/secrets?page=5&per_page=20",
+                          "description": "URL for the last page of results."
+                        }
+                      }
+                    }
+                  }
+                },
+                "unavailable_regions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "example": [
+                    "sfo3"
+                  ],
+                  "description": "Regions that could not be queried while building the list response."
+                }
+              }
+            }
+          }
+        }
+      },
+      "create_secret": {
+        "description": "The response will be a JSON object containing the secret name, region, and version.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/create_secret_response"
+            }
+          }
+        }
+      },
+      "secret": {
+        "description": "The response will be a JSON object containing the secret and its values.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/secret"
+            }
+          }
+        }
+      },
+      "secret_versions": {
+        "description": "The response will be a JSON object with a key called `versions`.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "versions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/secret_version"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "secret_list_item": {
+        "description": "The response will be a JSON object containing the secret metadata. Secret values are not included.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/secret_list_item"
             }
           }
         }
