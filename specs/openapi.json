@@ -165,7 +165,7 @@
     },
     {
       "name": "MicroVMs [Public Preview]",
-      "description": "[DigitalOcean MicroVMs](https://docs.digitalocean.com/products/microvms/)\nare lightweight virtual machines that run a `linux/amd64` container image\nin an isolated kernel. A MicroVM pauses automatically when it is idle and\nresumes on the next HTTP request, command, or console session, with its\nmemory, files, and processes intact. By sending requests to the\n`/v2/microvms` endpoints, you can create, list, pause, resume, and delete\nMicroVMs, run commands and open a console in them, and create checkpoints\nto start new MicroVMs from a saved state.\n\nEach MicroVM serves its HTTP port at\n`https://{microvm_id}.{region}.microvm.ondigitalocean.com`. Requests to\nthat endpoint require a token with the `microvm:access` scope."
+      "description": "[DigitalOcean MicroVMs](https://docs.digitalocean.com/products/microvms/)\nare lightweight virtual machines that run a `linux/amd64` container image\nin an isolated kernel. A MicroVM pauses automatically when it is idle and\nresumes on the next HTTP request, command, or console session, with its\nmemory, files, and processes intact. By sending requests to the\n`/v2/microvms` endpoints, you can create, list, pause, resume, and delete\nMicroVMs, run commands and open a console in them, upload and download\nfiles, and create checkpoints to start new MicroVMs from a saved state.\n\nEach MicroVM serves its HTTP port at\n`https://{microvm_id}.{region}.microvm.ondigitalocean.com`. Requests to\nthat endpoint require a token with the `microvm:access` scope."
     },
     {
       "name": "Monitoring",
@@ -625,11 +625,365 @@
         ]
       }
     },
+    "/v2/action-gateway/provider-credentials": {
+      "post": {
+        "operationId": "providerCredentials_create",
+        "summary": "Create a Provider Credential",
+        "description": "Stores an API key or OAuth client for a catalog provider that supports that\ncredential type. Secret material is write-only. Only you can see and use the\ncredential unless you share it with your team using `reusable_by_team`.\n\nTo use an API key, first create this credential, then create a connection for\nthe same provider with `credential.team_credential.credential_id` set to the\nreturned `credential.id`. That connection becomes active without OAuth consent.\nIts `user_id` must match the session's `actor_id`.\n\nCreating a credential does not replace existing credentials or connections.\nA duplicate display name for the same provider returns 409.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/provider_credential_create"
+              },
+              "example": {
+                "provider": "example-provider",
+                "display_name": "Production key",
+                "kind": "PROVIDER_CREDENTIAL_KIND_API_KEY",
+                "api_key": "<provider-api-key>"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/provider_credential"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl --request POST \\\n  --header \"Content-Type: application/json\" \\\n  --header \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --data '{\"provider\":\"<provider-slug>\",\"display_name\":\"Production key\",\"kind\":\"PROVIDER_CREDENTIAL_KIND_API_KEY\",\"api_key\":\"<provider-api-key>\"}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/provider-credentials\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:create"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "providerCredentials_list",
+        "summary": "List Provider Credentials",
+        "description": "Lists registered credentials visible to you, ordered by provider and display name. Optionally filter by provider slug, ignoring case. An unknown provider returns an empty list. Results are not paginated and exclude DigitalOcean-owned OAuth applications and credentials managed by MCP server registrations.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider_credential_provider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful. Secret material is not returned.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_credentials_list_response"
+                },
+                "example": {
+                  "credentials": [
+                    {
+                      "id": "example-credential-id",
+                      "provider": "example-provider",
+                      "display_name": "Production key",
+                      "kind": "PROVIDER_CREDENTIAL_KIND_API_KEY",
+                      "status": "PROVIDER_CREDENTIAL_STATUS_ACTIVE",
+                      "base_url": "",
+                      "created_at": "2026-11-01T12:00:00Z",
+                      "updated_at": "2026-11-01T12:00:00Z",
+                      "owning_user_id": "example-digitalocean-user-id",
+                      "reusable_by_team": false,
+                      "scope": "user",
+                      "redirect_url": ""
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl --request GET \\\n  --header \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/provider-credentials?provider=<provider-slug>\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/provider-credentials/{id}": {
+      "get": {
+        "operationId": "providerCredentials_get",
+        "summary": "Get a Provider Credential",
+        "description": "Returns metadata for a provider credential, never its secret material. Returns 404 if the credential is unknown, deleted, or not visible to you.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider_credential_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/provider_credential"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl --request GET \\\n  --header \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/provider-credentials/<credential-id>\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "providerCredentials_update",
+        "summary": "Update a Provider Credential",
+        "description": "Rotates an API key or OAuth client secret, or updates credential metadata, in\nplace. Send only the fields to change; omitted fields are preserved. No update\nmask is required. The provider, kind, and redirect URL cannot be changed.\n\nThe credential keeps its ID and its connections. Those connections use the new\nmaterial on subsequent calls; `revoked_connections` remains zero. For an OAuth\nclient, changing secret material or the base URL requires the original `client_id`.\n\nCredentials managed by MCP server registrations accept only secret rotation,\nnot display name or base URL changes. Sharing with the team requires the\nappropriate account feature and permissions and cannot be undone.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider_credential_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/provider_credential_update"
+              },
+              "example": {
+                "api_key": "<replacement-provider-api-key>"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/provider_credential"
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl --request PATCH \\\n  --header \"Content-Type: application/json\" \\\n  --header \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --data '{\"api_key\":\"<replacement-provider-api-key>\"}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/provider-credentials/<credential-id>\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "providerCredentials_delete",
+        "summary": "Delete a Provider Credential",
+        "description": "Deletes a provider credential and every connection that uses it. There is no\nconfirmation step. Warn affected users before deleting; sessions relying on\nthose connections lose provider access. To rotate a key without removing\nconnections, update the credential instead.\n\nReturns the deleted credential with status `PROVIDER_CREDENTIAL_STATUS_DELETED`\nand the number of removed connections in `revoked_connections`. Returns 404 for\nan unknown or already-deleted credential. A credential still bound to an MCP\nserver cannot be deleted separately; delete the server first.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/provider_credential_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The credential and its connections were deleted.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_credential_response"
+                },
+                "example": {
+                  "credential": {
+                    "id": "example-credential-id",
+                    "provider": "example-provider",
+                    "display_name": "Production key",
+                    "kind": "PROVIDER_CREDENTIAL_KIND_API_KEY",
+                    "status": "PROVIDER_CREDENTIAL_STATUS_DELETED",
+                    "created_at": "2026-11-01T12:00:00Z",
+                    "updated_at": "2026-11-01T13:00:00Z",
+                    "owning_user_id": "example-digitalocean-user-id",
+                    "reusable_by_team": false,
+                    "scope": "user"
+                  },
+                  "revoked_connections": 1
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "Curl",
+            "source": "curl --request DELETE \\\n  --header \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/provider-credentials/<credential-id>\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:delete"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/action-gateway/connections": {
       "post": {
         "operationId": "connections_create",
         "summary": "Create a Connection",
-        "description": "Connects one of your users, identified by `user_id`, to a provider so tools can act on their\naccount. An OAuth connection starts pending, and authorization carries the URL to send the user to;\nread the connection until it is active or expired. A connection through a team API-key credential is\nactive immediately.\n\nThere is one connection per provider and `user_id` for each DigitalOcean user who creates\nconnections. Repeating the request returns the existing connection when its scopes cover the\nrequest, reusing a pending connection's link, and restarts an expired or revoked connection under\nthe same ID. Requesting scopes beyond an existing connection's, or a different credential, returns\n400 until that connection is deleted.",
+        "description": "Connects one of your users, identified by `user_id`, to a provider so tools can act on their\naccount. An OAuth connection starts pending, and authorization carries the URL to send the user to;\nread the connection until it is active or expired. A connection through a team API-key credential is\nactive immediately. Register the API key with `POST /v2/action-gateway/provider-credentials`\nfirst, then set `credential.team_credential.credential_id` to the returned `credential.id`.\n\nThere is one connection per provider and `user_id` for each DigitalOcean user who creates\nconnections. Repeating the request returns the existing connection when its scopes cover the\nrequest, reusing a pending connection's link, and restarts an expired or revoked connection under\nthe same ID. Requesting scopes beyond an existing connection's, or a different credential, returns\n400 until that connection is deleted.",
         "tags": [
           "Action Gateway"
         ],
@@ -640,17 +994,34 @@
               "schema": {
                 "$ref": "#/components/schemas/connection_create"
               },
-              "example": {
-                "provider": "jira",
-                "user_id": "alice",
-                "scopes": [
-                  "write:jira-work"
-                ],
-                "connection_parameters": {
-                  "site_url": "https://example.atlassian.net"
+              "examples": {
+                "oauth": {
+                  "summary": "Connect using DigitalOcean's OAuth application",
+                  "value": {
+                    "provider": "jira",
+                    "user_id": "alice",
+                    "scopes": [
+                      "write:jira-work"
+                    ],
+                    "connection_parameters": {
+                      "site_url": "https://example.atlassian.net"
+                    },
+                    "credential": {
+                      "digitalocean_oauth": {}
+                    }
+                  }
                 },
-                "credential": {
-                  "digitalocean_oauth": {}
+                "api_key": {
+                  "summary": "Connect using a previously registered API-key credential",
+                  "value": {
+                    "provider": "example-provider",
+                    "user_id": "user-123",
+                    "credential": {
+                      "team_credential": {
+                        "credential_id": "example-credential-id"
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -5020,7 +5391,7 @@
             "$ref": "#/components/responses/data_plane_responses_unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5140,7 +5511,7 @@
             "$ref": "#/components/responses/data_plane_responses_unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5335,7 +5706,7 @@
             "$ref": "#/components/responses/payment_required"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5426,7 +5797,7 @@
             "$ref": "#/components/responses/data_plane_responses_unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5520,7 +5891,7 @@
             "$ref": "#/components/responses/data_plane_responses_unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "404": {
             "$ref": "#/components/responses/data_plane_responses_not_found"
@@ -5614,7 +5985,7 @@
             "$ref": "#/components/responses/data_plane_responses_unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden"
+            "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
           "404": {
             "$ref": "#/components/responses/data_plane_responses_not_found"
@@ -29803,7 +30174,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -29891,7 +30262,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -29966,7 +30337,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30067,7 +30438,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30136,7 +30507,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30223,7 +30594,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30295,7 +30666,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30364,7 +30735,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30454,7 +30825,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30524,7 +30895,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -30721,7 +31092,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/traces_not_found"
@@ -30787,7 +31158,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/traces_not_found"
@@ -30854,7 +31225,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -31789,7 +32160,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -34942,6 +35313,172 @@
           {
             "lang": "WebSocket",
             "source": "websocat -b \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"wss://api.digitalocean.com/v2/microvms/01a0ef1a-d873-793d-ae6a-5dd6239be62a/console?rows=24&cols=80\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "microvm:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/microvms/{microvm_id}/files": {
+      "put": {
+        "operationId": "microvms_upload_file",
+        "summary": "Upload a file to a MicroVM",
+        "description": "To write a file into a MicroVM's workload container, send a PUT request to\n`/v2/microvms/{microvm_id}/files?path=<absolute path>` with the raw file content as the\nrequest body and a `Content-Type` of `application/octet-stream`.\n\nThe file replaces any existing regular file at `path` atomically. The parent directory\nmust already exist. The request must carry a `Content-Length` header; chunked bodies are\nrejected. A body of up to 64 MiB is accepted, and a `Content-Length` of `0` writes an empty\nfile. Pass `sha256` to have the API verify the content before it replaces the target.\n\nYour team needs the `file_transfer` feature. Check `GET /v2/microvms/options`. If the MicroVM\nis paused and auto-resume is on, the request resumes it.\n",
+        "tags": [
+          "MicroVMs [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/microvm_id"
+          },
+          {
+            "$ref": "#/components/parameters/file_path"
+          },
+          {
+            "$ref": "#/components/parameters/file_mode"
+          },
+          {
+            "$ref": "#/components/parameters/file_uid"
+          },
+          {
+            "$ref": "#/components/parameters/file_gid"
+          },
+          {
+            "$ref": "#/components/parameters/file_sha256"
+          }
+        ],
+        "requestBody": {
+          "description": "The raw file content.",
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/file_info"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/file_conflict"
+          },
+          "411": {
+            "$ref": "#/components/responses/length_required"
+          },
+          "413": {
+            "$ref": "#/components/responses/errors_payload_too_large"
+          },
+          "422": {
+            "$ref": "#/components/responses/checksum_mismatch"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "502": {
+            "$ref": "#/components/responses/bad_gateway"
+          },
+          "504": {
+            "$ref": "#/components/responses/file_timeout"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/octet-stream\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  --data-binary @config.json \\\n  \"https://api.digitalocean.com/v2/microvms/01a0ef1a-d873-793d-ae6a-5dd6239be62a/files?path=/app/config.json&mode=0600\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "microvm:update"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "microvms_get_file",
+        "summary": "Download a file from a MicroVM",
+        "description": "To read a file from a MicroVM's workload container, send a GET request to\n`/v2/microvms/{microvm_id}/files?path=<absolute path>`.\n\nThe response body is the raw file content with a `Content-Type` of\n`application/octet-stream`. The `Content-Length` and `X-Checksum-Sha256` headers describe the\nfile as it was when the transfer began. Only regular files of up to 64 MiB can be downloaded.\nA MicroVM serves up to 4 downloads at a time.\n\nYour team needs the `file_transfer` feature. Check `GET /v2/microvms/options`. If the MicroVM\nis paused and auto-resume is on, the request resumes it.\n",
+        "tags": [
+          "MicroVMs [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/microvm_id"
+          },
+          {
+            "$ref": "#/components/parameters/file_path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/file_content"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/file_conflict"
+          },
+          "413": {
+            "$ref": "#/components/responses/errors_payload_too_large"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "502": {
+            "$ref": "#/components/responses/bad_gateway"
+          },
+          "504": {
+            "$ref": "#/components/responses/file_timeout"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -o output.log \\\n  \"https://api.digitalocean.com/v2/microvms/01a0ef1a-d873-793d-ae6a-5dd6239be62a/files?path=/app/output.log\""
           }
         ],
         "security": [
@@ -39538,7 +40075,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed-2"
@@ -39584,7 +40121,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed-2"
@@ -44938,7 +45475,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "429": {
             "$ref": "#/components/responses/too_many_requests"
@@ -45019,7 +45556,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "409": {
             "$ref": "#/components/responses/conflict"
@@ -45076,7 +45613,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -45166,7 +45703,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -45224,7 +45761,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -45284,7 +45821,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -45366,7 +45903,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -45426,7 +45963,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -63076,7 +63613,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "422": {
             "$ref": "#/components/responses/unprocessable_entity"
@@ -63825,7 +64362,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "422": {
             "$ref": "#/components/responses/unprocessable_entity"
@@ -64040,7 +64577,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -64171,7 +64708,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "429": {
             "$ref": "#/components/responses/too_many_requests"
@@ -64262,7 +64799,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -64356,7 +64893,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -64475,7 +65012,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "$ref": "#/components/responses/forbidden-2"
+            "$ref": "#/components/responses/forbidden"
           },
           "404": {
             "$ref": "#/components/responses/not_found"
@@ -64543,6 +65080,26 @@
           "pattern": "^[A-Za-z0-9._-]{1,64}$"
         },
         "example": "alice"
+      },
+      "provider_credential_provider": {
+        "name": "provider",
+        "in": "query",
+        "required": false,
+        "description": "Optional provider slug, matched case-insensitively. Omit to list credentials for all providers.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "example-provider"
+      },
+      "provider_credential_id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Provider credential ID returned when the credential was created.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "example-credential-id"
       },
       "connection_provider": {
         "name": "provider",
@@ -66649,6 +67206,58 @@
         },
         "example": 80
       },
+      "file_path": {
+        "in": "query",
+        "name": "path",
+        "required": true,
+        "description": "The absolute path of the file inside the workload container.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "/app/config.json"
+      },
+      "file_mode": {
+        "in": "query",
+        "name": "mode",
+        "required": false,
+        "description": "The octal permission bits for the file, from `0001` to `0777`. Defaults to `0644`. Setuid, setgid, sticky bits, and `0000` are rejected.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "0600"
+      },
+      "file_uid": {
+        "in": "query",
+        "name": "uid",
+        "required": false,
+        "description": "The owner user ID. Set it together with `gid`. Defaults to the workload container's user.",
+        "schema": {
+          "type": "integer",
+          "format": "uint32"
+        },
+        "example": 1000
+      },
+      "file_gid": {
+        "in": "query",
+        "name": "gid",
+        "required": false,
+        "description": "The owner group ID. Set it together with `uid`. Defaults to the workload container's group.",
+        "schema": {
+          "type": "integer",
+          "format": "uint32"
+        },
+        "example": 1000
+      },
+      "file_sha256": {
+        "in": "query",
+        "name": "sha256",
+        "required": false,
+        "description": "The lowercase hex SHA-256 of the request body. When set, the API verifies the content before it replaces the target. A mismatch returns 422 and leaves the existing file unchanged.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
       "alert_uuid": {
         "in": "path",
         "name": "alert_uuid",
@@ -67716,6 +68325,13 @@
         },
         "example": "application/json; charset=utf-8"
       },
+      "x-checksum-sha256": {
+        "description": "The lowercase hex SHA-256 of the file content.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
       "x-request-id": {
         "description": "Optionally, some endpoints may include a request ID that should be provided  when reporting bugs or opening support tickets to help identify the issue.",
         "schema": {
@@ -67878,6 +68494,421 @@
           }
         },
         "description": "Sets an actor's overrides."
+      },
+      "provider_credential_discovery": {
+        "type": "object",
+        "nullable": true,
+        "description": "Team-level MCP tool discovery authorization, not tool invocation authorization.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Whether discovery needs authorization, is waiting for it, is active, or has expired.",
+            "enum": [
+              "not_required",
+              "pending",
+              "active",
+              "expired"
+            ],
+            "example": "active"
+          },
+          "consented_by_user_id": {
+            "type": "string",
+            "description": "DigitalOcean user ID of the team owner who authorized discovery, or empty before consent.",
+            "example": "example-digitalocean-user-id"
+          },
+          "consented_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When discovery was authorized, if consent has been given.",
+            "example": "2026-11-01T12:00:00Z"
+          },
+          "authorization_url": {
+            "type": "string",
+            "description": "Where a team owner authorizes discovery. Set only while status is pending.",
+            "example": ""
+          }
+        }
+      },
+      "provider_credential": {
+        "type": "object",
+        "description": "A stored provider credential. Responses contain metadata only, never API keys, client secrets, or secret storage references.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Opaque ID used to select, retrieve, update, or delete the credential.",
+            "example": "example-credential-id"
+          },
+          "provider": {
+            "type": "string",
+            "description": "Provider slug.",
+            "example": "example-provider"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Label, unique among the team's credentials for this provider, ignoring case.",
+            "example": "Production key"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Credential type. NONE, NO_AUTH, and USER_API_KEY describe MCP server credentials; NO_AUTH and USER_API_KEY are output-only values.",
+            "enum": [
+              "PROVIDER_CREDENTIAL_KIND_UNSPECIFIED",
+              "PROVIDER_CREDENTIAL_KIND_OAUTH_CLIENT",
+              "PROVIDER_CREDENTIAL_KIND_API_KEY",
+              "PROVIDER_CREDENTIAL_KIND_NONE",
+              "PROVIDER_CREDENTIAL_KIND_NO_AUTH",
+              "PROVIDER_CREDENTIAL_KIND_USER_API_KEY"
+            ],
+            "example": "PROVIDER_CREDENTIAL_KIND_API_KEY"
+          },
+          "base_url": {
+            "type": "string",
+            "description": "Normalized HTTPS origin for this credential's provider API, when configured.",
+            "example": "https://api.example.com"
+          },
+          "status": {
+            "type": "string",
+            "description": "Credential lifecycle state. Disabled credentials cannot be used by existing or new connections and cannot be re-enabled through this API. DELETED is returned only by deletion.",
+            "enum": [
+              "PROVIDER_CREDENTIAL_STATUS_UNSPECIFIED",
+              "PROVIDER_CREDENTIAL_STATUS_ACTIVE",
+              "PROVIDER_CREDENTIAL_STATUS_DISABLED",
+              "PROVIDER_CREDENTIAL_STATUS_DELETED"
+            ],
+            "example": "PROVIDER_CREDENTIAL_STATUS_ACTIVE"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the credential was created.",
+            "example": "2026-11-01T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the credential was last modified.",
+            "example": "2026-11-01T12:00:00Z"
+          },
+          "owning_user_id": {
+            "type": "string",
+            "description": "DigitalOcean user ID of the creator. Absent for a credential shared with the team.",
+            "example": "example-digitalocean-user-id"
+          },
+          "reusable_by_team": {
+            "type": "boolean",
+            "description": "Whether everyone on the team can see and use the credential instead of only its creator.",
+            "example": false
+          },
+          "redirect_url": {
+            "type": "string",
+            "description": "OAuth redirect URI supplied at registration. Empty when using DigitalOcean's callback or when the credential is not an OAuth client.",
+            "example": ""
+          },
+          "scope": {
+            "type": "string",
+            "description": "Who can use the credential, either its creator (user) or the whole team (team).",
+            "enum": [
+              "user",
+              "team"
+            ],
+            "example": "user"
+          },
+          "discovery": {
+            "description": "Authorization to discover a team-scoped MCP server's tools, when required. This authorization is not used to invoke tools.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/provider_credential_discovery"
+              }
+            ]
+          }
+        }
+      },
+      "provider_credentials_list_response": {
+        "type": "object",
+        "description": "Registered credentials visible to the caller, without pagination.",
+        "properties": {
+          "credentials": {
+            "type": "array",
+            "description": "Credentials ordered by provider and display name, excluding DigitalOcean-owned OAuth applications.",
+            "items": {
+              "$ref": "#/components/schemas/provider_credential"
+            }
+          }
+        }
+      },
+      "provider_credential_create": {
+        "type": "object",
+        "description": "Register a credential for a provider that supports the selected kind. API keys require api_key; OAuth clients require client_id and client_secret. Fields for the other kind are rejected. Register custom MCP servers through the MCP server API rather than creating API-key credentials for them here.",
+        "required": [
+          "provider",
+          "kind",
+          "display_name"
+        ],
+        "properties": {
+          "provider": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Required provider slug from the provider catalog.",
+            "example": "example-provider"
+          },
+          "kind": {
+            "type": "string",
+            "description": "Credential type. NONE is available only for eligible MCP providers when team-scoped provider credentials are enabled; it accepts no credential fields.",
+            "enum": [
+              "PROVIDER_CREDENTIAL_KIND_OAUTH_CLIENT",
+              "PROVIDER_CREDENTIAL_KIND_API_KEY",
+              "PROVIDER_CREDENTIAL_KIND_NONE"
+            ],
+            "example": "PROVIDER_CREDENTIAL_KIND_API_KEY"
+          },
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Required label, unique among the team's credentials for this provider, ignoring case. A duplicate returns 409.",
+            "example": "Production key"
+          },
+          "api_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "writeOnly": true,
+            "description": "Required for API-key credentials. Rejected for other kinds. Never returned.",
+            "example": "<provider-api-key>"
+          },
+          "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Required for OAuth client credentials. Rejected for other kinds.",
+            "example": "example-client-id"
+          },
+          "client_secret": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "writeOnly": true,
+            "description": "Required for OAuth client credentials. Rejected for other kinds. Never returned.",
+            "example": "<provider-client-secret>"
+          },
+          "base_url": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Provider API HTTPS origin. Accepted only when the provider allows one, restricted to its allowed hosts, and required when the provider requires it. Do not send this alongside credential_parameters.",
+            "example": "https://api.example.com"
+          },
+          "credential_parameters": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Non-secret configuration for API-key providers that declare credential parameters. Validated against the provider's parameter definitions and used to derive base_url. Rejected for other credential kinds.",
+            "example": {
+              "subdomain": "example"
+            }
+          },
+          "reusable_by_team": {
+            "type": "boolean",
+            "default": false,
+            "description": "Share the credential with the team. Defaults to false, so only its creator can see and use it. Requires the team owner role when team-scoped provider credentials are enabled for the account.",
+            "example": false
+          },
+          "redirect_url": {
+            "type": "string",
+            "maxLength": 1024,
+            "description": "OAuth clients only. Optional absolute HTTPS redirect URI registered at the provider, with no user information or fragment. Requires custom OAuth redirects to be enabled for the account. Omit to use DigitalOcean's callback. Cannot be changed after registration.",
+            "example": "https://app.example.com/oauth/callback"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "PROVIDER_CREDENTIAL_KIND_API_KEY"
+                ]
+              }
+            },
+            "required": [
+              "api_key"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "client_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "client_secret"
+                  ]
+                },
+                {
+                  "required": [
+                    "redirect_url"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "PROVIDER_CREDENTIAL_KIND_OAUTH_CLIENT"
+                ]
+              }
+            },
+            "required": [
+              "client_id",
+              "client_secret"
+            ],
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "api_key"
+                  ]
+                },
+                {
+                  "required": [
+                    "credential_parameters"
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "PROVIDER_CREDENTIAL_KIND_NONE"
+                ]
+              }
+            },
+            "not": {
+              "anyOf": [
+                {
+                  "required": [
+                    "api_key"
+                  ]
+                },
+                {
+                  "required": [
+                    "client_id"
+                  ]
+                },
+                {
+                  "required": [
+                    "client_secret"
+                  ]
+                },
+                {
+                  "required": [
+                    "redirect_url"
+                  ]
+                },
+                {
+                  "required": [
+                    "base_url"
+                  ]
+                },
+                {
+                  "required": [
+                    "credential_parameters"
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "provider_credential_response": {
+        "type": "object",
+        "description": "Credential metadata and the number of connections removed by the operation.",
+        "properties": {
+          "credential": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/provider_credential"
+              }
+            ],
+            "description": "The registered or deleted credential, without secret material."
+          },
+          "revoked_connections": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "description": "Number of connections deleted with the credential. Always zero for create, get, and update operations.",
+            "example": 0
+          }
+        }
+      },
+      "credential_parameters": {
+        "type": "object",
+        "additionalProperties": true,
+        "description": "Non-secret configuration for API-key providers that declare credential parameters. Validated against the provider's parameter definitions and used to derive base_url. Rejected for other credential kinds.",
+        "example": {
+          "subdomain": "example"
+        }
+      },
+      "provider_credential_update": {
+        "type": "object",
+        "minProperties": 1,
+        "description": "Change only the supplied fields. Omitted fields remain unchanged; no update mask is required. The provider, kind, and redirect_url cannot be changed. Empty secrets and display names are rejected. Connections keep the same credential ID.",
+        "properties": {
+          "display_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "New label, unique among the team's credentials for this provider, ignoring case.",
+            "example": "Production key"
+          },
+          "api_key": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 4096,
+            "writeOnly": true,
+            "description": "New API key. Only valid for API-key credentials. Never returned.",
+            "example": "<replacement-provider-api-key>"
+          },
+          "client_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "OAuth clients only. Required when changing client_id, client_secret, or base_url. Must match the originally registered client ID; a different ID is rejected. Register another credential to use a different OAuth client.",
+            "example": "example-client-id"
+          },
+          "client_secret": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024,
+            "writeOnly": true,
+            "description": "New OAuth client secret. Requires client_id. Never returned.",
+            "example": "<replacement-provider-client-secret>"
+          },
+          "base_url": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "New HTTPS origin, validated as on creation. An empty string clears it unless the provider requires an origin. OAuth client updates also require client_id.",
+            "example": "https://api.example.com"
+          },
+          "credential_parameters": {
+            "$ref": "#/components/schemas/credential_parameters"
+          },
+          "reusable_by_team": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Set to true to share a credential with the team. Requires team-scoped provider credentials to be enabled and the team owner role to share a private credential. Sharing cannot be undone; false is rejected.",
+            "example": true
+          }
+        }
       },
       "connection_network": {
         "type": "object",
@@ -92641,7 +93672,7 @@
           },
           "features": {
             "type": "array",
-            "description": "Features and whether they are enabled for your team.",
+            "description": "Features and whether they are enabled for your team. `exec_pty` gates `exec` and `console`; `file_transfer` gates `files`.",
             "items": {
               "type": "object",
               "properties": {
@@ -92785,6 +93816,50 @@
             "example": false
           }
         }
+      },
+      "file_info": {
+        "type": "object",
+        "description": "Metadata of a file written into a MicroVM.",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The absolute path inside the workload container.",
+            "example": "/app/config.json"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "format": "uint64",
+            "description": "The file size in bytes.",
+            "example": 1024
+          },
+          "sha256": {
+            "type": "string",
+            "description": "The lowercase hex SHA-256 of the content.",
+            "example": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "mode": {
+            "type": "string",
+            "description": "The octal permission bits as written.",
+            "example": "0644"
+          },
+          "uid": {
+            "type": "integer",
+            "format": "uint32",
+            "description": "The owner user ID.",
+            "example": 0
+          },
+          "gid": {
+            "type": "integer",
+            "format": "uint32",
+            "description": "The owner group ID.",
+            "example": 0
+          }
+        },
+        "required": [
+          "path",
+          "size_bytes",
+          "sha256"
+        ]
       },
       "slack_details": {
         "type": "object",
@@ -112022,6 +113097,69 @@
           }
         }
       },
+      "forbidden": {
+        "description": "The authenticated principal does not have permission to perform this action on the requested resource.\n",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "forbidden",
+              "message": "You do not have permission to perform this action."
+            }
+          }
+        }
+      },
+      "provider_credential": {
+        "description": "The request was successful. Secret material is not returned.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/provider_credential_response"
+            },
+            "example": {
+              "credential": {
+                "id": "example-credential-id",
+                "provider": "example-provider",
+                "display_name": "Production key",
+                "kind": "PROVIDER_CREDENTIAL_KIND_API_KEY",
+                "status": "PROVIDER_CREDENTIAL_STATUS_ACTIVE",
+                "base_url": "",
+                "created_at": "2026-11-01T12:00:00Z",
+                "updated_at": "2026-11-01T12:00:00Z",
+                "owning_user_id": "example-digitalocean-user-id",
+                "reusable_by_team": false,
+                "scope": "user",
+                "redirect_url": ""
+              },
+              "revoked_connections": 0
+            }
+          }
+        }
+      },
       "conflict": {
         "description": "The request could not be completed due to a conflict.",
         "headers": {
@@ -112081,7 +113219,7 @@
           }
         }
       },
-      "forbidden": {
+      "data_plane_responses_forbidden": {
         "description": "The token or session cannot be used for this request. Tokens without the `action_gateway:execute` scope, and accounts that are not in good standing, are rejected with the standard DigitalOcean API error format. Session failures return a tool result: the session ID is missing or invalid, the session belongs to another user or team, the session has no policy, or the session policy denies the operation.",
         "content": {
           "application/json": {
@@ -120751,31 +121889,6 @@
           }
         }
       },
-      "forbidden-2": {
-        "description": "The authenticated principal does not have permission to perform this action on the requested resource.\n",
-        "headers": {
-          "ratelimit-limit": {
-            "$ref": "#/components/headers/ratelimit-limit"
-          },
-          "ratelimit-remaining": {
-            "$ref": "#/components/headers/ratelimit-remaining"
-          },
-          "ratelimit-reset": {
-            "$ref": "#/components/headers/ratelimit-reset"
-          }
-        },
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/error"
-            },
-            "example": {
-              "id": "forbidden",
-              "message": "You do not have permission to perform this action."
-            }
-          }
-        }
-      },
       "prom_query_range": {
         "description": "Range query result.",
         "headers": {
@@ -123260,6 +124373,208 @@
           },
           "ratelimit-reset": {
             "$ref": "#/components/headers/ratelimit-reset"
+          }
+        }
+      },
+      "file_content": {
+        "description": "The raw file content. `Content-Length` and `X-Checksum-Sha256` describe the file as it was when the transfer began.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          },
+          "X-Checksum-Sha256": {
+            "$ref": "#/components/headers/x-checksum-sha256"
+          }
+        },
+        "content": {
+          "application/octet-stream": {
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        }
+      },
+      "file_conflict": {
+        "description": "The file operation is not possible in the MicroVM's current state. `WORKLOAD_NOT_RUNNING`: the workload container is not running. `NOT_A_REGULAR_FILE`: the path is a directory, device, socket, or symlink. `AGENT_UNSUPPORTED`: the MicroVM runs an image that predates file transfer; recreate it.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/microvm_error"
+            },
+            "examples": {
+              "Not A Regular File": {
+                "value": {
+                  "code": "NOT_A_REGULAR_FILE",
+                  "message": "/app is not a regular file"
+                }
+              },
+              "Workload Not Running": {
+                "value": {
+                  "code": "WORKLOAD_NOT_RUNNING",
+                  "message": "workload container is not running"
+                }
+              },
+              "Agent Unsupported": {
+                "value": {
+                  "code": "AGENT_UNSUPPORTED",
+                  "message": "this MicroVM does not support file transfer; recreate it to pick up the new agent"
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors_payload_too_large": {
+        "description": "The file exceeds 64 MiB, or the guest disk is full.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/microvm_error"
+            },
+            "example": {
+              "code": "PAYLOAD_TOO_LARGE",
+              "message": "file exceeds the 67108864 byte limit"
+            }
+          }
+        }
+      },
+      "file_timeout": {
+        "description": "The transfer did not finish within 10 minutes. On upload the target file is unchanged. On download, if the body had already started, the stream ends short of `Content-Length` instead.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/microvm_error"
+            },
+            "example": {
+              "code": "FILE_TIMEOUT",
+              "message": "file transfer timed out"
+            }
+          }
+        }
+      },
+      "file_info": {
+        "description": "The file was written. The `X-Checksum-Sha256` header repeats the digest from the body.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          },
+          "X-Checksum-Sha256": {
+            "$ref": "#/components/headers/x-checksum-sha256"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/file_info"
+            },
+            "examples": {
+              "File Written": {
+                "value": {
+                  "path": "/app/config.json",
+                  "size_bytes": 1024,
+                  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                  "mode": "0600",
+                  "uid": 0,
+                  "gid": 0
+                }
+              }
+            }
+          }
+        }
+      },
+      "length_required": {
+        "description": "The request has no `Content-Length` header.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/microvm_error"
+            },
+            "example": {
+              "code": "LENGTH_REQUIRED",
+              "message": "Content-Length is required"
+            }
+          }
+        }
+      },
+      "checksum_mismatch": {
+        "description": "The request body does not match the `sha256` query parameter. The target file is unchanged.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/microvm_error"
+            },
+            "example": {
+              "code": "CHECKSUM_MISMATCH",
+              "message": "sha256 mismatch: expected e3b0c442…, got 9f86d081…"
+            }
           }
         }
       },
