@@ -57,7 +57,7 @@
     },
     {
       "name": "Harness Runtime",
-      "description": "DigitalOcean Harness Runtime API under `/v2/agents`. An environment is a\nreusable configuration that defines what an agent needs to do work; starting\na session from an environment provisions an isolated sandbox. Define an\nenvironment with a YAML environment spec, or save it as an Environment Config\nand create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/agents/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/agents/templates`) manage team custom sandbox\ntemplates and their build history.\n\nTriggers (`/v2/agents/triggers`) fire an agent run on a webhook delivery or\ncron schedule, each firing recorded as an execution. The session event feed\n(`GET /v2/agents/sessions/{session_id}/events`) is a Server-Sent Events\nstream, and port-forward (`GET /v2/agents/sessions/{session_id}/port-forward/{port}`)\nopens a WebSocket tunnel to a guest port."
+      "description": "DigitalOcean Harness Runtime API under `/v2/agents`. An environment is a\nreusable configuration that defines what an agent needs to do work; starting\na session from an environment provisions an isolated sandbox. Define an\nenvironment with a YAML environment spec, or save it as an Environment Config\nand create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/agents/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/agents/templates`) manage team custom sandbox\ntemplates and their build history.\n\nTriggers (`/v2/agents/triggers`) fire an agent run on a webhook delivery or\ncron schedule, each firing recorded as an execution. The session event feed\n(`GET /v2/agents/sessions/{session_id}/events`) is a Server-Sent Events\nstream, and port-forward (`GET /v2/agents/sessions/{session_id}/port-forward/{port}`)\nopens a WebSocket tunnel to a guest port.\n\n`POST /v2/agents/sessions/{session_id}/cancel` stops the turn in flight.\n`GET /v2/agents/image-messages` lists sandbox-image notices on the team's\nsessions and checkpoints. `POST /v2/agents/auth/{provider}` starts the\ninteractive provider login a session uses; `github` is the provider served\ntoday. Connections for that login are under `/v2/agents/auth/{provider}/connections`."
     },
     {
       "name": "Apps",
@@ -7037,6 +7037,1057 @@
         ]
       }
     },
+    "/v2/agents/auth/{provider}": {
+      "post": {
+        "operationId": "harness_create_provider_connect",
+        "summary": "Start an interactive provider login for the team.",
+        "description": "Starts, or resumes, the one-time login the team uses so a session can act on a provider. `github` is the provider served today; any other value returns 501. The body is optional. When the team is already connected, `status` is `success` and no URL is returned. Otherwise `status` is `requires_authorization` and the response carries the URL, verification code, and poll URL for the interactive step. No token or authorization handle is returned.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/start_provider_connect_request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login started, or already complete.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/start_provider_connect_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is present and is not the documented JSON object.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider login is not enabled, or this provider is not served.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"force_reconnect\":false}' \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/auth/{provider}/poll": {
+      "get": {
+        "operationId": "harness_get_provider_connect",
+        "summary": "Check whether a provider login has finished.",
+        "description": "Pass the `poll_url` from the start response. The response reports only whether login has finished. No token or authorization handle is returned. `github` is the provider served today.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          },
+          {
+            "in": "query",
+            "name": "poll_url",
+            "required": true,
+            "description": "The `poll_url` returned by the start call.",
+            "schema": {
+              "type": "string",
+              "example": "https://example.invalid/poll"
+            },
+            "example": "https://example.invalid/poll"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current login status.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/poll_provider_connect_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`poll_url` is missing.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider login is not enabled, or this provider is not served.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/poll?poll_url=https%3A%2F%2Fexample.invalid%2Fpoll\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/auth/{provider}/connections": {
+      "get": {
+        "operationId": "harness_list_provider_connections",
+        "summary": "List the team's connections for a provider.",
+        "description": "One page of connections the team holds for `{provider}`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. A list never includes revoked connections and never includes a token. `github` is the provider served today. Page defaults are the upstream connection service's own (20 per page, at most 100).",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "description": "Return only the connection for this actor identifier.",
+            "schema": {
+              "type": "string",
+              "example": "octocat"
+            },
+            "example": "octocat"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "Filter by connection status. Known values are `pending`, `active`, and `expired`.",
+            "schema": {
+              "type": "string",
+              "example": "active"
+            },
+            "example": "active"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "description": "Page number. Omit it or pass `0` to use the upstream default. A negative value is rejected.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "example": 1
+            },
+            "example": 1
+          },
+          {
+            "in": "query",
+            "name": "per_page",
+            "required": false,
+            "description": "Page size. Omit it or pass `0` to use the upstream default of 20. Values above 100 are capped. A negative value is rejected.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 0,
+              "example": 20
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of connections.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_provider_connections_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`page` or `per_page` is not an integer, or is negative. Zero is accepted and treated as omitted. Values of `per_page` above 100 are capped, not rejected.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider connections are not enabled.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "harness_create_provider_connection",
+        "summary": "Create a provider connection for one actor.",
+        "description": "Creates, or resumes, the connection `{provider}` will use for `user_id`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. A pending connection includes an `authorization` object the user still has to complete. An active connection omits it. No token is returned. `github` is the provider served today.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_provider_connection_request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The connection, plus authorization steps when it is still pending.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_connection_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is missing, is not the documented JSON object, or omits `user_id`.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider connections are not enabled.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"user_id\":\"octocat\"}' \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/auth/{provider}/connections/{connection_id}": {
+      "get": {
+        "operationId": "harness_get_provider_connection",
+        "summary": "Read one provider connection.",
+        "description": "Returns one connection. Poll a pending connection with this call until `authorization` is absent. A connection that belongs to another provider than `{provider}` is 404. No token is returned.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          },
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "description": "The connection id.",
+            "schema": {
+              "type": "string",
+              "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+            },
+            "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The connection, plus authorization steps when it is still pending.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_connection_response"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider connections are not enabled.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "harness_delete_provider_connection",
+        "summary": "Revoke a provider connection.",
+        "description": "Revokes the connection and returns it. A connection that an environment config still uses is left in place and the error names those configs. There is no force flag on this route. A connection under a different provider than `{provider}` is 404. No token is returned.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          },
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "description": "The connection id.",
+            "schema": {
+              "type": "string",
+              "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+            },
+            "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The revoked connection.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_connection_response"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "description": "An environment config still uses this connection, or that check could not be completed.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider connections are not enabled.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:manage"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/auth/{provider}/connections/{connection_id}/reconnect": {
+      "post": {
+        "operationId": "harness_post_provider_connection_reconnect",
+        "summary": "Start a fresh login for an existing connection.",
+        "description": "Begins the interactive step again for a connection that needs it. The response includes `authorization` while that step is outstanding. No token is returned.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "description": "Provider key. `github` is the provider served today.",
+            "schema": {
+              "type": "string",
+              "example": "github"
+            },
+            "example": "github"
+          },
+          {
+            "in": "path",
+            "name": "connection_id",
+            "required": true,
+            "description": "The connection id.",
+            "schema": {
+              "type": "string",
+              "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+            },
+            "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The connection, plus authorization steps when login is still outstanding.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/provider_connection_response"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Provider connections are not enabled.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}/reconnect\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/image-messages": {
+      "get": {
+        "operationId": "harness_list_image_messages",
+        "summary": "List sandbox-image notices for the team.",
+        "description": "Returns the caller's sessions and checkpoints whose sandbox image carries a live notice. Pass `session_name` or `checkpoint_name` to look up one resource; those two parameters cannot be set together, and `page_size` / `page_token` are ignored when either is set. Without a name, the list is keyset-paginated. `type` filters the notice kind; the only documented value is `vulnerability`. Triggers are not listed here — a trigger runs on a session, so ask about that session.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "description": "Notice type. Omit it to return every type. The only documented value is `vulnerability`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vulnerability"
+              ],
+              "example": "vulnerability"
+            },
+            "example": "vulnerability"
+          },
+          {
+            "in": "query",
+            "name": "session_name",
+            "required": false,
+            "description": "Exact session name. Returns one resource for that session. Cannot be combined with `checkpoint_name`.",
+            "schema": {
+              "type": "string",
+              "example": "support-agent"
+            },
+            "example": "support-agent"
+          },
+          {
+            "in": "query",
+            "name": "checkpoint_name",
+            "required": false,
+            "description": "Exact checkpoint name. Returns one resource for that checkpoint. Cannot be combined with `session_name`.",
+            "schema": {
+              "type": "string",
+              "example": "before-upgrade"
+            },
+            "example": "before-upgrade"
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "description": "Page size when listing. Defaults to 50 when omitted or not positive; values above 200 are clamped to 200. A non-integer is rejected. Ignored when `session_name` or `checkpoint_name` is set.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50,
+              "example": 50
+            },
+            "example": 50
+          },
+          {
+            "in": "query",
+            "name": "page_token",
+            "required": false,
+            "description": "Opaque cursor from the previous page. Empty starts at the beginning. A value that did not come from a previous page is rejected. Ignored when `session_name` or `checkpoint_name` is set.",
+            "schema": {
+              "type": "string",
+              "example": ""
+            },
+            "example": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notices for the team's matching sessions and checkpoints.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_image_messages_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `type`, a non-integer `page_size`, a malformed `page_token`, or both `session_name` and `checkpoint_name` set.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Image messages are not available on this deployment.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/image-messages\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/agents/configs": {
       "get": {
         "operationId": "harness_list_configs",
@@ -9413,6 +10464,169 @@
         ]
       }
     },
+    "/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages": {
+      "get": {
+        "operationId": "harness_get_checkpoint_image_messages",
+        "summary": "Read sandbox-image notices for one checkpoint.",
+        "description": "Returns the live notices on the checkpoint's sandbox image. The checkpoint must belong to `{session_id}`. `type` filters the notice kind; the only documented value is `vulnerability`.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "description": "The session UUID.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          {
+            "in": "path",
+            "name": "checkpoint_id",
+            "required": true,
+            "description": "The checkpoint id.",
+            "schema": {
+              "type": "string",
+              "example": "cp_example"
+            },
+            "example": "cp_example"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "description": "Notice type. Omit it to return every type. The only documented value is `vulnerability`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vulnerability"
+              ],
+              "example": "vulnerability"
+            },
+            "example": "vulnerability"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notices for this checkpoint. `messages` is empty when the image has none.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/get_image_message_resource_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `type`.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "Session belongs to another team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Image messages are not available on this deployment.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/rollback": {
       "post": {
         "operationId": "harness_revert_session_checkpoint",
@@ -9974,6 +11188,348 @@
           {
             "bearer_auth": [
               "agent_harness_session:operate"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/sessions/{session_id}/cancel": {
+      "post": {
+        "operationId": "harness_cancel_session_turn",
+        "summary": "Cancel the agent turn in flight.",
+        "description": "Stops the turn `POST /input` started. Pass `run_id` from that response to name the turn; an empty body cancels whichever turn is in flight. `outcome` is `acked` when the agent accepted the interrupt, `no_turn` when nothing addressable was running, and `unsupported` when this agent cannot be interrupted. A session that cannot take a cancel at all — paused, still starting, being destroyed, or with no active run — answers 409 instead of an `outcome`, so treat that as \"nothing to cancel\" rather than a fault. A team that is not enabled for turn cancel receives 403. A cancel starts nothing and is not blocked by the prepayment gate.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "description": "The session UUID.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/cancel_session_turn_request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The cancel was delivered. See `outcome` for what the agent did with it.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/cancel_session_turn_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The body is not valid JSON, or the agent rejected the cancel as malformed.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "The session belongs to another team, or this team is not enabled for turn cancel.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "description": "Nothing could be cancelled in the session's current state: it is paused, still provisioning, being destroyed, has no sandbox, or the agent has no active run for it. This is the ordinary answer for \"nothing to cancel\", not a fault. A turn that was running and has already finished returns 200 with `outcome` `no_turn` instead.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "This session is unavailable; contact support.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "503": {
+            "description": "The agent is not accepting requests yet. Retry once the session is ready.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"run_id\":\"run_example\"}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/cancel\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:operate"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/sessions/{session_id}/image-messages": {
+      "get": {
+        "operationId": "harness_get_session_image_messages",
+        "summary": "Read sandbox-image notices for one session.",
+        "description": "Returns the live notices on the session's sandbox image. `type` filters the notice kind; the only documented value is `vulnerability`. A session owned by another team returns 403.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "description": "The session UUID.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "description": "Notice type. Omit it to return every type. The only documented value is `vulnerability`.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "vulnerability"
+              ],
+              "example": "vulnerability"
+            },
+            "example": "vulnerability"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notices for this session. `messages` is empty when the image has none.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/get_image_message_resource_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unknown `type`.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "Session belongs to another team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Image messages are not available on this deployment.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/image-messages\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
             ]
           }
         ]
@@ -10978,7 +12534,7 @@
       "post": {
         "operationId": "harness_create_session_workspace_transfer",
         "summary": "Start a staged (large-file) workspace transfer.",
-        "description": "Creates an asynchronous, object-storage-backed transfer for payloads larger than the streaming path supports (> ~50 MiB). Bulk bytes never traverse harness-api: the client PUTs/GETs presigned DO Spaces URLs directly.\n\nSet `direction` to `upload` or `download`.\n- `upload`: responds 201 with `transfer_id` + `part_size`; the client then requests per-part presigned PUT URLs, uploads them to Spaces, and calls `commit`.\n- `download`: responds 202 with `transfer_id`; the client polls GET until `completed` and then fetches `download_url` from Spaces.\n\nUpload and cancel currently return 501 until the sandbox backend RPCs ship; download is live.",
+        "description": "Creates an asynchronous, object-storage-backed transfer for payloads larger than the streaming path supports (> ~50 MiB). Bulk bytes never traverse harness-api: the client PUTs/GETs presigned DO Spaces URLs directly.\n\nSet `direction` to `upload` or `download`.\n- `upload`: responds 201 with `transfer_id` + `part_size`; the client then requests per-part presigned PUT URLs, uploads them to Spaces, and calls `commit`.\n- `download`: responds 202 with `transfer_id`; the client polls GET until `completed` and then fetches `download_url` from Spaces.\n\nUpload, download, and cancel are live.",
         "tags": [
           "Harness Runtime"
         ],
@@ -11031,10 +12587,10 @@
                     "example": true
                   },
                   "size_bytes": {
-                    "type": "string",
+                    "type": "integer",
                     "format": "int64",
-                    "description": "Optional total payload size. Validated against the maximum staged object size (50 GiB); a larger value returns 413.",
-                    "example": "example"
+                    "description": "Optional total payload size, as a JSON number. Validated against the maximum staged object size (50 GiB); a larger value returns 413.",
+                    "example": 4
                   },
                   "sha256": {
                     "type": "string",
@@ -73469,6 +75025,326 @@
           "metadata"
         ]
       },
+      "start_provider_connect_request": {
+        "type": "object",
+        "properties": {
+          "force_reconnect": {
+            "type": "boolean",
+            "description": "When true, start a new login even if the team is already connected.",
+            "example": false
+          }
+        }
+      },
+      "start_provider_connect_response": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "status": {
+            "type": "string",
+            "description": "success when a credential already exists. requires_authorization when the user must finish the interactive step at connect_url.",
+            "enum": [
+              "success",
+              "requires_authorization"
+            ],
+            "example": "requires_authorization"
+          },
+          "connect_url": {
+            "type": "string",
+            "description": "Where to send the user. Omitted once status is success.",
+            "example": "https://example.invalid/connect"
+          },
+          "poll_url": {
+            "type": "string",
+            "description": "Pass this to the poll call. Omitted once status is success.",
+            "example": "https://example.invalid/poll"
+          },
+          "verification_code": {
+            "type": "string",
+            "description": "Code the user confirms during the interactive step. Omitted once status is success.",
+            "example": "ABCD-1234"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the interactive step expires. Omitted when there is nothing to expire.",
+            "example": "2026-07-27T12:00:00Z"
+          }
+        }
+      },
+      "poll_provider_connect_response": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "status": {
+            "type": "string",
+            "description": "success when login has finished. requires_authorization while it is still outstanding.",
+            "enum": [
+              "success",
+              "requires_authorization"
+            ],
+            "example": "success"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-27T12:00:00Z"
+          }
+        }
+      },
+      "provider_connection_oauth": {
+        "type": "object",
+        "description": "The grant on an OAuth connection. Absent for a connection that has no grant.",
+        "properties": {
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          },
+          "granted_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-27T12:00:00Z"
+          }
+        }
+      },
+      "provider_connection": {
+        "type": "object",
+        "description": "One provider connection. Identifiers only — no token or authorization handle.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f2a1b0c-9d8e-7f6a-5b4c-3d2e1f0a9b8c"
+          },
+          "provider": {
+            "type": "string",
+            "example": "github"
+          },
+          "provider_display_name": {
+            "type": "string",
+            "example": "GitHub"
+          },
+          "user_id": {
+            "type": "string",
+            "description": "Actor identifier the connection acts for. Not a DigitalOcean user id.",
+            "example": "octocat"
+          },
+          "status": {
+            "type": "string",
+            "description": "pending, active, revoked, or expired. A list does not include revoked connections.",
+            "example": "active"
+          },
+          "owning_user_id": {
+            "type": "string",
+            "description": "DigitalOcean user id of the member who created the connection, when recorded.",
+            "example": "b1c2d3e4-f5a6-7890-abcd-ef1234567890"
+          },
+          "deletion_protected": {
+            "type": "boolean",
+            "description": "True when an ordinary delete will be refused because an environment config uses it.",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-27T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-27T12:00:00Z"
+          },
+          "oauth": {
+            "$ref": "#/components/schemas/provider_connection_oauth"
+          }
+        }
+      },
+      "provider_connection_pagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          },
+          "per_page": {
+            "type": "integer",
+            "format": "int32",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32",
+            "example": 1
+          }
+        }
+      },
+      "list_provider_connections_response": {
+        "type": "object",
+        "properties": {
+          "connections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/provider_connection"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/provider_connection_pagination"
+          }
+        }
+      },
+      "create_provider_connection_request": {
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "description": "Actor identifier the connection acts for. Not a DigitalOcean user id.",
+            "example": "octocat"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "repo"
+            ]
+          }
+        }
+      },
+      "provider_connection_authorization": {
+        "type": "object",
+        "description": "Interactive step a pending connection still needs. Omitted when the connection is active.",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "requires_authorization"
+          },
+          "connect_url": {
+            "type": "string",
+            "example": "https://example.invalid/connect"
+          },
+          "verification_code": {
+            "type": "string",
+            "example": "ABCD-1234"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-07-27T12:00:00Z"
+          }
+        }
+      },
+      "provider_connection_response": {
+        "type": "object",
+        "properties": {
+          "connection": {
+            "$ref": "#/components/schemas/provider_connection"
+          },
+          "authorization": {
+            "$ref": "#/components/schemas/provider_connection_authorization"
+          }
+        }
+      },
+      "image_message": {
+        "type": "object",
+        "description": "One live notice on a sandbox image.",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Notice kind. The documented value is vulnerability.",
+            "example": "vulnerability"
+          },
+          "title": {
+            "type": "string",
+            "example": "Image update available"
+          },
+          "message": {
+            "type": "string",
+            "example": "This sandbox image has a published fix."
+          },
+          "more_info_url": {
+            "type": "string",
+            "example": "https://docs.digitalocean.com/products/gradient-ai-platform/"
+          }
+        }
+      },
+      "image_message_resource": {
+        "type": "object",
+        "description": "A session or checkpoint and the live notices on its sandbox image. Every key is present. messages is an empty array when the image has no notice.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SESSION",
+              "CHECKPOINT"
+            ],
+            "example": "SESSION"
+          },
+          "session_id": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "session_name": {
+            "type": "string",
+            "example": "support-agent"
+          },
+          "checkpoint_id": {
+            "type": "string",
+            "example": "cp_example"
+          },
+          "checkpoint_name": {
+            "type": "string",
+            "example": "before-upgrade"
+          },
+          "image_id": {
+            "type": "string",
+            "example": "img_example"
+          },
+          "resolution_complete": {
+            "type": "boolean",
+            "example": true
+          },
+          "vulnerable": {
+            "type": "boolean",
+            "example": false
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/image_message"
+            }
+          }
+        }
+      },
+      "list_image_messages_response": {
+        "type": "object",
+        "properties": {
+          "resources": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/image_message_resource"
+            }
+          },
+          "next_page_token": {
+            "type": "string",
+            "description": "Opaque cursor for the next page. Empty on the last page and on a single-resource lookup.",
+            "example": ""
+          }
+        }
+      },
       "agent_config_summary": {
         "type": "object",
         "description": "Lightweight list representation; the manifest is available from config reads, not list responses.",
@@ -74954,6 +76830,14 @@
           }
         }
       },
+      "get_image_message_resource_response": {
+        "type": "object",
+        "properties": {
+          "resource": {
+            "$ref": "#/components/schemas/image_message_resource"
+          }
+        }
+      },
       "rollback_to_checkpoint_response": {
         "type": "object",
         "description": "The session after in-place rollback: same session_id, sandbox_id swapped to the restored VM.",
@@ -75033,6 +76917,40 @@
         "required": [
           "outcome"
         ]
+      },
+      "cancel_session_turn_request": {
+        "type": "object",
+        "description": "Optional. An empty body cancels the turn in flight.",
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "description": "Turn id returned by POST /input. Omit it to cancel whichever turn is in flight.",
+            "example": "run_example"
+          }
+        }
+      },
+      "cancel_session_turn_response": {
+        "type": "object",
+        "required": [
+          "outcome"
+        ],
+        "properties": {
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "acked",
+              "no_turn",
+              "unsupported"
+            ],
+            "description": "acked means the agent accepted the interrupt. no_turn means nothing addressable was running. unsupported means this agent cannot be interrupted.",
+            "example": "acked"
+          },
+          "run_id": {
+            "type": "string",
+            "description": "The turn the cancel was aimed at. Omitted when an unnamed cancel found no turn.",
+            "example": "run_example"
+          }
+        }
       },
       "send_input_request": {
         "type": "object",
