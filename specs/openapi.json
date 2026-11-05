@@ -57,7 +57,11 @@
     },
     {
       "name": "Harness Runtime",
-      "description": "DigitalOcean Harness Runtime API under `/v2/agents`. An environment is a\nreusable configuration that defines what an agent needs to do work; starting\na session from an environment provisions an isolated sandbox. Define an\nenvironment with a YAML environment spec, or save it as an Environment Config\nand create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/agents/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/agents/templates`) manage team custom sandbox\ntemplates and their build history.\n\nTriggers (`/v2/agents/triggers`) fire an agent run on a webhook delivery or\ncron schedule, each firing recorded as an execution. The session event feed\n(`GET /v2/agents/sessions/{session_id}/events`) is a Server-Sent Events\nstream, and port-forward (`GET /v2/agents/sessions/{session_id}/port-forward/{port}`)\nopens a WebSocket tunnel to a guest port.\n\n`POST /v2/agents/sessions/{session_id}/cancel` stops the turn in flight.\n`GET /v2/agents/image-messages` lists sandbox-image notices on the team's\nsessions and checkpoints. `POST /v2/agents/auth/{provider}` starts the\ninteractive provider login a session uses; `github` is the provider served\ntoday. Connections for that login are under `/v2/agents/auth/{provider}/connections`."
+      "description": "DigitalOcean Harness Runtime API under `/v2/agents`. An environment is a\nreusable configuration that defines what an agent needs to do work; starting\na session from an environment provisions an isolated sandbox. Define an\nenvironment with a YAML environment spec, or save it as an Environment Config\nand create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/agents/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/agents/templates`) manage team custom sandbox\ntemplates and their build history.\n\nTriggers (`/v2/agents/triggers`) fire an agent run on a webhook delivery or\ncron schedule, each firing recorded as an execution. The session event feed\n(`GET /v2/agents/sessions/{session_id}/events`) is a Server-Sent Events\nstream, and port-forward (`GET /v2/agents/sessions/{session_id}/port-forward/{port}`)\nopens a WebSocket tunnel to a guest port.\n\n`POST /v2/agents/sessions/{session_id}/cancel` stops the turn in flight.\n`GET /v2/agents/image-messages` lists sandbox-image notices on the team's\nsessions and checkpoints. `POST /v2/agents/auth/{provider}` starts the\ninteractive provider login a session uses; `github` is the provider served\ntoday. Connections for that login are under `/v2/agents/auth/{provider}/connections`.\n\nPersistent workspaces (`/v2/agents/workspaces`) are in public preview and are\ndescribed under Harness Runtime Workspaces [Public Preview]."
+    },
+    {
+      "name": "Harness Runtime Workspaces [Public Preview]",
+      "description": "Persistent workspaces (`/v2/agents/workspaces`) are sets of files that outlive\na session. Attach one by passing `workspace_id` when you create a session from\nan Environment Config; it mounts at `/workspace`, a workspace is attached to one\nsession at a time, and its files are saved when the session is removed or\ncheckpointed. Fork and rollback are not available for a session with a\nworkspace. Persistent workspaces are in public preview, free during public\npreview, and enabled per team; requests from other teams return `403`."
     },
     {
       "name": "Apps",
@@ -153,7 +157,7 @@
     },
     {
       "name": "Insights",
-      "description": "The DigitalOcean Insights API provides observability resources for\nmonitoring your infrastructure, including alert rules that evaluate\nmetrics, notification channels that deliver alert events, read-only\nalert instances that record when alert rules fire, PromQL, logs, spans,\nand traces query interfaces, and per-resource enablement of the metrics,\nlogs, and traces signals."
+      "description": "The DigitalOcean Insights API provides observability resources for\nmonitoring your infrastructure, including alert rules that evaluate\nmetrics, notification channels that deliver alert events, read-only\nalert instances that record when alert rules fire, user-defined\ndashboards, PromQL, logs, spans, and traces query interfaces, and\nper-resource enablement of the metrics, logs, and traces signals."
     },
     {
       "name": "Kubernetes",
@@ -323,6 +327,7 @@
         "Floating IPs",
         "Functions",
         "Harness Runtime",
+        "Harness Runtime Workspaces [Public Preview]",
         "Image Actions",
         "Images",
         "Insights",
@@ -9146,7 +9151,7 @@
             }
           },
           "403": {
-            "description": "Secrets Manager denied access to a pinned credential.",
+            "description": "Secrets Manager denied access to a pinned credential, or `workspace_id` was sent and persistent workspaces are not enabled for the team.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -9170,7 +9175,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Team is at the active-session quota, or a live session name already exists.",
+            "description": "Team is at the active-session quota, a live session name already exists, or the requested workspace_id is not AVAILABLE (attached to another session, still being saved, FAILED, or being deleted).",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -9460,7 +9465,7 @@
       "delete": {
         "operationId": "harness_delete_session",
         "summary": "DestroySession tears down the sandbox and marks the session DESTROYED.",
-        "description": "Persistent workspace contents are retained per tenant policy. Returns 204 No Content on success.",
+        "description": "Persistent workspace contents are retained per tenant policy. A persistent workspace the session holds is saved and kept: it goes to `RELEASING` while the files are saved and then back to `AVAILABLE`. Creating a session on that workspace returns `409` until it is `AVAILABLE` again. Returns 204 No Content on success.",
         "tags": [
           "Harness Runtime"
         ],
@@ -10023,7 +10028,7 @@
       "post": {
         "operationId": "harness_create_session_checkpoint",
         "summary": "CreateCheckpoint captures the session's live sandbox state as a durable checkpoint.",
-        "description": "Synchronous: blocks until the capture reaches READY and returns the terminal Checkpoint — clients never see PENDING on this endpoint and need no poll loop. The checkpoint binds the machine-state capture to the event-log cursor at the cut, so it can later seed forks (POST .../fork) and rollback. Checkpoints are taken between turns; a session with an active turn in flight returns 409.",
+        "description": "Synchronous: blocks until the capture reaches READY and returns the terminal Checkpoint — clients never see PENDING on this endpoint and need no poll loop. The checkpoint binds the machine-state capture to the event-log cursor at the cut, so it can later seed forks (POST .../fork) and rollback. Checkpoints are taken between turns; a session with an active turn in flight returns 409. A checkpoint captures machine state only: the files of a persistent workspace the session has are not in it, and are saved by the workspace itself.",
         "tags": [
           "Harness Runtime"
         ],
@@ -10730,7 +10735,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Checkpoint is not READY, or session cannot be rolled back in its current state.",
+            "description": "Checkpoint is not READY, the session has a persistent workspace, or the session cannot be rolled back in its current state.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10921,7 +10926,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Team is at the active-session quota, the checkpoint is not READY, or the source session is itself a fork.",
+            "description": "Team is at the active-session quota, the checkpoint is not READY, the source session is itself a fork, or the source session has a persistent workspace.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -15263,7 +15268,7 @@
       "post": {
         "operationId": "harness_create_trigger",
         "summary": "CreateTrigger creates a webhook or cron trigger.",
-        "description": "Validation is synchronous, so a mistake is a 400/409 at creation, not a silent miss at the first\nfire. Exactly one of `webhook` / `cron` must be present and match `kind`. kind=cron forbids a\n`webhook` block and requires a parseable `cron.cron_expr` and a valid IANA `cron.timezone`.\nsession_mode=fresh requires `session_template` (a well-formed agents.yaml Agent manifest) and\nforbids `bound_session_id`; session_mode=reuse requires `bound_session_id` (an existing team-owned\nsession) and forbids `session_template`. `output.mode` selects the destination block (email/slack),\nwhich is stored encrypted. `name` must be unique per team among non-deleted triggers.\n\nFor webhook triggers the response includes `webhook_secret` exactly ONCE - it is never returned\nagain. Cron triggers return no secret and carry a computed `trigger.cron.next_run_at`. The team and\nuser identity are taken from the authenticated principal, never the body.",
+        "description": "Validation is synchronous, so a mistake is a 400/409 at creation, not a silent miss at the first\nfire. Exactly one of `webhook` / `cron` must be present and match `kind`. kind=cron forbids a\n`webhook` block and requires a parseable `cron.cron_expr` and a valid IANA `cron.timezone`.\nsession_mode=fresh requires `session_template` (a well-formed agents.yaml Agent manifest) and\nforbids `bound_session_id`; session_mode=reuse requires `bound_session_id` (an existing team-owned\nsession) and forbids `session_template`. `output.mode` selects the destination block (email/slack),\nwhich is stored encrypted. `name` must be unique per team among non-deleted triggers. Triggers do\nnot support persistent workspaces: a `session_template` that names `workspace_id`, and a\n`bound_session_id` whose session has a workspace, are both refused.\n\nFor webhook triggers the response includes `webhook_secret` exactly ONCE - it is never returned\nagain. Cron triggers return no secret and carry a computed `trigger.cron.next_run_at`. The team and\nuser identity are taken from the authenticated principal, never the body.",
         "tags": [
           "Harness Runtime"
         ],
@@ -15301,7 +15306,7 @@
             }
           },
           "400": {
-            "description": "Validation failed (bad manifest/cron/timezone, kind/block/mode mismatch, provider on cron, payload placeholder in a cron prompt, invalid email, etc.).",
+            "description": "Validation failed (bad manifest/cron/timezone, kind/block/mode mismatch, provider on cron, payload placeholder in a cron prompt, invalid email, a `session_template` that names `workspace_id`, a `bound_session_id` whose session has a workspace, etc.).",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -15743,7 +15748,7 @@
             }
           },
           "400": {
-            "description": "Validation failed.",
+            "description": "Validation failed, including a `session_template` that names `workspace_id` and a `bound_session_id` whose session has a workspace.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -16582,6 +16587,701 @@
           {
             "bearer_auth": [
               "agent_harness_session:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/workspaces": {
+      "get": {
+        "operationId": "harness_list_workspaces",
+        "summary": "List the team's persistent workspaces.",
+        "description": "Lists the calling team's persistent workspaces, optionally only those in one state. A page can hold fewer results than page_size, so keep paging until next_page_token is empty.",
+        "tags": [
+          "Harness Runtime Workspaces [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "description": "Page size. The server applies a default when omitted and clamps large values.",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "minimum": 1,
+              "example": 50
+            },
+            "example": 50
+          },
+          {
+            "in": "query",
+            "name": "page_token",
+            "required": false,
+            "description": "Opaque cursor returned by the previous page. Empty starts from the beginning.",
+            "schema": {
+              "type": "string",
+              "example": ""
+            },
+            "example": ""
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": false,
+            "description": "Only list workspaces in this state.",
+            "schema": {
+              "$ref": "#/components/schemas/workspace_state"
+            },
+            "example": "AVAILABLE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/list_workspaces_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid page_token or state.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "Persistent workspaces are not enabled for this team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Persistent workspaces are not available yet.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Workspace state is temporarily unavailable. Retry.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces?state=AVAILABLE\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "harness_create_workspace",
+        "summary": "Create a persistent workspace.",
+        "description": "Creates a persistent workspace with a fixed size limit. A workspace is a set of files with its own ID that is mounted at `/workspace` in the session it is attached to, and is kept when that session is removed. Attach it to a session by passing `workspace_id` when you create the session from an Environment Config. A new workspace returns `201`. A retry with the same `Idempotency-Key` and body within 24 hours returns the existing workspace with `200`. Persistent workspaces are in public preview, free during public preview, and enabled per team; for a team without access this returns `403`.",
+        "tags": [
+          "Harness Runtime Workspaces [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "description": "Optional key that makes retries safe. Within 24 hours, the same key and body return the workspace the first request created, and the same key with a different body returns `422`.",
+            "schema": {
+              "type": "string",
+              "maxLength": 255,
+              "example": "7f9c2ba4-e88f-4c2a-9d1e-0b6a1f3c5d21"
+            },
+            "example": "7f9c2ba4-e88f-4c2a-9d1e-0b6a1f3c5d21"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/create_workspace_request"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Replay of an earlier create with the same Idempotency-Key and body; returns that workspace.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/create_workspace_response"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Workspace created.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/create_workspace_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body, such as a missing or out-of-range size_limit_gib, a name longer than 255 characters, or an unknown field.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "The request has no user identity, the team's account has been cleaned up, or persistent workspaces are not enabled for this team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The team's workspace count or total size limit is reached, or a create with this Idempotency-Key is still in progress or created a workspace that is being deleted.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The Idempotency-Key was already used with a different body.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Persistent workspaces are not available yet.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The workspace could not be confirmed. Retry with the same Idempotency-Key.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Idempotency-Key: 7f9c2ba4-e88f-4c2a-9d1e-0b6a1f3c5d21\" \\\n  -d '{\"size_limit_gib\":10,\"name\":\"notes\"}' \\\n  \"https://api.digitalocean.com/v2/agents/workspaces\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/agents/workspaces/{workspace_id}": {
+      "get": {
+        "operationId": "harness_get_workspace",
+        "summary": "Get a persistent workspace.",
+        "description": "Returns one persistent workspace by its ID, including its state and when its files were last saved. Use it to wait for a workspace to return to `AVAILABLE` after the session that held it was removed.",
+        "tags": [
+          "Harness Runtime Workspaces [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "description": "The workspace ID. Workspace names are not accepted.",
+            "schema": {
+              "type": "string",
+              "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
+            },
+            "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/get_workspace_response"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "Persistent workspaces are not enabled for this team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Persistent workspaces are not available yet.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Workspace state is temporarily unavailable. Retry.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "harness_delete_workspace",
+        "summary": "Delete a persistent workspace.",
+        "description": "Permanently deletes a persistent workspace and its files. Only a workspace that is `AVAILABLE` or `FAILED` can be deleted; remove the session that holds it first. Workspaces are never deleted automatically.",
+        "tags": [
+          "Harness Runtime Workspaces [Public Preview]"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "description": "The workspace ID. Workspace names are not accepted.",
+            "schema": {
+              "type": "string",
+              "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
+            },
+            "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Workspace deleted; no response body.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "description": "The request has no user identity, or persistent workspaces are not enabled for this team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "description": "The workspace is attached to a session, is still being saved, or cannot be deleted right now. Remove the session that holds it, or retry.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "501": {
+            "description": "Persistent workspaces are not available yet.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Workspace state is temporarily unavailable. Retry.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:manage"
             ]
           }
         ]
@@ -31371,6 +32071,319 @@
           {
             "lang": "cURL",
             "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/alert-rules/a1b2c3d4-e5f6-7890-abcd-ef1234567890\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/dashboards": {
+      "get": {
+        "operationId": "insights_list_dashboards",
+        "summary": "List Dashboards",
+        "description": "To list the dashboards in your team, send a GET request to\n`/v2/insights/dashboards`.\n\nResults are paginated with `pagination.page` and `pagination.per_page`\n(default `20`, maximum `200`) and can be sorted with `pagination.sort`\n(`name`, `created_at`, or `updated_at`) and `pagination.sort_direction`.\nWhen `pagination.sort` is omitted, dashboards are ordered by `created_at`\ndescending. When it is set, the direction defaults to `asc` unless\n`pagination.sort_direction` is also given.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dashboards_page"
+          },
+          {
+            "$ref": "#/components/parameters/dashboards_per_page"
+          },
+          {
+            "$ref": "#/components/parameters/dashboards_sort"
+          },
+          {
+            "$ref": "#/components/parameters/dashboards_sort_direction"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/list_dashboards_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/dashboard_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/dashboards?pagination.per_page=50&pagination.sort=updated_at&pagination.sort_direction=desc\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "insights_create_dashboard",
+        "summary": "Create a Dashboard",
+        "description": "To create a dashboard, send a POST request to `/v2/insights/dashboards`\nwith a `spec` containing the dashboard definition as a JSON document\nserialized to a string.\n\nThe server derives the dashboard's `name` and `description` from\n`spec.display.name` and `spec.display.description`. Dashboard names are\nunique within a team; reusing a name returns `409`.\n\nThe response status is `200` and the body contains the created dashboard.\n",
+        "tags": [
+          "Insights"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/dashboard_request"
+              },
+              "example": {
+                "spec": "{\"kind\":\"Dashboard\",\"apiVersion\":\"perses.dev/v1alpha1\",\"spec\":{\"display\":{\"name\":\"Droplet CPU\",\"description\":\"CPU utilization across production Droplets.\"},\"duration\":\"1h\",\"variables\":[],\"layouts\":[{\"kind\":\"Grid\",\"spec\":{\"items\":[{\"x\":0,\"y\":0,\"width\":12,\"height\":6,\"content\":{\"$ref\":\"#/spec/panels/cpu\"}}]}}],\"panels\":{\"cpu\":{\"kind\":\"Panel\",\"spec\":{\"display\":{\"name\":\"CPU utilization\"},\"plugin\":{\"kind\":\"TimeSeriesChart\",\"spec\":{}},\"queries\":[{\"kind\":\"TimeSeriesQuery\",\"spec\":{\"plugin\":{\"kind\":\"MetricsTimeSeriesQuery\",\"spec\":{\"metricName\":\"do.droplets.cpu_utilization\",\"kind\":\"gauge\",\"filters\":[],\"groupBy\":[]}}}}]}}}}}"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/dashboard_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/dashboard_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/dashboard_conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"spec\":\"{\\\"kind\\\":\\\"Dashboard\\\",\\\"apiVersion\\\":\\\"perses.dev/v1alpha1\\\",\\\"spec\\\":{\\\"display\\\":{\\\"name\\\":\\\"Droplet CPU\\\",\\\"description\\\":\\\"CPU utilization across production Droplets.\\\"},\\\"duration\\\":\\\"1h\\\",\\\"variables\\\":[],\\\"layouts\\\":[{\\\"kind\\\":\\\"Grid\\\",\\\"spec\\\":{\\\"items\\\":[{\\\"x\\\":0,\\\"y\\\":0,\\\"width\\\":12,\\\"height\\\":6,\\\"content\\\":{\\\"$ref\\\":\\\"#/spec/panels/cpu\\\"}}]}}],\\\"panels\\\":{\\\"cpu\\\":{\\\"kind\\\":\\\"Panel\\\",\\\"spec\\\":{\\\"display\\\":{\\\"name\\\":\\\"CPU utilization\\\"},\\\"plugin\\\":{\\\"kind\\\":\\\"TimeSeriesChart\\\",\\\"spec\\\":{}},\\\"queries\\\":[{\\\"kind\\\":\\\"TimeSeriesQuery\\\",\\\"spec\\\":{\\\"plugin\\\":{\\\"kind\\\":\\\"MetricsTimeSeriesQuery\\\",\\\"spec\\\":{\\\"metricName\\\":\\\"do.droplets.cpu_utilization\\\",\\\"kind\\\":\\\"gauge\\\",\\\"filters\\\":[],\\\"groupBy\\\":[]}}}}]}}}}}\"}' \\\n  \"https://api.digitalocean.com/v2/insights/dashboards\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/dashboards/schema": {
+      "get": {
+        "operationId": "insights_get_dashboardSchema",
+        "summary": "Retrieve the Dashboard Schema",
+        "description": "To retrieve the JSON Schema that dashboard `spec` documents must satisfy,\nsend a GET request to `/v2/insights/dashboards/schema`.\n\nThe response body is the JSON Schema document itself (draft 2020-12). Use\nit to validate a dashboard definition before sending it to the create or\nupdate endpoints.\n",
+        "tags": [
+          "Insights"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/dashboard_schema_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/dashboards/schema\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/insights/dashboards/{uuid}": {
+      "get": {
+        "operationId": "insights_get_dashboard",
+        "summary": "Retrieve a Dashboard",
+        "description": "To retrieve a dashboard, send a GET request to\n`/v2/insights/dashboards/{uuid}`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dashboard_uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/dashboard_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/dashboard_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/dashboards/7c9e6679-7425-40de-944b-e07fc1f90ae7\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "insights_update_dashboard",
+        "summary": "Update a Dashboard",
+        "description": "To update a dashboard, send a PUT request to\n`/v2/insights/dashboards/{uuid}` with a `spec` containing the full\ndashboard definition as a JSON document serialized to a string.\n\nThis endpoint uses replace semantics: the stored `spec` is overwritten in\nfull and `name` and `description` are recomputed from the new\n`spec.display`. Changing the name to one already used by another dashboard\nin your team returns `409`.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dashboard_uuid"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/dashboard_request"
+              },
+              "example": {
+                "spec": "{\"kind\":\"Dashboard\",\"apiVersion\":\"perses.dev/v1alpha1\",\"spec\":{\"display\":{\"name\":\"Droplet CPU (production)\",\"description\":\"CPU utilization across production Droplets.\"},\"duration\":\"6h\",\"variables\":[],\"layouts\":[{\"kind\":\"Grid\",\"spec\":{\"items\":[{\"x\":0,\"y\":0,\"width\":12,\"height\":6,\"content\":{\"$ref\":\"#/spec/panels/cpu\"}}]}}],\"panels\":{\"cpu\":{\"kind\":\"Panel\",\"spec\":{\"display\":{\"name\":\"CPU utilization\"},\"plugin\":{\"kind\":\"TimeSeriesChart\",\"spec\":{}},\"queries\":[{\"kind\":\"TimeSeriesQuery\",\"spec\":{\"plugin\":{\"kind\":\"MetricsTimeSeriesQuery\",\"spec\":{\"metricName\":\"do.droplets.cpu_utilization\",\"kind\":\"gauge\",\"filters\":[],\"groupBy\":[]}}}}]}}}}}"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/dashboard_response"
+          },
+          "400": {
+            "$ref": "#/components/responses/dashboard_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/dashboard_not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/dashboard_conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"spec\":\"{\\\"kind\\\":\\\"Dashboard\\\",\\\"apiVersion\\\":\\\"perses.dev/v1alpha1\\\",\\\"spec\\\":{\\\"display\\\":{\\\"name\\\":\\\"Droplet CPU (production)\\\",\\\"description\\\":\\\"CPU utilization across production Droplets.\\\"},\\\"duration\\\":\\\"6h\\\",\\\"variables\\\":[],\\\"layouts\\\":[{\\\"kind\\\":\\\"Grid\\\",\\\"spec\\\":{\\\"items\\\":[{\\\"x\\\":0,\\\"y\\\":0,\\\"width\\\":12,\\\"height\\\":6,\\\"content\\\":{\\\"$ref\\\":\\\"#/spec/panels/cpu\\\"}}]}}],\\\"panels\\\":{\\\"cpu\\\":{\\\"kind\\\":\\\"Panel\\\",\\\"spec\\\":{\\\"display\\\":{\\\"name\\\":\\\"CPU utilization\\\"},\\\"plugin\\\":{\\\"kind\\\":\\\"TimeSeriesChart\\\",\\\"spec\\\":{}},\\\"queries\\\":[{\\\"kind\\\":\\\"TimeSeriesQuery\\\",\\\"spec\\\":{\\\"plugin\\\":{\\\"kind\\\":\\\"MetricsTimeSeriesQuery\\\",\\\"spec\\\":{\\\"metricName\\\":\\\"do.droplets.cpu_utilization\\\",\\\"kind\\\":\\\"gauge\\\",\\\"filters\\\":[],\\\"groupBy\\\":[]}}}}]}}}}}\"}' \\\n  \"https://api.digitalocean.com/v2/insights/dashboards/7c9e6679-7425-40de-944b-e07fc1f90ae7\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "insights:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "insights_delete_dashboard",
+        "summary": "Delete a Dashboard",
+        "description": "To delete a dashboard, send a DELETE request to\n`/v2/insights/dashboards/{uuid}`.\n\nA successful request returns `200` with an empty JSON object as the body.\n",
+        "tags": [
+          "Insights"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/dashboard_uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/dashboard_deleted_response"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/dashboard_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/dashboard_too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/dashboard_server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/insights/dashboards/7c9e6679-7425-40de-944b-e07fc1f90ae7\""
           }
         ],
         "security": [
@@ -68119,6 +69132,71 @@
         },
         "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
       },
+      "dashboards_page": {
+        "in": "query",
+        "name": "pagination.page",
+        "required": false,
+        "description": "Which 'page' of paginated results to return.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "example": 1
+      },
+      "dashboards_per_page": {
+        "in": "query",
+        "name": "pagination.per_page",
+        "required": false,
+        "description": "Number of items returned per page. Values above `200` are rejected with `400`.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 200,
+          "default": 20
+        },
+        "example": 20
+      },
+      "dashboards_sort": {
+        "in": "query",
+        "name": "pagination.sort",
+        "required": false,
+        "description": "Field to sort by. Matched case-insensitively. When omitted, results are ordered by `created_at` descending. Any other value is rejected with `400`.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "name",
+            "created_at",
+            "updated_at"
+          ]
+        },
+        "example": "updated_at"
+      },
+      "dashboards_sort_direction": {
+        "in": "query",
+        "name": "pagination.sort_direction",
+        "required": false,
+        "description": "Sort direction. Only applied when `pagination.sort` is set, in which case it defaults to `asc`. When `pagination.sort` is omitted, results are ordered by `created_at` descending regardless of this parameter.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        },
+        "example": "desc"
+      },
+      "dashboard_uuid": {
+        "in": "path",
+        "name": "uuid",
+        "description": "The unique identifier of the dashboard. Unknown, deleted, or malformed identifiers return `404`.",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+      },
       "notification_channel_id": {
         "in": "path",
         "name": "id",
@@ -76440,6 +77518,11 @@
             "type": "string",
             "description": "DO region slug the session lives in, e.g. ric1. Stamped once at create from the region whose API host served the request, and never changed. Returned only for teams on the regional routing rollout; omitted otherwise.",
             "example": "ric1"
+          },
+          "workspace_id": {
+            "type": "string",
+            "description": "The persistent workspace attached to the session, mounted at `/workspace`. Empty when the session has none. Fork and rollback return 409 for a session that has a workspace.",
+            "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
           }
         }
       },
@@ -76488,6 +77571,12 @@
             "type": "string",
             "description": "Optional placement check, not a placement choice: the session is always created in the region whose API host served the request. If set, it must equal that region, or the request fails with 400 and a region_mismatch message. Honored only for teams on the regional routing rollout; ignored otherwise.",
             "example": "ric1"
+          },
+          "workspace_id": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Optional persistent workspace to attach at create; its files are mounted at `/workspace`. The workspace must be `AVAILABLE`, otherwise the request returns 409. Accepted only in this JSON form; an environment spec that contains workspace_id is rejected with 400. Returns 403 when persistent workspaces are not enabled for the team.",
+            "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
           }
         },
         "description": "Strict application/json CreateSession form. Loads config_id, resolves the config's single internal secret binding, and creates the session. Body capped at 16 KiB; no inline secrets."
@@ -78207,6 +79296,148 @@
             "items": {
               "$ref": "#/components/schemas/webhook_provider"
             }
+          }
+        }
+      },
+      "workspace_state": {
+        "type": "string",
+        "enum": [
+          "AVAILABLE",
+          "ATTACHING",
+          "ATTACHED",
+          "RELEASING",
+          "FAILED",
+          "DELETING"
+        ],
+        "description": "Lifecycle state of a persistent workspace. `AVAILABLE`: ready to attach to a new session. `ATTACHING`: a session is being created with it. `ATTACHED`: a session is using it. `RELEASING`: the session was removed and the files are being saved. `FAILED`: the workspace could not be saved or created; it keeps its last successful save. `DELETING`: a delete is in progress. States may be added; treat an unknown value as unavailable.",
+        "example": "AVAILABLE"
+      },
+      "workspace": {
+        "type": "object",
+        "description": "A persistent workspace: a set of files with its own ID, mounted at `/workspace` in the one session it is attached to and kept when that session is removed.",
+        "required": [
+          "workspace_id",
+          "state",
+          "size_limit_gib",
+          "bytes_used",
+          "created_at",
+          "updated_at",
+          "created_by",
+          "updated_by"
+        ],
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "description": "Assigned at create and never reused. Treat it as an opaque string.",
+            "example": "019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70"
+          },
+          "name": {
+            "type": "string",
+            "description": "Optional label. Not unique, and never accepted in place of workspace_id.",
+            "example": "notes"
+          },
+          "state": {
+            "$ref": "#/components/schemas/workspace_state"
+          },
+          "attached_session_id": {
+            "type": "string",
+            "description": "The session that holds the workspace. Absent when no session does.",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "size_limit_gib": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Size limit in GiB, fixed at create. It is a quota, so the filesystem total inside the session is slightly lower.",
+            "example": 10
+          },
+          "bytes_used": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Estimated used space in bytes as of the last save. It can differ from the usage seen inside the session.",
+            "example": 1073741824
+          },
+          "last_saved_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Time of the newest complete save. Absent until the first save.",
+            "example": "2026-10-27T12:00:00Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the workspace was created.",
+            "example": "2026-10-27T11:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When a user request last changed the workspace. Equal to created_at until then. Saves made by the platform do not change it.",
+            "example": "2026-10-27T11:00:00Z"
+          },
+          "created_by": {
+            "type": "string",
+            "description": "UUID of the user that created the workspace.",
+            "example": "3c5d7e9f-1a2b-4c6d-8e0f-a1b2c3d4e5f6"
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "UUID of the user whose request last changed the workspace. Equal to created_by until then.",
+            "example": "3c5d7e9f-1a2b-4c6d-8e0f-a1b2c3d4e5f6"
+          }
+        }
+      },
+      "list_workspaces_response": {
+        "type": "object",
+        "properties": {
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/workspace"
+            }
+          },
+          "next_page_token": {
+            "type": "string",
+            "description": "Opaque cursor for the next page. Empty when there are no further pages. A page can hold fewer results than page_size, so keep paging until this is empty.",
+            "example": ""
+          }
+        }
+      },
+      "create_workspace_request": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "size_limit_gib"
+        ],
+        "properties": {
+          "size_limit_gib": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Size limit of the workspace in GiB, from 1 to 100. A team limit can lower the maximum. The size cannot be changed after create.",
+            "example": 10
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Optional label of at most 255 characters. It does not need to be unique.",
+            "example": "notes"
+          }
+        }
+      },
+      "create_workspace_response": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "$ref": "#/components/schemas/workspace"
+          }
+        }
+      },
+      "get_workspace_response": {
+        "type": "object",
+        "properties": {
+          "workspace": {
+            "$ref": "#/components/schemas/workspace"
           }
         }
       },
@@ -90407,6 +91638,156 @@
           }
         ]
       },
+      "dashboard": {
+        "type": "object",
+        "description": "An Insights dashboard.",
+        "required": [
+          "uuid",
+          "spec",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "uuid": {
+            "type": "string",
+            "format": "uuid",
+            "readOnly": true,
+            "description": "A unique identifier for the dashboard.",
+            "example": "7c9e6679-7425-40de-944b-e07fc1f90ae7"
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true,
+            "maxLength": 255,
+            "description": "The dashboard's display name. Populated by the server from `spec.display.name`; it cannot be set directly. Omitted when `spec.display.name` is an empty string.",
+            "example": "Droplet CPU"
+          },
+          "description": {
+            "type": "string",
+            "readOnly": true,
+            "maxLength": 1000,
+            "description": "The dashboard's display description. Populated by the server from `spec.display.description`; it cannot be set directly. Omitted when the spec has no description.",
+            "example": "CPU utilization across production Droplets."
+          },
+          "spec": {
+            "type": "string",
+            "description": "The dashboard definition as a JSON document serialized to a string. The document must have `kind` set to `Dashboard` and a `spec.display.name` between 1 and 255 characters, which is projected to `name`. An optional `spec.display.description` of up to 1000 characters is projected to `description`. Retrieve the full JSON Schema from `GET /v2/insights/dashboards/schema`. The document is returned in a normalized form: content is unchanged, but object keys may be reordered and whitespace may differ from the submitted string.",
+            "example": "{\"kind\": \"Dashboard\", \"spec\": {\"panels\": {\"cpu\": {\"kind\": \"Panel\", \"spec\": {\"plugin\": {\"kind\": \"TimeSeriesChart\", \"spec\": {}}, \"display\": {\"name\": \"CPU utilization\"}, \"queries\": [{\"kind\": \"TimeSeriesQuery\", \"spec\": {\"plugin\": {\"kind\": \"MetricsTimeSeriesQuery\", \"spec\": {\"kind\": \"gauge\", \"filters\": [], \"groupBy\": [], \"metricName\": \"do.droplets.cpu_utilization\"}}}}]}}}, \"display\": {\"name\": \"Droplet CPU\", \"description\": \"CPU utilization across production Droplets.\"}, \"layouts\": [{\"kind\": \"Grid\", \"spec\": {\"items\": [{\"x\": 0, \"y\": 0, \"width\": 12, \"height\": 6, \"content\": {\"$ref\": \"#/spec/panels/cpu\"}}]}}], \"duration\": \"1h\", \"variables\": []}, \"apiVersion\": \"perses.dev/v1alpha1\"}"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the dashboard was created.",
+            "example": "2026-10-29T10:21:44Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "Time the dashboard was last updated.",
+            "example": "2026-10-29T10:21:44Z"
+          }
+        }
+      },
+      "dashboards_pagination_response": {
+        "type": "object",
+        "description": "Page-based pagination metadata for a dashboards list.",
+        "required": [
+          "page",
+          "per_page"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "description": "The current page number.",
+            "example": 1
+          },
+          "pages": {
+            "type": "integer",
+            "description": "The total number of pages. Omitted when there are no results.",
+            "example": 3
+          },
+          "per_page": {
+            "type": "integer",
+            "description": "The number of items per page.",
+            "example": 20
+          },
+          "total": {
+            "type": "integer",
+            "description": "The total number of dashboards across all pages. Omitted when there are no results.",
+            "example": 42
+          }
+        }
+      },
+      "list_dashboards_response": {
+        "type": "object",
+        "description": "Response body for listing dashboards.",
+        "required": [
+          "pagination"
+        ],
+        "properties": {
+          "dashboards": {
+            "type": "array",
+            "description": "The requested page of dashboards. Omitted when the page is empty.",
+            "items": {
+              "$ref": "#/components/schemas/dashboard"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/dashboards_pagination_response"
+          }
+        }
+      },
+      "dashboard_error": {
+        "type": "object",
+        "description": "Error body returned by the dashboards service. Unlike most DigitalOcean API errors, this body carries a gRPC status code rather than an `id` string.",
+        "required": [
+          "error",
+          "message",
+          "code"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "A human-readable description of the error. Identical to `message`.",
+            "example": "dashboard not found"
+          },
+          "message": {
+            "type": "string",
+            "description": "A human-readable description of the error. Identical to `error`.",
+            "example": "dashboard not found"
+          },
+          "code": {
+            "type": "integer",
+            "description": "The gRPC status code for the error. `3` = invalid argument, `5` = not found, `6` = already exists, `8` = resource exhausted, `13` = internal.",
+            "example": 5
+          },
+          "details": {
+            "type": "array",
+            "description": "Additional machine-readable error details. Omitted when there are none. Each entry carries an `@type` identifying its schema.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        }
+      },
+      "dashboard_request": {
+        "type": "object",
+        "description": "Request body for creating or updating a dashboard.",
+        "required": [
+          "spec"
+        ],
+        "properties": {
+          "spec": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The dashboard definition as a JSON document serialized to a string. The document must have `kind` set to `Dashboard` and a `spec.display.name` between 1 and 255 characters. An empty value or a value that is not valid JSON is rejected with `400`. Retrieve the full JSON Schema from `GET /v2/insights/dashboards/schema`.",
+            "example": "{\"kind\":\"Dashboard\",\"apiVersion\":\"perses.dev/v1alpha1\",\"spec\":{\"display\":{\"name\":\"Droplet CPU\",\"description\":\"CPU utilization across production Droplets.\"},\"duration\":\"1h\",\"variables\":[],\"layouts\":[{\"kind\":\"Grid\",\"spec\":{\"items\":[{\"x\":0,\"y\":0,\"width\":12,\"height\":6,\"content\":{\"$ref\":\"#/spec/panels/cpu\"}}]}}],\"panels\":{\"cpu\":{\"kind\":\"Panel\",\"spec\":{\"display\":{\"name\":\"CPU utilization\"},\"plugin\":{\"kind\":\"TimeSeriesChart\",\"spec\":{}},\"queries\":[{\"kind\":\"TimeSeriesQuery\",\"spec\":{\"plugin\":{\"kind\":\"MetricsTimeSeriesQuery\",\"spec\":{\"metricName\":\"do.droplets.cpu_utilization\",\"kind\":\"gauge\",\"filters\":[],\"groupBy\":[]}}}}]}}}}}"
+          }
+        }
+      },
       "email_notification_config": {
         "type": "object",
         "description": "Email notification channel configuration. Recipients must be verified team\nmember email addresses.\n",
@@ -93780,6 +95161,19 @@
           "node_pools"
         ]
       },
+      "insights_opt_in-2": {
+        "type": "object",
+        "nullable": true,
+        "writeOnly": true,
+        "description": "An object specifying the Insights telemetry that the customer opts in to for the Kubernetes cluster. This is only accepted when creating a cluster and is not returned in responses. If the object is omitted, or if `logs` is not set, no opt-in is recorded for the cluster.",
+        "properties": {
+          "logs": {
+            "type": "boolean",
+            "description": "A boolean value indicating whether the cluster's logs are sent to Insights. Setting this to `false` records an explicit opt-out. When omitted, no choice is recorded.",
+            "example": true
+          }
+        }
+      },
       "cluster": {
         "type": "object",
         "properties": {
@@ -93977,6 +95371,9 @@
           },
           "coredns_autoscaler": {
             "$ref": "#/components/schemas/coredns_autoscaler"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/insights_opt_in-2"
           }
         },
         "required": [
@@ -123607,6 +125004,333 @@
           }
         }
       },
+      "list_dashboards_response": {
+        "description": "A paginated list of dashboards.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/list_dashboards_response"
+            },
+            "example": {
+              "dashboards": [
+                {
+                  "uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                  "name": "Droplet CPU",
+                  "description": "CPU utilization across production Droplets.",
+                  "spec": "{\"kind\": \"Dashboard\", \"spec\": {\"panels\": {\"cpu\": {\"kind\": \"Panel\", \"spec\": {\"plugin\": {\"kind\": \"TimeSeriesChart\", \"spec\": {}}, \"display\": {\"name\": \"CPU utilization\"}, \"queries\": [{\"kind\": \"TimeSeriesQuery\", \"spec\": {\"plugin\": {\"kind\": \"MetricsTimeSeriesQuery\", \"spec\": {\"kind\": \"gauge\", \"filters\": [], \"groupBy\": [], \"metricName\": \"do.droplets.cpu_utilization\"}}}}]}}}, \"display\": {\"name\": \"Droplet CPU\", \"description\": \"CPU utilization across production Droplets.\"}, \"layouts\": [{\"kind\": \"Grid\", \"spec\": {\"items\": [{\"x\": 0, \"y\": 0, \"width\": 12, \"height\": 6, \"content\": {\"$ref\": \"#/spec/panels/cpu\"}}]}}], \"duration\": \"1h\", \"variables\": []}, \"apiVersion\": \"perses.dev/v1alpha1\"}",
+                  "created_at": "2026-10-29T10:21:44Z",
+                  "updated_at": "2026-10-29T10:21:44Z"
+                },
+                {
+                  "uuid": "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+                  "name": "Load balancer traffic",
+                  "spec": "{\"kind\": \"Dashboard\", \"spec\": {\"panels\": {\"requests\": {\"kind\": \"Panel\", \"spec\": {\"plugin\": {\"kind\": \"TimeSeriesChart\", \"spec\": {}}, \"display\": {\"name\": \"Requests per second\"}, \"queries\": [{\"kind\": \"TimeSeriesQuery\", \"spec\": {\"plugin\": {\"kind\": \"MetricsTimeSeriesQuery\", \"spec\": {\"kind\": \"gauge\", \"filters\": [], \"groupBy\": [], \"metricName\": \"do.load_balancers.requests_per_second\"}}}}]}}}, \"display\": {\"name\": \"Load balancer traffic\"}, \"layouts\": [{\"kind\": \"Grid\", \"spec\": {\"items\": [{\"x\": 0, \"y\": 0, \"width\": 12, \"height\": 6, \"content\": {\"$ref\": \"#/spec/panels/requests\"}}]}}], \"duration\": \"6h\", \"variables\": []}, \"apiVersion\": \"perses.dev/v1alpha1\"}",
+                  "created_at": "2026-10-27T16:09:31Z",
+                  "updated_at": "2026-10-28T09:12:05Z"
+                }
+              ],
+              "pagination": {
+                "page": 1,
+                "pages": 1,
+                "per_page": 20,
+                "total": 2
+              }
+            }
+          }
+        }
+      },
+      "dashboard_bad_request": {
+        "description": "The request was malformed. Causes include an empty `spec`, a `spec` that is not valid JSON, a `pagination.per_page` above `200`, or an unsupported `pagination.sort` or `pagination.sort_direction`.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/dashboard_error"
+            },
+            "example": {
+              "error": "spec is required",
+              "code": 3,
+              "message": "spec is required"
+            }
+          }
+        }
+      },
+      "dashboard_too_many_requests": {
+        "description": "Either the API rate limit has been exceeded, or a dashboards product limit was reached: the team already holds its maximum number of dashboards, or the `spec` contains more panels than allowed per dashboard. Rate-limit responses use the standard DigitalOcean error body. Product-limit responses use the dashboards service error body; a dashboard-count limit carries a `google.rpc.ErrorInfo` detail with `reason` set to `dashboard_limit_reached`.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/error"
+                },
+                {
+                  "$ref": "#/components/schemas/dashboard_error"
+                }
+              ]
+            },
+            "examples": {
+              "rate_limited": {
+                "summary": "API rate limit exceeded",
+                "value": {
+                  "id": "too_many_requests",
+                  "message": "API rate limit exceeded."
+                }
+              },
+              "dashboard_limit_reached": {
+                "summary": "Team dashboard limit reached",
+                "value": {
+                  "error": "This team has reached the limit of 50 dashboards. Delete an existing dashboard before creating another, or contact support to request a higher limit.",
+                  "code": 8,
+                  "message": "This team has reached the limit of 50 dashboards. Delete an existing dashboard before creating another, or contact support to request a higher limit.",
+                  "details": [
+                    {
+                      "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                      "reason": "dashboard_limit_reached",
+                      "metadata": {
+                        "limit": "50",
+                        "description": "This team has reached the limit of 50 dashboards. Delete an existing dashboard before creating another, or contact support to request a higher limit."
+                      }
+                    }
+                  ]
+                }
+              },
+              "chart_limit_reached": {
+                "summary": "Per-dashboard chart limit reached",
+                "value": {
+                  "error": "Max number of charts reached per dashboard. Delete a chart to add another, or contact support to request a higher limit.",
+                  "code": 8,
+                  "message": "Max number of charts reached per dashboard. Delete a chart to add another, or contact support to request a higher limit."
+                }
+              }
+            }
+          }
+        }
+      },
+      "dashboard_server_error": {
+        "description": "Unexpected server-side error.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/dashboard_error"
+            },
+            "example": {
+              "error": "internal error",
+              "code": 13,
+              "message": "internal error"
+            }
+          }
+        }
+      },
+      "dashboard_response": {
+        "description": "A single dashboard.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "dashboard"
+              ],
+              "properties": {
+                "dashboard": {
+                  "$ref": "#/components/schemas/dashboard"
+                }
+              }
+            },
+            "example": {
+              "dashboard": {
+                "uuid": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                "name": "Droplet CPU",
+                "description": "CPU utilization across production Droplets.",
+                "spec": "{\"kind\": \"Dashboard\", \"spec\": {\"panels\": {\"cpu\": {\"kind\": \"Panel\", \"spec\": {\"plugin\": {\"kind\": \"TimeSeriesChart\", \"spec\": {}}, \"display\": {\"name\": \"CPU utilization\"}, \"queries\": [{\"kind\": \"TimeSeriesQuery\", \"spec\": {\"plugin\": {\"kind\": \"MetricsTimeSeriesQuery\", \"spec\": {\"kind\": \"gauge\", \"filters\": [], \"groupBy\": [], \"metricName\": \"do.droplets.cpu_utilization\"}}}}]}}}, \"display\": {\"name\": \"Droplet CPU\", \"description\": \"CPU utilization across production Droplets.\"}, \"layouts\": [{\"kind\": \"Grid\", \"spec\": {\"items\": [{\"x\": 0, \"y\": 0, \"width\": 12, \"height\": 6, \"content\": {\"$ref\": \"#/spec/panels/cpu\"}}]}}], \"duration\": \"1h\", \"variables\": []}, \"apiVersion\": \"perses.dev/v1alpha1\"}",
+                "created_at": "2026-10-29T10:21:44Z",
+                "updated_at": "2026-10-29T10:21:44Z"
+              }
+            }
+          }
+        }
+      },
+      "dashboard_conflict": {
+        "description": "Another dashboard in your team already uses the `spec.display.name` in the request. Dashboard names are unique within a team.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/dashboard_error"
+            },
+            "example": {
+              "error": "dashboard name already exists",
+              "code": 6,
+              "message": "dashboard name already exists"
+            }
+          }
+        }
+      },
+      "dashboard_schema_response": {
+        "description": "The JSON Schema (draft 2020-12) that dashboard `spec` documents must satisfy. The response body is the schema document itself, not wrapped in an object.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "description": "A JSON Schema document.",
+              "additionalProperties": true
+            },
+            "example": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "https://api.digitalocean.com/v2/insights/dashboards/schema",
+              "title": "Dashboard",
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "spec"
+              ],
+              "properties": {
+                "apiVersion": {
+                  "const": "perses.dev/v1alpha1"
+                },
+                "kind": {
+                  "const": "Dashboard"
+                },
+                "spec": {
+                  "type": "object",
+                  "required": [
+                    "display",
+                    "duration",
+                    "variables",
+                    "layouts",
+                    "panels"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "dashboard_not_found": {
+        "description": "No dashboard with this identifier exists in your team. Deleted dashboards and dashboards owned by other teams also return this response.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/dashboard_error"
+            },
+            "example": {
+              "error": "dashboard not found",
+              "code": 5,
+              "message": "dashboard not found"
+            }
+          }
+        }
+      },
+      "dashboard_deleted_response": {
+        "description": "The dashboard was deleted. The body is an empty JSON object.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "additionalProperties": false
+            },
+            "example": {}
+          }
+        }
+      },
       "list_notification_channels_response": {
         "description": "A list of notification channels.",
         "headers": {
@@ -136356,13 +138080,16 @@
         }
       },
       "kubernetes_clusters_multi_pool_request": {
-        "description": "This example request creates a Kubernetes cluster with two node pools. It\nalso demonstrates setting tags, labels, auto scaling, and a maintenance\npolicy.\n",
+        "description": "This example request creates a Kubernetes cluster with two node pools. It\nalso demonstrates setting tags, labels, auto scaling, and a maintenance\npolicy. It also opts in to sending the cluster's logs to Insights.\n",
         "value": {
           "name": "prod-cluster-01",
           "region": "nyc1",
           "version": "1.18.6-do.0",
           "isolated_workers": false,
           "gpu_operator_ready": false,
+          "insights": {
+            "logs": true
+          },
           "tags": [
             "production",
             "web-team"
