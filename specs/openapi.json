@@ -2802,11 +2802,874 @@
         ]
       }
     },
+    "/v2/action-gateway/endpoints": {
+      "post": {
+        "operationId": "endpoints_create",
+        "summary": "Create an Endpoint",
+        "description": "Creates a named endpoint and its first immutable version atomically. The MCP URL follows the highest-numbered live version; version_mcp_url stays pinned. The top-level insights field sets the endpoint's Insights consent; version.insights is deprecated and ignored. An invalid name returns 400 invalid_endpoint_name; a duplicate team name returns 409 endpoint_name_taken.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/endpoint_create"
+              },
+              "examples": {
+                "request": {
+                  "$ref": "#/components/examples/endpoint_create"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new head version was created.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_publish_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/publish"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "409": {
+            "$ref": "#/components/responses/endpoint_name_taken"
+          },
+          "429": {
+            "$ref": "#/components/responses/endpoint_creation_limited"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"support-agent\",\"version\":{\"actor_id\":\"alice\",\"tools\":[\"exa_web_search@1\"],\"policy\":{\"defaultAction\":\"ask\"},\"config\":{\"preloadTools\":[\"exa_web_search\"]}}}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:create"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "endpoints_list",
+        "summary": "List Endpoints",
+        "description": "Lists visible endpoints, newest creation time first, with endpoint UUID descending as the tie-breaker. Keyset pagination remains stable across tied timestamps, deletions, and concurrent inserts. There are no offsets or totals. Team owners may list all endpoints in their team.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_token"
+          },
+          {
+            "$ref": "#/components/parameters/name"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_actor_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoints_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/endpoints"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints?page_size=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/endpoints/search": {
+      "get": {
+        "operationId": "endpoints_list_search",
+        "summary": "Search Endpoints",
+        "description": "Returns the endpoints you can see whose name, endpoint ID, actor_id, or agent name contains query, case-insensitively. Results are ranked across the whole result set: exact matches first, then prefix matches, then substring matches, then by name. Each endpoint has the list shape, including its embedded head_version. Keyset pagination uses page_size and page_token; a page token is valid only with the same query and actor_id. There are no offsets or totals. Service-managed endpoints are never returned.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/search_query"
+          },
+          {
+            "$ref": "#/components/parameters/search_actor_id"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_search_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/endpoint_search"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/search?query=support&page_size=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/endpoints/{endpoint_id}": {
+      "get": {
+        "operationId": "endpoints_get",
+        "summary": "Retrieve an Endpoint",
+        "description": "Returns an endpoint with its live head and Insights consent. When no live versions remain, head_version is null and the endpoint MCP URL fails closed until a version is published. An inaccessible endpoint returns 404 endpoint_not_found.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/endpoint"
+                  },
+                  "without_live_versions": {
+                    "$ref": "#/components/examples/empty_endpoint"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "endpoints_patch",
+        "summary": "Update an Endpoint",
+        "description": "Renames an endpoint, changes its Insights consent, or both, without changing its owner, actor, or versions. Send name, insights, or both. Insights merges per signal: a metrics, logs, or traces value of true or false replaces that signal, and an omitted signal keeps its stored value. The consent applies to every version, including pinned and older versions. A body with no name and no insights signal returns 400 endpoint_update_empty. Only the endpoint owner may update it. An invalid name returns 400 invalid_endpoint_name; a duplicate team name returns 409 endpoint_name_taken. Inaccessible endpoints return 404 endpoint_not_found.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/endpoint_patch"
+              },
+              "examples": {
+                "request": {
+                  "$ref": "#/components/examples/endpoint_patch"
+                },
+                "logs_disabled": {
+                  "$ref": "#/components/examples/logs_disabled"
+                },
+                "traces_enabled": {
+                  "$ref": "#/components/examples/traces_enabled"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/endpoint"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "$ref": "#/components/responses/endpoint_name_taken"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PATCH \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"name\":\"support-agent\"}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "endpoints_delete",
+        "summary": "Delete an Endpoint",
+        "description": "Deletes an endpoint and all its versions. The owner or a team owner may delete it. Missing endpoints, endpoints outside your team, and otherwise invisible endpoints all return the same empty 204 response as a successful deletion. A service-managed endpoint is invisible: deleting its ID returns the same 204 as an unknown ID and does not change it. Repeating a delete returns 204. Deletion is final for the endpoint identity and all cascaded version identities; retries, replays, and later writes cannot resurrect them. Reusing the same contents requires a new endpoint identity and a new version identity and number.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The endpoint was deleted or no visible endpoint matched. The response is empty in either case.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/endpoints/{endpoint_id}/versions": {
+      "post": {
+        "operationId": "endpointVersions_create",
+        "summary": "Create an Endpoint Version",
+        "description": "Publishes a new immutable version as the endpoint's head. Only the endpoint owner may create versions, and the actor binding must match the endpoint. An identity mismatch returns 404 endpoint_identity_mismatch. Inaccessible endpoints return 404 endpoint_not_found. Publishing identical contents still creates a new version identity and number; it never resurrects a deleted version. Versions carry no Insights consent: a request's insights field is deprecated and ignored, and the endpoint's consent applies to the new version. Neither new-version creation nor head replacement changes that consent; change it with PATCH /v2/action-gateway/endpoints/{endpoint_id}.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/endpoint_version_spec"
+              },
+              "examples": {
+                "request": {
+                  "$ref": "#/components/examples/endpoint_version_spec"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new head version was created.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_publish_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/publish_empty"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/version_creation_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/version_creation_limited"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"actor_id\":\"alice\",\"tools\":[],\"policy\":{},\"config\":{}}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/versions\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:create"
+            ]
+          }
+        ]
+      },
+      "get": {
+        "operationId": "endpointVersions_list",
+        "summary": "List Endpoint Versions",
+        "description": "Lists live versions of an accessible endpoint by version_number descending, using keyset pagination without offsets or totals. The cursor is bound to this parent endpoint as well as the caller and team. Inaccessible endpoints return 404 endpoint_not_found.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_parameters_page_token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_versions_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/versions"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/versions?page_size=20\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/endpoints/{endpoint_id}/versions:promote": {
+      "post": {
+        "operationId": "endpointVersions_create_promotion",
+        "summary": "Promote an Endpoint Version",
+        "description": "Copies a live version's configuration into a new, higher-numbered head version and sets promoted_from_version_number. Existing versions never change. Only the endpoint owner may promote. An inaccessible endpoint returns 404 endpoint_not_found, and a deleted, unknown, or different endpoint's version returns 404 endpoint_version_not_found. The new version always has a new identity and number, even for identical contents; deleted identities are never resurrected. Head replacement does not change the endpoint's Insights consent, which applies to every version.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/endpoint_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/endpoint_promotion"
+              },
+              "examples": {
+                "request": {
+                  "$ref": "#/components/examples/endpoint_promotion"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new head version was created.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_publish_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/promotion"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/promotion_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/version_creation_limited"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"version_id\":\"1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1\"}' \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoints/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/versions:promote\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/action-gateway/endpoint-versions/{version_id}": {
+      "get": {
+        "operationId": "endpointVersions_get",
+        "summary": "Retrieve an Endpoint Version",
+        "description": "Returns the exact live version named by its composite public ID. An inaccessible or deleted version returns 404 endpoint_version_not_found. A bare session UUID is not a version ID.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/version_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request was successful.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/endpoint_version_response"
+                },
+                "examples": {
+                  "response": {
+                    "$ref": "#/components/examples/version"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoint-versions/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:read"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "endpointVersions_delete",
+        "summary": "Delete an Endpoint Version",
+        "description": "Deletes a live version. Only the endpoint owner may delete versions. Deleting the head makes the highest-numbered remaining live version the head. With no live versions, the endpoint MCP URL fails closed until another version is published. Inaccessible or deleted versions return 404 endpoint_version_not_found, and so does a version of a service-managed endpoint, exactly as for an unknown ID. Deletion is final for the version identity. Retries, replays, and later writes cannot resurrect it. Reusing identical contents requires a new version identity and version number.",
+        "tags": [
+          "Action Gateway"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/version_id"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The resource was deleted.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/action-gateway/endpoint-versions/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "action_gateway:delete"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/action-gateway/sessions": {
       "post": {
         "operationId": "sessions_create",
+        "deprecated": true,
         "summary": "Create a Session",
-        "description": "Creates a session owned by your team, with a new session URN, and returns the MCP URL an agent connects to. tools selects the tools and toolbelts the session exposes, and policy decides which calls run, need approval, or are refused.\n\nSet config.cache to opt into result caching for all eligible tools or a specific list. Caching is off by default and must be enabled for the team.",
+        "description": "Deprecated: use POST /v2/action-gateway/endpoints. Existing sessions and their MCP URLs keep working. A new session may be created as version 1 of a new endpoint whose name is derived from the session name, with part of the session ID appended when that name is taken. The response then includes endpoint_id, endpoint_version_id, and version_number. Such a session counts against your team's endpoint limit (429 endpoint_limit_exceeded). If every derived name is already used by an endpoint in your team, the request returns 409 endpoint_name_taken. Creates a session owned by your team, with a new session URN, and returns the MCP URL an agent connects to. tools selects the tools and toolbelts the session exposes, and policy decides which calls run, need approval, or are refused.\n\nSet config.cache to opt into result caching for all eligible tools or a specific list. Caching is off by default and must be enabled for the team.",
         "tags": [
           "Action Gateway"
         ],
@@ -2933,8 +3796,11 @@
           "401": {
             "$ref": "#/components/responses/unauthorized"
           },
+          "409": {
+            "$ref": "#/components/responses/session_name_taken"
+          },
           "429": {
-            "$ref": "#/components/responses/too_many_requests"
+            "$ref": "#/components/responses/session_creation_limited"
           },
           "500": {
             "$ref": "#/components/responses/server_error"
@@ -2959,8 +3825,9 @@
       },
       "get": {
         "operationId": "sessions_list",
+        "deprecated": true,
         "summary": "List Sessions",
-        "description": "Returns the sessions you can see, newest first. Offset-paged with page and `per_page`; `end_user_id` filters to one actor.",
+        "description": "Deprecated: use GET /v2/action-gateway/endpoints for endpoints. This route continues to list legacy sessions with its existing fields and pagination. Returns the sessions you can see, newest first. Offset-paged with page and `per_page`; `end_user_id` filters to one actor.",
         "tags": [
           "Action Gateway"
         ],
@@ -3084,14 +3951,15 @@
     "/v2/action-gateway/sessions/search": {
       "get": {
         "operationId": "sessions_list_search",
+        "deprecated": true,
         "summary": "Search Sessions",
-        "description": "Returns the sessions you can see whose name, `actor_id`, `session_urn`, or `agentName` contains query, case-insensitively, ranked across the whole result set. Cursor-paged with `page_size` and `page_token`; no total is reported.",
+        "description": "Deprecated: use GET /v2/action-gateway/endpoints/search for endpoints. This route continues to search legacy sessions with its existing fields and pagination. Returns the sessions you can see whose name, `actor_id`, `session_urn`, or `agentName` contains query, case-insensitively, ranked across the whole result set. Cursor-paged with `page_size` and `page_token`; no total is reported.",
         "tags": [
           "Action Gateway"
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/search_query"
+            "$ref": "#/components/parameters/parameters_search_query"
           },
           {
             "$ref": "#/components/parameters/end_user_id_sessions_search"
@@ -3211,8 +4079,9 @@
     "/v2/action-gateway/sessions/{session_urn}": {
       "delete": {
         "operationId": "sessions_delete",
+        "deprecated": true,
         "summary": "Delete a Session",
-        "description": "Deletes the session and its policy. Succeeds without deleting anything when the session does not exist or you cannot delete it, so repeating a delete also succeeds. A malformed `session_urn` is rejected with 400.",
+        "description": "Deprecated: use DELETE /v2/action-gateway/endpoints/{endpoint_id} for endpoints. This route continues to accept legacy session URNs and delete legacy sessions. Deletes the session and its policy. Succeeds without deleting anything when the session does not exist or you cannot delete it, so repeating a delete also succeeds. A malformed `session_urn` is rejected with 400. When the session is a version of an endpoint, this deletes that version, and deleting the endpoint's last live version also deletes the endpoint. Deleting the last live version with DELETE /v2/action-gateway/endpoint-versions/{version_id} instead keeps the endpoint, with no live version.",
         "tags": [
           "Action Gateway"
         ],
@@ -5319,6 +6188,12 @@
             "$ref": "#/components/parameters/session_id_header"
           },
           {
+            "$ref": "#/components/parameters/endpoint_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
+          },
+          {
             "$ref": "#/components/parameters/session_tools_page_size"
           },
           {
@@ -5338,6 +6213,12 @@
                   "type": "string"
                 },
                 "example": "\"3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c\""
+              },
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
               }
             },
             "content": {
@@ -5387,7 +6268,15 @@
             }
           },
           "304": {
-            "description": "The page is unchanged since the `ETag` in `If-None-Match`."
+            "description": "The page is unchanged since the `ETag` in `If-None-Match`.",
+            "headers": {
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
+              }
+            }
           },
           "400": {
             "$ref": "#/components/responses/data_plane_responses_bad_request"
@@ -5397,6 +6286,9 @@
           },
           "403": {
             "$ref": "#/components/responses/data_plane_responses_forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/endpoint_not_found"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5443,6 +6335,12 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/session_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
           }
         ],
         "requestBody": {
@@ -5466,6 +6364,14 @@
         "responses": {
           "200": {
             "description": "The search ran, or it is waiting for approval. Check `status` before reading `output`.",
+            "headers": {
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5518,6 +6424,9 @@
           "403": {
             "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
+          "404": {
+            "$ref": "#/components/responses/endpoint_not_found"
+          },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
           },
@@ -5566,6 +6475,12 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/session_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
           }
         ],
         "requestBody": {
@@ -5593,6 +6508,14 @@
         "responses": {
           "200": {
             "description": "The calls ran. Each item reports its own success or failure.",
+            "headers": {
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5713,6 +6636,9 @@
           "403": {
             "$ref": "#/components/responses/data_plane_responses_forbidden"
           },
+          "404": {
+            "$ref": "#/components/responses/endpoint_not_found"
+          },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
           },
@@ -5761,6 +6687,12 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/session_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
           }
         ],
         "requestBody": {
@@ -5779,6 +6711,14 @@
         "responses": {
           "200": {
             "description": "The code ran, or it is waiting for approval. Check `status` before reading `output`.",
+            "headers": {
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -5803,6 +6743,9 @@
           },
           "403": {
             "$ref": "#/components/responses/data_plane_responses_forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/endpoint_not_found"
           },
           "412": {
             "$ref": "#/components/responses/precondition_failed"
@@ -5858,6 +6801,9 @@
           },
           {
             "$ref": "#/components/parameters/approval_id"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
           }
         ],
         "requestBody": {
@@ -5936,7 +6882,7 @@
       "post": {
         "operationId": "gatewayApprovals_update",
         "summary": "Decide a Pending Approval by Session Header",
-        "description": "Approves or denies a tool call that is waiting for approval, identifying the session with the `X-Session-Id` header. It behaves the same as `POST /approvals/session/{session_id}/{approval_id}`, which is the path returned in a result's `_meta.decide`.",
+        "description": "Approves or denies a tool call that is waiting for approval, identifying the session with the `X-Session-Id` header or the endpoint with the `X-Endpoint-Id` header. With `X-Session-Id`, it behaves the same as `POST /approvals/session/{session_id}/{approval_id}`, which is the path returned in a result's `_meta.decide`. An unknown `X-Endpoint-Id` returns 404.",
         "tags": [
           "Action Gateway Data Plane"
         ],
@@ -5949,6 +6895,12 @@
         "parameters": [
           {
             "$ref": "#/components/parameters/session_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/endpoint_id_header"
+          },
+          {
+            "$ref": "#/components/parameters/actor_id_header"
           },
           {
             "$ref": "#/components/parameters/approval_id"
@@ -5970,6 +6922,14 @@
         "responses": {
           "200": {
             "description": "The decision was recorded.",
+            "headers": {
+              "X-Endpoint-Id": {
+                "$ref": "#/components/headers/X-Endpoint-Id"
+              },
+              "X-Action-Gateway-Endpoint-Version": {
+                "$ref": "#/components/headers/X-Action-Gateway-Endpoint-Version"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -37224,7 +38184,7 @@
             "$ref": "#/components/parameters/microvm_region"
           },
           {
-            "$ref": "#/components/parameters/name"
+            "$ref": "#/components/parameters/parameters_name"
           },
           {
             "$ref": "#/components/parameters/parameters_tag_name"
@@ -48848,6 +49808,68 @@
         ]
       }
     },
+    "/v2/snapshots/{snapshot_id}/regions/{region}": {
+      "delete": {
+        "operationId": "snapshots_delete_region",
+        "summary": "Delete a Snapshot Copy from a Region",
+        "description": "A Droplet snapshot that has been transferred to additional regions holds an\nindependent copy in each one. To delete the copy in a single region without\naffecting the snapshot or its copies in other regions, send a DELETE request\nto `/v2/snapshots/$SNAPSHOT_ID/regions/$REGION`.\n\nThe regions a snapshot holds copies in are listed in the `regions` attribute\nof the snapshot. The copy in the snapshot's original region cannot be\ndeleted individually; to delete the snapshot entirely, use\n`DELETE /v2/snapshots/$SNAPSHOT_ID`. This endpoint is only available for\nDroplet snapshots.\n\nA status of 204 will be given. This indicates that the request was processed\nsuccessfully, but that no response body is needed.\n",
+        "tags": [
+          "Snapshots"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/snapshot_id"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_region-3"
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/components/responses/no_content"
+          },
+          "400": {
+            "$ref": "#/components/responses/invalid_region"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "422": {
+            "$ref": "#/components/responses/cannot_delete_original_region"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H 'Content-Type: application/json' \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/snapshots/6372321/regions/fra1\""
+          },
+          {
+            "lang": "Python",
+            "source": "import os\nfrom pydo import Client\n\nclient = Client(token=os.environ.get(\"DIGITALOCEAN_TOKEN\"))\n\nresp = client.snapshots.delete_region(snapshot_id=6372321, region=\"fra1\")"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "image:delete",
+              "snapshot:delete"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/spaces/keys": {
       "get": {
         "operationId": "spacesKey_list",
@@ -48870,7 +49892,7 @@
             "$ref": "#/components/parameters/parameters_sort_direction"
           },
           {
-            "$ref": "#/components/parameters/parameters_name"
+            "$ref": "#/components/parameters/parameters_name-2"
           },
           {
             "$ref": "#/components/parameters/bucket"
@@ -50483,7 +51505,7 @@
             "$ref": "#/components/parameters/volume_name"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-3"
+            "$ref": "#/components/parameters/parameters_region-4"
           },
           {
             "$ref": "#/components/parameters/parameters_per_page"
@@ -50656,7 +51678,7 @@
             "$ref": "#/components/parameters/volume_name"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-3"
+            "$ref": "#/components/parameters/parameters_region-4"
           }
         ],
         "responses": {
@@ -52727,7 +53749,7 @@
             "$ref": "#/components/parameters/page"
           },
           {
-            "$ref": "#/components/parameters/parameters_region-3"
+            "$ref": "#/components/parameters/parameters_region-4"
           }
         ],
         "responses": {
@@ -57411,7 +58433,7 @@
         "x-codeSamples": [
           {
             "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/custom_evaluation_metrics\" \\\n  -d '{\n    \"metric_name\": \"My domain tone metric\",\n    \"description\": \"Scores adherence to our support macros\",\n    \"config\": {\n      \"requires_ground_truth\": true,\n      \"scoring_prompt\": \"Grade for brand tone and factuality.\"\n    }\n  }'"
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\"  \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/custom_evaluation_metrics\" \\\n  -d '{\n    \"metric_name\": \"My domain tone metric\",\n    \"description\": \"Scores adherence to our support macros\",\n    \"config\": {\n      \"requires_ground_truth\": true,\n      \"scoring_prompt\": \"Grade for brand tone and factuality.\",\n      \"turn_type\": \"EVALUATION_METRIC_TURN_TYPE_SINGLE_TURN\"\n    }\n  }'"
           }
         ]
       }
@@ -59643,6 +60665,17 @@
       "get": {
         "description": "To list all available metrics for model evaluation, send a GET request to `/v2/genai/model_evaluation_metrics`.",
         "operationId": "genai_list_model_evaluation_metrics",
+        "parameters": [
+          {
+            "description": "When set, only return metrics compatible with this turn type.",
+            "example": "EVALUATION_METRIC_TURN_TYPE_MULTI_TURN",
+            "in": "query",
+            "name": "turn_type",
+            "schema": {
+              "$ref": "#/components/schemas/apiEvaluationMetricTurnType"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -67833,6 +68866,90 @@
         },
         "example": "ov_4f0c2a9d8e1b47c6a3d5f7e9b1c3a5d7"
       },
+      "endpoint_parameters_page_size": {
+        "name": "page_size",
+        "in": "query",
+        "required": false,
+        "description": "Page size; defaults to 20 when omitted. Supplied values outside 1 through 100 return 400. Sizes are not clamped.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "default": 20
+        },
+        "example": 20
+      },
+      "endpoint_parameters_page_token": {
+        "name": "page_token",
+        "in": "query",
+        "required": false,
+        "description": "Opaque next_page_token from the previous response. Omit for the first page. Malformed tokens or replay with a different team, caller visibility, normalized filters, resource kind, or parent endpoint return 400. Tokens contain no full URNs or database row IDs.",
+        "schema": {
+          "type": "string"
+        },
+        "example": ""
+      },
+      "name": {
+        "name": "name",
+        "in": "query",
+        "required": false,
+        "description": "Filter by endpoint name.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "support-agent"
+      },
+      "endpoint_parameters_actor_id": {
+        "name": "actor_id",
+        "in": "query",
+        "required": false,
+        "description": "Filter by the endpoint's actor binding.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "alice"
+      },
+      "search_query": {
+        "name": "query",
+        "in": "query",
+        "required": true,
+        "description": "Text matched case-insensitively as a substring of the endpoint name, endpoint ID, actor_id, or agent name. Leading and trailing whitespace is trimmed; an empty query returns 400 invalid_search_query.",
+        "schema": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example": "support"
+      },
+      "search_actor_id": {
+        "name": "actor_id",
+        "in": "query",
+        "required": false,
+        "description": "Exact actor_id filter, combined with query. Omitted or empty means all actors.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "alice"
+      },
+      "endpoint_id": {
+        "name": "endpoint_id",
+        "in": "path",
+        "required": true,
+        "description": "Endpoint UUID only. Malformed IDs or full URNs return 400 invalid_endpoint_id.",
+        "schema": {
+          "$ref": "#/components/schemas/endpoint_id"
+        },
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+      },
+      "version_id": {
+        "name": "version_id",
+        "in": "path",
+        "required": true,
+        "description": "Composite version ID only. Invalid IDs return 400 invalid_endpoint_version_id.",
+        "schema": {
+          "$ref": "#/components/schemas/endpoint_version_id"
+        },
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1"
+      },
       "end_user_id": {
         "name": "end_user_id",
         "in": "query",
@@ -67843,7 +68960,7 @@
         },
         "example": "alice"
       },
-      "search_query": {
+      "parameters_search_query": {
         "name": "query",
         "in": "query",
         "required": false,
@@ -68240,13 +69357,35 @@
       "session_id_header": {
         "name": "X-Session-Id",
         "in": "header",
-        "required": true,
-        "description": "The session to act in: the UUID at the end of the session's `sessionUrn` and `mcpUrl`. The session must belong to the authenticated user and team.",
+        "required": false,
+        "description": "The session to act in: the UUID at the end of the session's `sessionUrn` and `mcpUrl`. For a pinned endpoint version, use the session UUID at the end of its `mcp_url`, not the composite version ID. The session must belong to the authenticated user and team. Send either this header or `X-Endpoint-Id`, not both; both returns 400. With neither, the request uses your default endpoint when default endpoints are enabled for your team, and otherwise returns 403.",
         "schema": {
           "type": "string",
           "format": "uuid"
         },
         "example": "2b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b"
+      },
+      "endpoint_id_header": {
+        "name": "X-Endpoint-Id",
+        "in": "header",
+        "required": false,
+        "description": "The endpoint to act in, as a lowercase endpoint UUID. The request uses the endpoint's current head version, which the response reports in `X-Action-Gateway-Endpoint-Version`. The endpoint must belong to the authenticated user and team; an unknown or inaccessible endpoint returns 404. Send either this header or `X-Session-Id`, not both. A malformed value or more than one value returns 400.",
+        "schema": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+        },
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+      },
+      "actor_id_header": {
+        "name": "X-Actor-Id",
+        "in": "header",
+        "required": false,
+        "description": "The actor you expect the session or endpoint to be bound to. It does not select an actor or connections; those come from the session's or endpoint's `actor_id`. When sent, it must equal that binding. A different value, including any value for a target with no actor, returns 403 with the message \"The session is not bound to the request's actor.\"",
+        "schema": {
+          "type": "string"
+        },
+        "example": "alice"
       },
       "session_tools_page_size": {
         "name": "page_size",
@@ -69761,7 +70900,7 @@
         },
         "example": "mkc1"
       },
-      "name": {
+      "parameters_name": {
         "in": "query",
         "name": "name",
         "required": false,
@@ -70597,6 +71736,16 @@
         },
         "example": 6372321
       },
+      "parameters_region-3": {
+        "in": "path",
+        "name": "region",
+        "required": true,
+        "description": "The slug of the region from which to delete the snapshot's copy.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "fra1"
+      },
       "sort": {
         "in": "query",
         "name": "sort",
@@ -70619,7 +71768,7 @@
         },
         "example": "desc"
       },
-      "parameters_name": {
+      "parameters_name-2": {
         "in": "query",
         "name": "name",
         "required": false,
@@ -70680,7 +71829,7 @@
         },
         "example": "example"
       },
-      "parameters_region-3": {
+      "parameters_region-4": {
         "name": "region",
         "in": "query",
         "description": "The slug identifier for the region where the resource is available.",
@@ -70944,6 +72093,21 @@
         },
         "example": 1444931833,
         "description": "The time when the oldest request will expire. The value is given in Unix epoch time. See https://developers.digitalocean.com/documentation/v2/#rate-limit for information about how requests expire."
+      },
+      "X-Endpoint-Id": {
+        "description": "The UUID of your default endpoint. Returned when the request sent neither `X-Session-Id` nor `X-Endpoint-Id` and used your default endpoint.",
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+      },
+      "X-Action-Gateway-Endpoint-Version": {
+        "description": "The composite ID of the endpoint version that served the request, such as `<endpoint uuid>.v3`. Returned when the request targeted an endpoint with `X-Endpoint-Id` or used your default endpoint, so the version is the head at request time.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1"
       },
       "content-disposition": {
         "description": "Indicates if the content is expected to be displayed *inline* in the  browser, that is, as a Web page or as part of a Web page, or as an  *attachment*, that is downloaded and saved locally.",
@@ -72596,37 +73760,78 @@
           }
         }
       },
-      "session_policy": {
+      "endpoint_id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+        "not": {
+          "pattern": "\\s"
+        },
+        "description": "Lowercase, hyphenated endpoint UUID, without a URN prefix.",
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+      },
+      "endpoint_name": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._-]{1,64}$",
+        "minLength": 1,
+        "maxLength": 64,
+        "description": "Endpoint name, unique within your team.",
+        "example": "support-agent"
+      },
+      "endpoint_version_id": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.v([1-9][0-9]{0,8}|[1-3][0-9]{9}|4[01][0-9]{8}|42[0-8][0-9]{7}|429[0-3][0-9]{6}|4294[0-8][0-9]{5}|42949[0-5][0-9]{4}|429496[0-6][0-9]{3}|4294967[01][0-9]{2}|42949672[0-8][0-9]|429496729[0-5])$",
+        "not": {
+          "pattern": "\\s"
+        },
+        "description": "The endpoint UUID followed by .v and its version number, without a URN prefix. The UUID is lowercase and hyphenated. The number is from 1 through 4294967295, in decimal without signs or leading zeros. A bare UUID is not a version ID.",
+        "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1"
+      },
+      "version_number": {
+        "type": "integer",
+        "format": "int64",
+        "minimum": 1,
+        "maximum": 4294967295,
+        "description": "Positive unsigned 32-bit version number, never reused after deletion.",
+        "example": 1
+      },
+      "endpoint_policy": {
         "type": "object",
         "nullable": true,
-        "description": "Tool-permission policy of a session.",
+        "description": "Tool-permission policy. Omission or an empty object asks before every call. Property names are camelCase, as in the session API.",
         "properties": {
           "defaultAction": {
             "type": "string",
             "enum": [
               "allow",
               "ask",
-              "deny"
+              "deny",
+              "SESSION_POLICY_ACTION_UNSPECIFIED"
             ],
-            "description": "Action for calls no rule matches. Empty means ask; otherwise this must be allow, ask, or deny.",
+            "description": "Action for calls no rule matches. Omission means ask; responses then return SESSION_POLICY_ACTION_UNSPECIFIED.",
             "example": "ask"
           },
           "rules": {
             "type": "array",
+            "description": "Rules for selected tools or toolbelts.",
             "items": {
               "type": "object",
+              "required": [
+                "tool",
+                "action"
+              ],
               "properties": {
                 "tool": {
                   "type": "string",
-                  "description": "Required. A tool slug, optionally `<tool_slug>@<version>`, or a toolbelt as `toolbelt:<name>@<version>`. When the session selects tools, the rule must name one of them.",
+                  "description": "Selected tool slug or version-pinned toolbelt reference.",
                   "example": "exa_web_search"
                 },
                 "match": {
                   "type": "object",
-                  "description": "Optional argument conditions, keyed by argument name; the rule applies only to calls whose arguments match.",
                   "additionalProperties": {
                     "type": "string"
                   },
+                  "description": "Argument conditions; an empty object matches every call to the tool.",
                   "example": {}
                 },
                 "action": {
@@ -72636,12 +73841,46 @@
                     "ask",
                     "deny"
                   ],
-                  "example": "allow",
-                  "description": "Required: allow, ask, or deny."
+                  "description": "Action when the rule matches.",
+                  "example": "allow"
                 }
               }
             },
-            "description": "Rules for specific tools or toolbelts."
+            "example": []
+          }
+        }
+      },
+      "tools": {
+        "type": "object",
+        "description": "Omitted when the request omitted tools (all tools). A present selection with no references represents tools: [].",
+        "properties": {
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "SESSION_TOOL_REFERENCE_KIND_TOOLBELT"
+                  ],
+                  "example": "SESSION_TOOL_REFERENCE_KIND_TOOLBELT",
+                  "description": "Whether name is a tool or a toolbelt."
+                },
+                "name": {
+                  "type": "string",
+                  "example": "search-toolbelt",
+                  "description": "Tool slug or toolbelt name."
+                },
+                "version": {
+                  "type": "string",
+                  "example": "1",
+                  "description": "Pinned version."
+                }
+              }
+            },
+            "description": "The selected references. Empty means the session exposes no tools."
           }
         }
       },
@@ -72694,15 +73933,65 @@
           }
         ]
       },
-      "session_network": {
+      "endpoint_config": {
         "type": "object",
-        "description": "Attaches a session to a VPC.",
+        "additionalProperties": true,
+        "description": "Version options, stored and returned as supplied. Omission leaves config absent; an explicit empty object is preserved. Property names are camelCase, as in the session API; other keys are stored but have no effect.",
+        "properties": {
+          "preloadTools": {
+            "type": "array",
+            "description": "Tool names, optionally version-pinned, or version-pinned toolbelt references.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search"
+            ]
+          },
+          "outputViews": {
+            "type": "object",
+            "maxProperties": 100,
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Maps up to 100 tool slugs to output-view names.",
+            "example": {
+              "exa_web_search": "titles-and-urls"
+            }
+          },
+          "customInstructions": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "Instructions for tools in this version.",
+            "example": "Prefer primary sources and cite URLs."
+          },
+          "cache": {
+            "$ref": "#/components/schemas/session_cache"
+          }
+        }
+      },
+      "vpcUuid": {
+        "type": "string",
+        "format": "uuid",
+        "description": "UUID of a VPC owned by your team in a supported region.",
+        "example": "5a4981aa-9653-4bd1-bef5-d6bff52042e4"
+      },
+      "endpoint_network_response": {
+        "type": "object",
+        "required": [
+          "vpcUuid",
+          "region"
+        ],
+        "description": "VPC binding, including the VPC region recorded at creation. Omitted when no binding was supplied.",
         "properties": {
           "vpcUuid": {
+            "$ref": "#/components/schemas/vpcUuid"
+          },
+          "region": {
             "type": "string",
-            "format": "uuid",
-            "example": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
-            "description": "UUID of a VPC owned by your team, in a region that supports sessions."
+            "readOnly": true,
+            "description": "The VPC's region, recorded when the version was created. A tool call through a connection whose VPC is in a different region is refused. This field is returned in responses only and is rejected in requests.",
+            "example": "nyc3"
           }
         }
       },
@@ -72730,10 +74019,519 @@
           }
         }
       },
+      "endpoint_version": {
+        "type": "object",
+        "required": [
+          "id",
+          "endpoint_id",
+          "version_number",
+          "name",
+          "actor_id",
+          "policy",
+          "created_at",
+          "updated_at"
+        ],
+        "description": "An immutable, live endpoint version. Its ID must encode endpoint_id and version_number. Deleting it does not reuse its number or change older versions. Deletion is final: retries, replays, and later writes cannot resurrect its identity. Identical contents require a new version identity and number. Omitted tools means every tool; a present selection with empty references means no tools. Policy and config retain omission versus explicitly empty objects.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/endpoint_version_id"
+          },
+          "endpoint_id": {
+            "$ref": "#/components/schemas/endpoint_id"
+          },
+          "version_number": {
+            "$ref": "#/components/schemas/version_number"
+          },
+          "promoted_from_version_number": {
+            "$ref": "#/components/schemas/version_number"
+          },
+          "name": {
+            "type": "string",
+            "description": "The endpoint's name when this version was created. Renaming the endpoint does not change it.",
+            "example": "support-agent"
+          },
+          "actor_id": {
+            "type": "string",
+            "description": "Actor binding shared by every version of the endpoint; empty means no actor.",
+            "example": "alice"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/endpoint_policy"
+          },
+          "tools": {
+            "description": "Canonical pinned selection; omitted means every tool, empty references means none.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/tools"
+              }
+            ]
+          },
+          "config": {
+            "$ref": "#/components/schemas/endpoint_config"
+          },
+          "network": {
+            "$ref": "#/components/schemas/endpoint_network_response"
+          },
+          "insights": {
+            "type": "object",
+            "deprecated": true,
+            "description": "Deprecated: always omitted. Versions do not carry Insights consent; read the endpoint's insights instead.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/session_insights"
+              }
+            ]
+          },
+          "mcp_url": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "description": "Pinned MCP URL for this version, valid for the version's lifetime. It is the same value the create response returns as version_mcp_url. Its final segment is the backing session UUID, not the composite version ID. VPC-bound versions may use a regional host. Returned in responses only.",
+            "example": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the version was created.",
+            "example": "2026-10-15T14:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the version was last updated.",
+            "example": "2026-10-15T14:00:00Z"
+          }
+        }
+      },
+      "metrics": {
+        "type": "boolean",
+        "nullable": true,
+        "example": true,
+        "description": "Accepted and stored for parity with the Insights schema."
+      },
+      "logs": {
+        "type": "boolean",
+        "nullable": true,
+        "example": true,
+        "description": "Whether the session's customer logs are sent to Insights."
+      },
+      "traces": {
+        "type": "boolean",
+        "nullable": true,
+        "example": false,
+        "description": "Whether the session's customer traces are sent to Insights."
+      },
+      "endpoint_insights": {
+        "type": "object",
+        "nullable": true,
+        "description": "The endpoint's Insights consent. It applies to every version of the endpoint, including pinned and older versions. For each signal independently, the latest explicit true enables and false disables. Omission preserves the existing value through updates, head replacement, and new-version creation; none of these operations implicitly resets a choice, and a stored choice cannot be cleared. Metrics defaults are unchanged.",
+        "properties": {
+          "metrics": {
+            "$ref": "#/components/schemas/metrics"
+          },
+          "logs": {
+            "type": "boolean",
+            "nullable": true,
+            "example": true,
+            "description": "Explicit true enables customer logs and false disables them. Omission preserves the existing choice without an implicit reset.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/logs"
+              }
+            ]
+          },
+          "traces": {
+            "type": "boolean",
+            "nullable": true,
+            "example": false,
+            "description": "Explicit true enables customer traces and false disables them. Omission preserves the existing choice without an implicit reset.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/traces"
+              }
+            ]
+          }
+        }
+      },
+      "endpoint": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "actor_id",
+          "created_at",
+          "updated_at"
+        ],
+        "description": "A named lineage of immutable versions owned by its creating user. Only that user may use it, update it, create versions, or promote versions. A team owner may also list and delete team endpoints, but may not use them or add versions. Service-managed endpoints and their versions are not part of the public API: lists and search omit them, every read or write of one returns the same 404 as an unknown ID, and deleting one returns the same 204 as deleting an unknown ID without changing it. Deletion is final for this identity and all cascaded version identities; retries, replays, and later writes cannot resurrect them. Reusing identical contents after endpoint deletion requires a new endpoint identity and a new version identity and number.",
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/endpoint_id"
+          },
+          "name": {
+            "$ref": "#/components/schemas/endpoint_name"
+          },
+          "actor_id": {
+            "type": "string",
+            "description": "Immutable actor binding; empty means no actor.",
+            "example": "alice"
+          },
+          "is_default": {
+            "type": "boolean",
+            "readOnly": true,
+            "description": "True only for your own default endpoint in the team: the one the generic MCP URL and data-plane requests without `X-Session-Id` or `X-Endpoint-Id` resolve to for you, which Action Gateway creates on first use. False for every other endpoint, including other team members' default endpoints that a team owner can see, so a response marks at most one endpoint. A default endpoint does not count toward your team's endpoint limit or reserve its name. After it is deleted, the next such request creates a new default. Returned in responses only.",
+            "example": false
+          },
+          "head_version": {
+            "type": "object",
+            "nullable": true,
+            "description": "Embedded live head version, the highest-numbered live version. Null when no live version remains.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/endpoint_version"
+              }
+            ]
+          },
+          "insights": {
+            "$ref": "#/components/schemas/endpoint_insights"
+          },
+          "mcp_url": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "description": "MCP URL that resolves the highest-numbered live version on every request. Its host follows the head version's VPC region, or the default host when no version is live. It is the same value the create response returns as mcp_url. Returned in responses only.",
+            "example": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the endpoint was created.",
+            "example": "2026-10-15T14:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the endpoint was last changed.",
+            "example": "2026-10-15T14:00:00Z"
+          }
+        }
+      },
+      "endpoints_next_page_token": {
+        "type": "string",
+        "description": "Opaque keyset cursor for the next page; an empty string marks the last page. Bound to the team, caller visibility, normalized filters, resource kind, and parent endpoint for version lists. Contains no full URNs or database row IDs. Pass it unchanged as page_token with the same criteria.",
+        "example": ""
+      },
+      "endpoints_response": {
+        "type": "object",
+        "required": [
+          "endpoints",
+          "next_page_token"
+        ],
+        "properties": {
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/endpoint"
+            },
+            "description": "Endpoints ordered by creation time descending, then endpoint UUID descending.",
+            "example": []
+          },
+          "next_page_token": {
+            "$ref": "#/components/schemas/endpoints_next_page_token"
+          }
+        },
+        "description": "A keyset page without offsets or totals."
+      },
+      "endpoint_network": {
+        "type": "object",
+        "description": "VPC binding supplied at creation. Omitted when no binding was supplied. region is output-only; requests containing it are rejected.",
+        "not": {
+          "required": [
+            "region"
+          ]
+        },
+        "properties": {
+          "vpcUuid": {
+            "type": "string",
+            "format": "uuid",
+            "description": "UUID of a VPC owned by your team in a supported region.",
+            "example": "5a4981aa-9653-4bd1-bef5-d6bff52042e4"
+          }
+        }
+      },
+      "endpoint_version_spec": {
+        "type": "object",
+        "description": "Immutable version configuration. The endpoint owner and actor cannot change between versions. Omitted or empty actor_id means no actor binding.",
+        "properties": {
+          "actor_id": {
+            "type": "string",
+            "pattern": "^([A-Za-z0-9._-]{1,64})?$",
+            "description": "Actor whose provider connections are used. Omitted or empty means no actor.",
+            "example": "alice"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/endpoint_policy"
+          },
+          "tools": {
+            "type": "array",
+            "description": "Omitted enables every tool; an explicit empty array enables no tools. Direct tools use provider-qualified slugs, optionally pinned as tool@version. Toolbelts must be pinned as toolbelt:name@version. Floating pins are rejected.",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "exa_web_search@1"
+            ]
+          },
+          "config": {
+            "$ref": "#/components/schemas/endpoint_config"
+          },
+          "network": {
+            "$ref": "#/components/schemas/endpoint_network"
+          },
+          "insights": {
+            "type": "object",
+            "nullable": true,
+            "deprecated": true,
+            "description": "Deprecated: accepted and ignored. Versions do not carry Insights consent; set the endpoint's insights when creating the endpoint or with PATCH /v2/action-gateway/endpoints/{endpoint_id}.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/endpoint_insights"
+              }
+            ]
+          }
+        }
+      },
+      "endpoint_create": {
+        "type": "object",
+        "required": [
+          "name",
+          "version"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/endpoint_name"
+          },
+          "version": {
+            "$ref": "#/components/schemas/endpoint_version_spec"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/endpoint_insights"
+          }
+        },
+        "description": "Creates an endpoint and its first version atomically. Omitting insights stores no explicit Insights choice."
+      },
+      "endpoint_publish_response": {
+        "type": "object",
+        "required": [
+          "endpoint",
+          "version",
+          "mcp_url",
+          "version_mcp_url"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/endpoint"
+          },
+          "version": {
+            "$ref": "#/components/schemas/endpoint_version"
+          },
+          "mcp_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "MCP URL that resolves the highest-numbered live version on every request. Its host follows the head version's VPC region, or the default host when no version is live.",
+            "example": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13"
+          },
+          "version_mcp_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Pinned MCP URL, valid for this version's lifetime. Its final segment is the backing session UUID, not the public composite version ID. VPC-bound versions may use a regional host. Existing /mcp/session/ URLs keep working.",
+            "example": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f"
+          }
+        },
+        "description": "Returns the new head, its endpoint, and both MCP URLs."
+      },
+      "endpoint_search_response": {
+        "type": "object",
+        "required": [
+          "endpoints",
+          "next_page_token"
+        ],
+        "properties": {
+          "endpoints": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/endpoint"
+            },
+            "description": "Matching endpoints in rank order across the whole result set. Do not re-sort a page to rank it.",
+            "example": []
+          },
+          "next_page_token": {
+            "$ref": "#/components/schemas/endpoints_next_page_token"
+          }
+        },
+        "description": "A ranked page of matching endpoints without offsets or totals."
+      },
+      "endpoint_response": {
+        "type": "object",
+        "required": [
+          "endpoint"
+        ],
+        "properties": {
+          "endpoint": {
+            "$ref": "#/components/schemas/endpoint"
+          }
+        },
+        "description": "Returns an endpoint, including its live head when one exists."
+      },
+      "endpoint_patch": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "$ref": "#/components/schemas/endpoint_name"
+          },
+          "insights": {
+            "$ref": "#/components/schemas/endpoint_insights"
+          }
+        },
+        "description": "Renames an endpoint, changes its Insights consent, or both; its identity and versions do not change. Send a name, at least one insights signal, or both. A body with neither, including one whose only field is an empty insights object, returns 400 endpoint_update_empty. An empty insights object next to a name is a rename. Unrecognized fields are ignored."
+      },
+      "endpoint_versions_response": {
+        "type": "object",
+        "required": [
+          "versions",
+          "next_page_token"
+        ],
+        "properties": {
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/endpoint_version"
+            },
+            "description": "Live versions ordered by version_number descending.",
+            "example": []
+          },
+          "next_page_token": {
+            "$ref": "#/components/schemas/endpoints_next_page_token"
+          }
+        },
+        "description": "A keyset page of live versions without offsets or totals."
+      },
+      "endpoint_promotion": {
+        "type": "object",
+        "required": [
+          "version_id"
+        ],
+        "properties": {
+          "version_id": {
+            "$ref": "#/components/schemas/endpoint_version_id"
+          }
+        },
+        "description": "Live version of this endpoint whose configuration will be copied to a new head."
+      },
+      "endpoint_version_response": {
+        "type": "object",
+        "required": [
+          "version"
+        ],
+        "properties": {
+          "version": {
+            "$ref": "#/components/schemas/endpoint_version"
+          }
+        },
+        "description": "Returns one immutable live version."
+      },
+      "session_policy": {
+        "type": "object",
+        "nullable": true,
+        "description": "Tool-permission policy of a session.",
+        "properties": {
+          "defaultAction": {
+            "type": "string",
+            "enum": [
+              "allow",
+              "ask",
+              "deny"
+            ],
+            "description": "Action for calls no rule matches. Empty means ask; otherwise this must be allow, ask, or deny.",
+            "example": "ask"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "type": "string",
+                  "description": "Required. A tool slug, optionally `<tool_slug>@<version>`, or a toolbelt as `toolbelt:<name>@<version>`. When the session selects tools, the rule must name one of them.",
+                  "example": "exa_web_search"
+                },
+                "match": {
+                  "type": "object",
+                  "description": "Optional argument conditions, keyed by argument name; the rule applies only to calls whose arguments match.",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "example": {}
+                },
+                "action": {
+                  "type": "string",
+                  "enum": [
+                    "allow",
+                    "ask",
+                    "deny"
+                  ],
+                  "example": "allow",
+                  "description": "Required: allow, ask, or deny."
+                }
+              }
+            },
+            "description": "Rules for specific tools or toolbelts."
+          }
+        }
+      },
+      "session_network": {
+        "type": "object",
+        "description": "Attaches a session to a VPC.",
+        "properties": {
+          "vpcUuid": {
+            "type": "string",
+            "format": "uuid",
+            "example": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+            "description": "UUID of a VPC owned by your team, in a region that supports sessions."
+          }
+        }
+      },
       "session": {
         "type": "object",
         "description": "A session and the tool-permission policy bound to it.",
         "properties": {
+          "endpoint_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "not": {
+              "pattern": "\\s"
+            },
+            "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "description": "Public parent endpoint UUID. Absent for legacy sessions without a parent."
+          },
+          "endpoint_version_id": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.v([1-9][0-9]{0,8}|[1-3][0-9]{9}|4[01][0-9]{8}|42[0-8][0-9]{7}|429[0-3][0-9]{6}|4294[0-8][0-9]{5}|42949[0-5][0-9]{4}|429496[0-6][0-9]{3}|4294967[01][0-9]{2}|42949672[0-8][0-9]|429496729[0-5])$",
+            "not": {
+              "pattern": "\\s"
+            },
+            "example": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+            "description": "Public composite version ID. Absent for legacy sessions without a parent."
+          },
+          "version_number": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 1,
+            "maximum": 4294967295,
+            "example": 1,
+            "description": "Version number within the parent endpoint. Absent for legacy sessions without a parent."
+          },
           "sessionUrn": {
             "type": "string",
             "example": "do:managed_agent_session:2b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b",
@@ -97529,7 +99327,7 @@
           }
         }
       },
-      "metrics": {
+      "metrics-2": {
         "type": "object",
         "required": [
           "status",
@@ -104787,6 +106585,17 @@
         "example": "METRIC_CATEGORY_UNSPECIFIED",
         "type": "string"
       },
+      "apiEvaluationMetricTurnType": {
+        "default": "EVALUATION_METRIC_TURN_TYPE_UNSPECIFIED",
+        "description": "Whether the metric is for single-turn or multi-turn evaluations.",
+        "enum": [
+          "EVALUATION_METRIC_TURN_TYPE_UNSPECIFIED",
+          "EVALUATION_METRIC_TURN_TYPE_SINGLE_TURN",
+          "EVALUATION_METRIC_TURN_TYPE_MULTI_TURN"
+        ],
+        "example": "EVALUATION_METRIC_TURN_TYPE_UNSPECIFIED",
+        "type": "string"
+      },
       "apiCustomEvaluationMetricConfig": {
         "description": "Configuration for a custom model-evaluation metric scored by an LLM judge.\nPrompt and model response are always included in the judge context.",
         "properties": {
@@ -104810,6 +106619,9 @@
             "description": "Instructions for the judge model (multi-line).",
             "example": "example string",
             "type": "string"
+          },
+          "turn_type": {
+            "$ref": "#/components/schemas/apiEvaluationMetricTurnType"
           },
           "updated_at": {
             "example": "2023-01-01T00:00:00Z",
@@ -104928,6 +106740,9 @@
           },
           "source": {
             "$ref": "#/components/schemas/apiEvaluationMetricSource"
+          },
+          "turn_type": {
+            "$ref": "#/components/schemas/apiEvaluationMetricTurnType"
           }
         },
         "type": "object"
@@ -116500,8 +118315,245 @@
           }
         }
       },
+      "endpoint_name_taken": {
+        "description": "An endpoint with this name already exists in the team (endpoint_name_taken).",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "endpoint_name_taken",
+              "message": "endpoint name is already in use"
+            }
+          }
+        }
+      },
+      "endpoint_creation_limited": {
+        "description": "The API rate limit or your team's endpoint limit was exceeded. A rate-limit error uses too_many_requests. An endpoint-cap error uses endpoint_limit_exceeded; its message includes the limit and current count. The endpoint limit depends on your team's allowance, not a fixed limit for every team. It counts endpoints created through the public API. It does not count each user's default endpoint, which Action Gateway creates on first use, service-managed endpoints, or legacy sessions. Delete an endpoint before creating another when this cap is reached.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "rate_limit": {
+                "summary": "API rate limit exceeded",
+                "value": {
+                  "id": "too_many_requests",
+                  "message": "API rate limit exceeded."
+                }
+              },
+              "endpoint_limit": {
+                "summary": "Illustrative team allowance of 50 endpoints is full",
+                "value": {
+                  "id": "endpoint_limit_exceeded",
+                  "message": "endpoint limit 50 reached (current count 50)"
+                }
+              }
+            }
+          }
+        }
+      },
+      "version_creation_not_found": {
+        "description": "An inaccessible endpoint returns endpoint_not_found. A request whose owner or actor differs from the endpoint returns endpoint_identity_mismatch.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "endpoint_not_found": {
+                "value": {
+                  "id": "endpoint_not_found",
+                  "message": "endpoint not found"
+                }
+              },
+              "endpoint_identity_mismatch": {
+                "value": {
+                  "id": "endpoint_identity_mismatch",
+                  "message": "version owner and actor must match the endpoint"
+                }
+              }
+            }
+          }
+        }
+      },
+      "version_creation_limited": {
+        "description": "The API rate limit or the endpoint's live-version limit was exceeded. A rate-limit error uses too_many_requests. A version-cap error uses endpoint_version_limit_exceeded. Each endpoint may have at most 100 live versions. Creation and promotion both consume a live-version slot. Delete an older live version before creating or promoting another when this cap is reached.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "rate_limit": {
+                "summary": "API rate limit exceeded",
+                "value": {
+                  "id": "too_many_requests",
+                  "message": "API rate limit exceeded."
+                }
+              },
+              "version_limit": {
+                "summary": "The endpoint has 100 live versions",
+                "value": {
+                  "id": "endpoint_version_limit_exceeded",
+                  "message": "live version limit reached; delete an older version"
+                }
+              }
+            }
+          }
+        }
+      },
+      "promotion_not_found": {
+        "description": "An inaccessible endpoint returns endpoint_not_found. A version that is deleted, unknown, or belongs to another endpoint returns endpoint_version_not_found. A source version whose owner or actor differs from the endpoint returns endpoint_identity_mismatch.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "endpoint_not_found": {
+                "value": {
+                  "id": "endpoint_not_found",
+                  "message": "endpoint not found"
+                }
+              },
+              "endpoint_version_not_found": {
+                "value": {
+                  "id": "endpoint_version_not_found",
+                  "message": "endpoint version not found"
+                }
+              },
+              "endpoint_identity_mismatch": {
+                "value": {
+                  "id": "endpoint_identity_mismatch",
+                  "message": "version owner and actor must match the endpoint"
+                }
+              }
+            }
+          }
+        }
+      },
+      "session_name_taken": {
+        "description": "The session is created as an endpoint, and every endpoint name derived from the session name is already in use in the team (endpoint_name_taken).",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "endpoint_name_taken",
+              "message": "endpoint name is already in use; choose another session name"
+            }
+          }
+        }
+      },
+      "session_creation_limited": {
+        "description": "The API rate limit or your team's endpoint limit was exceeded. A rate-limit error uses too_many_requests. When the new session is created as an endpoint, it counts against your team's endpoint limit, and a full limit returns endpoint_limit_exceeded with the limit and current count in its message.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "examples": {
+              "rate_limit": {
+                "summary": "API rate limit exceeded",
+                "value": {
+                  "id": "too_many_requests",
+                  "message": "API rate limit exceeded."
+                }
+              },
+              "endpoint_limit": {
+                "summary": "Illustrative team allowance of 50 endpoints is full",
+                "value": {
+                  "id": "endpoint_limit_exceeded",
+                  "message": "endpoint limit 50 reached (current count 50)"
+                }
+              }
+            }
+          }
+        }
+      },
       "data_plane_responses_bad_request": {
-        "description": "The request is invalid: the body is not valid JSON, a required field is missing, or a value is out of range.",
+        "description": "The request is invalid: the body is not valid JSON, a required field is missing, a value is out of range, `X-Endpoint-Id` is malformed or repeated, or both `X-Session-Id` and `X-Endpoint-Id` were sent.",
         "content": {
           "application/json": {
             "schema": {
@@ -116535,7 +118587,7 @@
         }
       },
       "data_plane_responses_forbidden": {
-        "description": "The token or session cannot be used for this request. Tokens without the `action_gateway:execute` scope, and accounts that are not in good standing, are rejected with the standard DigitalOcean API error format. Session failures return a tool result: the session ID is missing or invalid, the session belongs to another user or team, the session has no policy, or the session policy denies the operation.",
+        "description": "The token or session cannot be used for this request. Tokens without the `action_gateway:execute` scope, and accounts that are not in good standing, are rejected with the standard DigitalOcean API error format. Session failures return a tool result: the session ID is missing or invalid, the session or endpoint belongs to another user or team, `X-Actor-Id` does not match its actor binding, the session has no policy, or the session policy denies the operation.",
         "content": {
           "application/json": {
             "schema": {
@@ -116553,6 +118605,26 @@
               "error": {
                 "class": "forbidden",
                 "message": "A valid session ID is required to invoke tools.",
+                "retriable": false,
+                "recovery_hint": "fix_args"
+              },
+              "call_id": ""
+            }
+          }
+        }
+      },
+      "endpoint_not_found": {
+        "description": "The endpoint in `X-Endpoint-Id` does not exist, has no live version, or belongs to another user or team.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/tool_result_error"
+            },
+            "example": {
+              "status": "failed",
+              "error": {
+                "class": "invalid_argument",
+                "message": "The requested route is not supported.",
                 "retriable": false,
                 "recovery_hint": "fix_args"
               },
@@ -128331,7 +130403,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/metrics"
+              "$ref": "#/components/schemas/metrics-2"
             },
             "examples": {
               "Inbound Private Bandwidth": {
@@ -128366,7 +130438,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/metrics"
+              "$ref": "#/components/schemas/metrics-2"
             },
             "examples": {
               "CPU": {
@@ -128392,7 +130464,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/metrics"
+              "$ref": "#/components/schemas/metrics-2"
             },
             "examples": {
               "Filesystem": {
@@ -128418,7 +130490,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/metrics"
+              "$ref": "#/components/schemas/metrics-2"
             }
           }
         }
@@ -128439,7 +130511,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/metrics"
+              "$ref": "#/components/schemas/metrics-2"
             },
             "examples": {
               "Memory": {
@@ -131942,6 +134014,58 @@
           }
         }
       },
+      "invalid_region": {
+        "description": "Bad Request",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "bad_request",
+              "message": "the specified region is not valid",
+              "request_id": "bbd8d7d4-2beb-4be1-a374-338e6165e32d"
+            }
+          }
+        }
+      },
+      "cannot_delete_original_region": {
+        "description": "Unprocessable Entity",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error"
+            },
+            "example": {
+              "id": "unprocessable_entity",
+              "message": "The copy in the snapshot's original region cannot be deleted individually. To delete the snapshot and all of its copies, use DELETE /v2/snapshots/<snapshot_id>.",
+              "request_id": "bbd8d7d4-2beb-4be1-a374-338e6165e32d"
+            }
+          }
+        }
+      },
       "key_list": {
         "description": "A JSON response containing a list of keys.",
         "headers": {
@@ -133785,37 +135909,656 @@
         }
       }
     },
-    "links": {
-      "sshKeys_get_by_id": {
-        "operationId": "sshKeys_get_by_id",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/id"
-        },
-        "description": "The `id` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_get_by_fingerprint": {
-        "operationId": "sshKeys_get_by_fingerprint",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
-        },
-        "description": "The `fingerprint` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_delete_by_id": {
-        "operationId": "sshKeys_delete_by_id",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/id"
-        },
-        "description": "The `id` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
-      },
-      "sshKeys_delete_by_fingerprint": {
-        "operationId": "ssh_keys_delete_by_fingerprint",
-        "parameters": {
-          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
-        },
-        "description": "The `fingerprint` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
-      }
-    },
     "examples": {
+      "endpoints": {
+        "summary": "Final page of endpoints",
+        "value": {
+          "endpoints": [
+            {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "name": "support-agent",
+              "actor_id": "alice",
+              "is_default": false,
+              "head_version": {
+                "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+                "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+                "version_number": 1,
+                "name": "support-agent",
+                "actor_id": "alice",
+                "tools": {
+                  "references": [
+                    {
+                      "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                      "name": "exa_web_search",
+                      "version": "1"
+                    }
+                  ]
+                },
+                "policy": {
+                  "defaultAction": "ask",
+                  "rules": [
+                    {
+                      "tool": "exa_web_search@1",
+                      "match": {},
+                      "action": "allow"
+                    }
+                  ]
+                },
+                "config": {
+                  "preloadTools": [
+                    "exa_web_search"
+                  ],
+                  "outputViews": {
+                    "exa_web_search": "titles-and-urls"
+                  },
+                  "customInstructions": "Prefer primary sources and cite URLs."
+                },
+                "network": {
+                  "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                  "region": "nyc3"
+                },
+                "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+                "created_at": "2026-10-15T14:00:00Z",
+                "updated_at": "2026-10-15T14:00:00Z"
+              },
+              "insights": {
+                "metrics": null,
+                "logs": true,
+                "traces": false
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "created_at": "2026-10-15T14:00:00Z",
+              "updated_at": "2026-10-15T14:00:00Z"
+            }
+          ],
+          "next_page_token": ""
+        }
+      },
+      "endpoint_create": {
+        "summary": "Create an endpoint with a selected tool",
+        "value": {
+          "name": "support-agent",
+          "version": {
+            "actor_id": "alice",
+            "tools": [
+              "exa_web_search@1"
+            ],
+            "policy": {
+              "defaultAction": "ask",
+              "rules": [
+                {
+                  "tool": "exa_web_search@1",
+                  "match": {},
+                  "action": "allow"
+                }
+              ]
+            },
+            "config": {
+              "preloadTools": [
+                "exa_web_search"
+              ],
+              "outputViews": {
+                "exa_web_search": "titles-and-urls"
+              },
+              "customInstructions": "Prefer primary sources and cite URLs."
+            },
+            "network": {
+              "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4"
+            }
+          },
+          "insights": {
+            "logs": true,
+            "traces": false
+          }
+        }
+      },
+      "publish": {
+        "summary": "New head with floating and pinned MCP URLs",
+        "value": {
+          "endpoint": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "name": "support-agent",
+            "actor_id": "alice",
+            "is_default": false,
+            "head_version": {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+              "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "version_number": 1,
+              "name": "support-agent",
+              "actor_id": "alice",
+              "tools": {
+                "references": [
+                  {
+                    "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "name": "exa_web_search",
+                    "version": "1"
+                  }
+                ]
+              },
+              "policy": {
+                "defaultAction": "ask",
+                "rules": [
+                  {
+                    "tool": "exa_web_search@1",
+                    "match": {},
+                    "action": "allow"
+                  }
+                ]
+              },
+              "config": {
+                "preloadTools": [
+                  "exa_web_search"
+                ],
+                "outputViews": {
+                  "exa_web_search": "titles-and-urls"
+                },
+                "customInstructions": "Prefer primary sources and cite URLs."
+              },
+              "network": {
+                "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                "region": "nyc3"
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+              "created_at": "2026-10-15T14:00:00Z",
+              "updated_at": "2026-10-15T14:00:00Z"
+            },
+            "insights": {
+              "metrics": null,
+              "logs": true,
+              "traces": false
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-15T14:00:00Z"
+          },
+          "version": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+            "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "version_number": 1,
+            "name": "support-agent",
+            "actor_id": "alice",
+            "tools": {
+              "references": [
+                {
+                  "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                  "name": "exa_web_search",
+                  "version": "1"
+                }
+              ]
+            },
+            "policy": {
+              "defaultAction": "ask",
+              "rules": [
+                {
+                  "tool": "exa_web_search@1",
+                  "match": {},
+                  "action": "allow"
+                }
+              ]
+            },
+            "config": {
+              "preloadTools": [
+                "exa_web_search"
+              ],
+              "outputViews": {
+                "exa_web_search": "titles-and-urls"
+              },
+              "customInstructions": "Prefer primary sources and cite URLs."
+            },
+            "network": {
+              "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+              "region": "nyc3"
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-15T14:00:00Z"
+          },
+          "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+          "version_mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f"
+        }
+      },
+      "endpoint_search": {
+        "summary": "Final page of endpoints matching support",
+        "value": {
+          "endpoints": [
+            {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "name": "support-agent",
+              "actor_id": "alice",
+              "is_default": false,
+              "head_version": {
+                "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+                "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+                "version_number": 1,
+                "name": "support-agent",
+                "actor_id": "alice",
+                "tools": {
+                  "references": [
+                    {
+                      "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                      "name": "exa_web_search",
+                      "version": "1"
+                    }
+                  ]
+                },
+                "policy": {
+                  "defaultAction": "ask",
+                  "rules": [
+                    {
+                      "tool": "exa_web_search@1",
+                      "match": {},
+                      "action": "allow"
+                    }
+                  ]
+                },
+                "config": {
+                  "preloadTools": [
+                    "exa_web_search"
+                  ],
+                  "outputViews": {
+                    "exa_web_search": "titles-and-urls"
+                  },
+                  "customInstructions": "Prefer primary sources and cite URLs."
+                },
+                "network": {
+                  "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                  "region": "nyc3"
+                },
+                "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+                "created_at": "2026-10-15T14:00:00Z",
+                "updated_at": "2026-10-15T14:00:00Z"
+              },
+              "insights": {
+                "metrics": null,
+                "logs": true,
+                "traces": false
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "created_at": "2026-10-15T14:00:00Z",
+              "updated_at": "2026-10-15T14:00:00Z"
+            }
+          ],
+          "next_page_token": ""
+        }
+      },
+      "endpoint": {
+        "summary": "Endpoint with an embedded live head",
+        "value": {
+          "endpoint": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "name": "support-agent",
+            "actor_id": "alice",
+            "is_default": false,
+            "head_version": {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+              "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "version_number": 1,
+              "name": "support-agent",
+              "actor_id": "alice",
+              "tools": {
+                "references": [
+                  {
+                    "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "name": "exa_web_search",
+                    "version": "1"
+                  }
+                ]
+              },
+              "policy": {
+                "defaultAction": "ask",
+                "rules": [
+                  {
+                    "tool": "exa_web_search@1",
+                    "match": {},
+                    "action": "allow"
+                  }
+                ]
+              },
+              "config": {
+                "preloadTools": [
+                  "exa_web_search"
+                ],
+                "outputViews": {
+                  "exa_web_search": "titles-and-urls"
+                },
+                "customInstructions": "Prefer primary sources and cite URLs."
+              },
+              "network": {
+                "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                "region": "nyc3"
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+              "created_at": "2026-10-15T14:00:00Z",
+              "updated_at": "2026-10-15T14:00:00Z"
+            },
+            "insights": {
+              "metrics": null,
+              "logs": true,
+              "traces": false
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-15T14:00:00Z"
+          }
+        }
+      },
+      "empty_endpoint": {
+        "summary": "Endpoint after deletion of its last live version",
+        "value": {
+          "endpoint": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "name": "support-agent",
+            "actor_id": "alice",
+            "is_default": false,
+            "insights": {
+              "metrics": null,
+              "logs": true,
+              "traces": false
+            },
+            "mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-17T09:00:00Z"
+          }
+        }
+      },
+      "endpoint_patch": {
+        "summary": "Rename an endpoint",
+        "value": {
+          "name": "support-agent"
+        }
+      },
+      "logs_disabled": {
+        "summary": "Disable logs while preserving the existing traces choice",
+        "value": {
+          "insights": {
+            "logs": false
+          }
+        }
+      },
+      "traces_enabled": {
+        "summary": "Enable traces while preserving the existing logs choice",
+        "value": {
+          "insights": {
+            "traces": true
+          }
+        }
+      },
+      "versions": {
+        "summary": "Final page of live versions",
+        "value": {
+          "versions": [
+            {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+              "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "version_number": 1,
+              "name": "support-agent",
+              "actor_id": "alice",
+              "tools": {
+                "references": [
+                  {
+                    "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "name": "exa_web_search",
+                    "version": "1"
+                  }
+                ]
+              },
+              "policy": {
+                "defaultAction": "ask",
+                "rules": [
+                  {
+                    "tool": "exa_web_search@1",
+                    "match": {},
+                    "action": "allow"
+                  }
+                ]
+              },
+              "config": {
+                "preloadTools": [
+                  "exa_web_search"
+                ],
+                "outputViews": {
+                  "exa_web_search": "titles-and-urls"
+                },
+                "customInstructions": "Prefer primary sources and cite URLs."
+              },
+              "network": {
+                "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                "region": "nyc3"
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+              "created_at": "2026-10-15T14:00:00Z",
+              "updated_at": "2026-10-15T14:00:00Z"
+            }
+          ],
+          "next_page_token": ""
+        }
+      },
+      "endpoint_version_spec": {
+        "summary": "Publish a version with no tools and explicitly empty policy and config",
+        "value": {
+          "actor_id": "alice",
+          "tools": [],
+          "policy": {},
+          "config": {}
+        }
+      },
+      "publish_empty": {
+        "summary": "Publish version 2 with empty selections and preserved telemetry choices",
+        "value": {
+          "endpoint": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "name": "support-agent",
+            "actor_id": "alice",
+            "is_default": false,
+            "insights": {
+              "metrics": null,
+              "logs": true,
+              "traces": false
+            },
+            "mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-16T13:00:00Z",
+            "head_version": {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v2",
+              "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "version_number": 2,
+              "name": "support-agent",
+              "actor_id": "alice",
+              "tools": {
+                "references": []
+              },
+              "policy": {
+                "defaultAction": "SESSION_POLICY_ACTION_UNSPECIFIED",
+                "rules": []
+              },
+              "config": {},
+              "mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/2b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b",
+              "created_at": "2026-10-16T13:00:00Z",
+              "updated_at": "2026-10-16T13:00:00Z"
+            }
+          },
+          "version": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v2",
+            "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "version_number": 2,
+            "name": "support-agent",
+            "actor_id": "alice",
+            "tools": {
+              "references": []
+            },
+            "policy": {
+              "defaultAction": "SESSION_POLICY_ACTION_UNSPECIFIED",
+              "rules": []
+            },
+            "config": {},
+            "mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/2b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b",
+            "created_at": "2026-10-16T13:00:00Z",
+            "updated_at": "2026-10-16T13:00:00Z"
+          },
+          "mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+          "version_mcp_url": "https://actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/2b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b"
+        }
+      },
+      "endpoint_promotion": {
+        "summary": "Copy a live version into a new head",
+        "value": {
+          "version_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1"
+        }
+      },
+      "promotion": {
+        "summary": "Promotion creates version 3 from version 1",
+        "value": {
+          "endpoint": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "name": "support-agent",
+            "actor_id": "alice",
+            "is_default": false,
+            "insights": {
+              "metrics": null,
+              "logs": true,
+              "traces": false
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-16T14:00:00Z",
+            "head_version": {
+              "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v3",
+              "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+              "version_number": 3,
+              "promoted_from_version_number": 1,
+              "name": "support-agent",
+              "actor_id": "alice",
+              "tools": {
+                "references": [
+                  {
+                    "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                    "name": "exa_web_search",
+                    "version": "1"
+                  }
+                ]
+              },
+              "policy": {
+                "defaultAction": "ask",
+                "rules": [
+                  {
+                    "tool": "exa_web_search@1",
+                    "match": {},
+                    "action": "allow"
+                  }
+                ]
+              },
+              "config": {
+                "preloadTools": [
+                  "exa_web_search"
+                ],
+                "outputViews": {
+                  "exa_web_search": "titles-and-urls"
+                },
+                "customInstructions": "Prefer primary sources and cite URLs."
+              },
+              "network": {
+                "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+                "region": "nyc3"
+              },
+              "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/3b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b",
+              "created_at": "2026-10-16T14:00:00Z",
+              "updated_at": "2026-10-16T14:00:00Z"
+            }
+          },
+          "version": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v3",
+            "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "version_number": 3,
+            "promoted_from_version_number": 1,
+            "name": "support-agent",
+            "actor_id": "alice",
+            "tools": {
+              "references": [
+                {
+                  "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                  "name": "exa_web_search",
+                  "version": "1"
+                }
+              ]
+            },
+            "policy": {
+              "defaultAction": "ask",
+              "rules": [
+                {
+                  "tool": "exa_web_search@1",
+                  "match": {},
+                  "action": "allow"
+                }
+              ]
+            },
+            "config": {
+              "preloadTools": [
+                "exa_web_search"
+              ],
+              "outputViews": {
+                "exa_web_search": "titles-and-urls"
+              },
+              "customInstructions": "Prefer primary sources and cite URLs."
+            },
+            "network": {
+              "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+              "region": "nyc3"
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/3b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b",
+            "created_at": "2026-10-16T14:00:00Z",
+            "updated_at": "2026-10-16T14:00:00Z"
+          },
+          "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+          "version_mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/3b3c9f0e-1a4d-4e5f-8a7b-6c5d4e3f2a1b"
+        }
+      },
+      "version": {
+        "summary": "Immutable version with a selected tool",
+        "value": {
+          "version": {
+            "id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13.v1",
+            "endpoint_id": "1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13",
+            "version_number": 1,
+            "name": "support-agent",
+            "actor_id": "alice",
+            "tools": {
+              "references": [
+                {
+                  "kind": "SESSION_TOOL_REFERENCE_KIND_TOOL",
+                  "name": "exa_web_search",
+                  "version": "1"
+                }
+              ]
+            },
+            "policy": {
+              "defaultAction": "ask",
+              "rules": [
+                {
+                  "tool": "exa_web_search@1",
+                  "match": {},
+                  "action": "allow"
+                }
+              ]
+            },
+            "config": {
+              "preloadTools": [
+                "exa_web_search"
+              ],
+              "outputViews": {
+                "exa_web_search": "titles-and-urls"
+              },
+              "customInstructions": "Prefer primary sources and cite URLs."
+            },
+            "network": {
+              "vpcUuid": "5a4981aa-9653-4bd1-bef5-d6bff52042e4",
+              "region": "nyc3"
+            },
+            "mcp_url": "https://nyc3.actions.do-ai.run/mcp/endpoint/1b4d4e0f-9a7c-4d5b-8f3c-2a6e6e8f0a13/version/9a7c2d5b-6e8f-4a13-8f3c-2a6e1b4d4e0f",
+            "created_at": "2026-10-15T14:00:00Z",
+            "updated_at": "2026-10-15T14:00:00Z"
+          }
+        }
+      },
       "apps": {
         "value": {
           "apps": [
@@ -141257,6 +144000,36 @@
             "updated_at": "2025-08-12T19:00:04Z"
           }
         }
+      }
+    },
+    "links": {
+      "sshKeys_get_by_id": {
+        "operationId": "sshKeys_get_by_id",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/id"
+        },
+        "description": "The `id` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_get_by_fingerprint": {
+        "operationId": "sshKeys_get_by_fingerprint",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
+        },
+        "description": "The `fingerprint` value returned in the response can be used as the `ssh_key_identifier` parameter in `GET /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_delete_by_id": {
+        "operationId": "sshKeys_delete_by_id",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/id"
+        },
+        "description": "The `id` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
+      },
+      "sshKeys_delete_by_fingerprint": {
+        "operationId": "ssh_keys_delete_by_fingerprint",
+        "parameters": {
+          "ssh_key_identifier": "$response.body#/ssh_key/fingerprint"
+        },
+        "description": "The `fingerprint` value returned in the response can be used as the  `ssh_key_identifier` parameter in `DELETE /v2/account/keys/{ssh_key_identifier}`."
       }
     }
   },
