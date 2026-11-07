@@ -81,7 +81,7 @@
     },
     {
       "name": "BYOIP Prefixes",
-      "description": "Bring your own IP (BYOIP) lets you provision your own IPv4 network prefixes\nto your account, then assign those IPs to your DigitalOcean resources.\nBYOIP supports the following features:\n* IPv4 addresses\n* Network sizes of anywhere from `/24` (256 addresses) to `/18` (16,384 addresses)\n* Same API and management interface as our existing reserved IPs feature\n* Assignable to Droplets only"
+      "description": "Bring your own IP (BYOIP) lets you provision your own IPv4 network prefixes\nto your account, then assign those IPs to your DigitalOcean resources.\nBYOIP supports the following features:\n* IPv4 addresses\n* Network sizes of anywhere from `/24` (256 addresses) to `/18` (16,384 addresses)\n* Same API and management interface as our existing reserved IPs feature\n* Assignable to Droplets, and to external regional load balancers and public NAT gateways at creation"
     },
     {
       "name": "CDN Endpoints",
@@ -9835,6 +9835,68 @@
           {
             "lang": "bash",
             "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/configs/019fb39c-14d9-7080-933e-b9b90e25acda/sessions\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/harness-runtime/regions": {
+      "get": {
+        "operationId": "harness_list_regions",
+        "summary": "ListRegions returns the regions the caller's team may create sessions and agent configs in.",
+        "description": "Per-team catalog the UI (and other clients) render as the region picker, instead of hardcoding the list. A region is chosen by the API host you call, not by a field in the request body, so a returned `slug` tells you which regional host to target — `ric1` means `https://api-ric1.digitalocean.com`. The default region is always listed and is marked `is_default`; its resources are also reachable on the region-less host, `https://api.digitalocean.com`. Every other open region is listed only when the team holds its placement grant, so a create on a listed region's host is admitted and a region missing from this list is refused. Teams not yet on the regional routing rollout see only the default region, and their responses carry no `region` field. Legacy regions are never listed. Sorted by slug; no pagination.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "responses": {
+          "200": {
+            "description": "The regions the team may place resources in.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/harness_regions_response"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/regions\"",
             "label": "cURL"
           }
         ],
@@ -33405,7 +33467,7 @@
       "post": {
         "operationId": "insights_create_notificationChannel",
         "summary": "Create a Notification Channel",
-        "description": "To create a notification channel, send a POST request to\n`/v2/insights/notification-channels` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nEmail recipients must be verified team member addresses. Webhook URLs must\nuse HTTPS. Secret fields (`slack.webhook_url`, webhook credentials) are\nwrite-only. Subsequent reads never return secret values; they include\noptional `*_status` objects when a secret is configured.\n",
+        "description": "To create a notification channel, send a POST request to\n`/v2/insights/notification-channels` with a `name` and exactly one of\n`email`, `slack`, or `webhook`.\n\nEmail recipients must be team contact emails added and verified by a team\nowner. Webhook URLs must\nuse HTTPS. Secret fields (`slack.webhook_url`, webhook credentials) are\nwrite-only. Subsequent reads never return secret values; they include\noptional `*_status` objects when a secret is configured.\n",
         "tags": [
           "Insights"
         ],
@@ -62366,6 +62428,367 @@
         ]
       }
     },
+    "/v2/gen-ai/models/catalog_v2": {
+      "get": {
+        "description": "Returns the model catalog using the V2 card shape (typed serving, badges, and modalities). Requires authentication.",
+        "operationId": "genai_list_model_catalog_v2",
+        "parameters": [
+          {
+            "description": "Page number for pagination.",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Number of items per page.",
+            "example": 1,
+            "in": "query",
+            "name": "per_page",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Optional partial, case-insensitive match on the display name or model ID.\nOmit this when filtering only by modality, serving, or product.",
+            "example": "llama",
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by where the model is served. Multiple values use OR semantics.\n\n - MODEL_SERVING_SERVERLESS: Serverless inference.\n - MODEL_SERVING_DEDICATED: Dedicated inference.",
+            "example": [
+              "MODEL_SERVING_SERVERLESS"
+            ],
+            "in": "query",
+            "name": "serving",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_SERVING_UNSPECIFIED",
+                  "MODEL_SERVING_SERVERLESS",
+                  "MODEL_SERVING_DEDICATED"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Filter by badge. Multiple values use OR semantics.\n\n - MODEL_CATALOG_BADGE_FEATURED: Featured in the catalog.\n - MODEL_CATALOG_BADGE_NEW: Newly added.\n - MODEL_CATALOG_BADGE_PREVIEW: Preview.\n - MODEL_CATALOG_BADGE_DEPRECATING: Scheduled for deprecation.\n - MODEL_CATALOG_BADGE_INFERENCE_ROUTER: Inference Router preset.",
+            "example": [
+              "MODEL_CATALOG_BADGE_FEATURED"
+            ],
+            "in": "query",
+            "name": "badges",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_CATALOG_BADGE_UNSPECIFIED",
+                  "MODEL_CATALOG_BADGE_FEATURED",
+                  "MODEL_CATALOG_BADGE_NEW",
+                  "MODEL_CATALOG_BADGE_PREVIEW",
+                  "MODEL_CATALOG_BADGE_DEPRECATING",
+                  "MODEL_CATALOG_BADGE_INFERENCE_ROUTER"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Require every listed modality as a model input. Multiple values use AND semantics.\n\n - MODEL_MODALITY_TEXT: plain text\n - MODEL_MODALITY_IMAGE: still images\n - MODEL_MODALITY_AUDIO: audio\n - MODEL_MODALITY_VIDEO: video\n - MODEL_MODALITY_EMBEDDING: embedding vectors\n - MODEL_MODALITY_RANKING: document ranking scores produced by reranking models\n - MODEL_MODALITY_DECISIONS: structured decisions produced by classification models",
+            "example": [
+              "MODEL_MODALITY_TEXT"
+            ],
+            "in": "query",
+            "name": "input_modality",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_MODALITY_UNSPECIFIED",
+                  "MODEL_MODALITY_TEXT",
+                  "MODEL_MODALITY_IMAGE",
+                  "MODEL_MODALITY_AUDIO",
+                  "MODEL_MODALITY_VIDEO",
+                  "MODEL_MODALITY_EMBEDDING",
+                  "MODEL_MODALITY_RANKING",
+                  "MODEL_MODALITY_DECISIONS"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Require every listed modality as a model output. Multiple values use AND semantics.\n\n - MODEL_MODALITY_TEXT: plain text\n - MODEL_MODALITY_IMAGE: still images\n - MODEL_MODALITY_AUDIO: audio\n - MODEL_MODALITY_VIDEO: video\n - MODEL_MODALITY_EMBEDDING: embedding vectors\n - MODEL_MODALITY_RANKING: document ranking scores produced by reranking models\n - MODEL_MODALITY_DECISIONS: structured decisions produced by classification models",
+            "example": [
+              "MODEL_MODALITY_TEXT"
+            ],
+            "in": "query",
+            "name": "output_modality",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_MODALITY_UNSPECIFIED",
+                  "MODEL_MODALITY_TEXT",
+                  "MODEL_MODALITY_IMAGE",
+                  "MODEL_MODALITY_AUDIO",
+                  "MODEL_MODALITY_VIDEO",
+                  "MODEL_MODALITY_EMBEDDING",
+                  "MODEL_MODALITY_RANKING",
+                  "MODEL_MODALITY_DECISIONS"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Filter by product enrollment.\n\n - MODEL_CATALOG_PRODUCT_EVALUATIONS_JUDGE: Model can judge evaluations.\n - MODEL_CATALOG_PRODUCT_HARNESS_RUNTIME: Model is enrolled for the harness runtime.\n - MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE: Model can be an evaluation or simulation candidate. It serves a text endpoint and accepts and returns text.",
+            "example": [
+              "MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE"
+            ],
+            "in": "query",
+            "name": "product",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_CATALOG_PRODUCT_UNSPECIFIED",
+                  "MODEL_CATALOG_PRODUCT_EVALUATIONS_JUDGE",
+                  "MODEL_CATALOG_PRODUCT_HARNESS_RUNTIME",
+                  "MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Require every listed capability. Multiple values use AND semantics.\n`coding` matches a coding specialisation, not only models whose type is coding.",
+            "example": [
+              "tool_calling"
+            ],
+            "in": "query",
+            "name": "capabilities",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Include foundation models, Inference Router presets, or both. Omit to return both.\n\n - MODEL_CATALOG_ITEM_TYPE_MODEL: A foundation or inference model.\n - MODEL_CATALOG_ITEM_TYPE_INFERENCE_ROUTER: An Inference Router preset.",
+            "example": [
+              "MODEL_CATALOG_ITEM_TYPE_MODEL"
+            ],
+            "in": "query",
+            "name": "item_type",
+            "schema": {
+              "items": {
+                "enum": [
+                  "MODEL_CATALOG_ITEM_TYPE_UNSPECIFIED",
+                  "MODEL_CATALOG_ITEM_TYPE_MODEL",
+                  "MODEL_CATALOG_ITEM_TYPE_INFERENCE_ROUTER"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "description": "Field to sort results by. Default is `MODEL_CATALOG_SORT_BY_CREATED_AT`.\n\n - MODEL_CATALOG_SORT_BY_CREATED_AT: Sort by creation date.\n - MODEL_CATALOG_SORT_BY_NAME: Sort by display name, case-insensitive.\n - MODEL_CATALOG_SORT_BY_PRICE: Sort by input token price.\n - MODEL_CATALOG_SORT_BY_E2E_LATENCY_P50: Sort by canary end-to-end latency p50, in seconds. Lower is better. Rows without performance data sort after rows with data.\n - MODEL_CATALOG_SORT_BY_THROUGHPUT_P50: Sort by canary throughput p50, in tokens per second. Higher is better. Rows without performance data sort after rows with data.\n - MODEL_CATALOG_SORT_BY_TTFT_P50: Sort by canary time to first token p50, in seconds. Lower is better. Rows without performance data sort after rows with data.",
+            "example": "MODEL_CATALOG_SORT_BY_NAME",
+            "in": "query",
+            "name": "sort_by",
+            "schema": {
+              "default": "MODEL_CATALOG_SORT_BY_CREATED_AT",
+              "enum": [
+                "MODEL_CATALOG_SORT_BY_CREATED_AT",
+                "MODEL_CATALOG_SORT_BY_NAME",
+                "MODEL_CATALOG_SORT_BY_PRICE",
+                "MODEL_CATALOG_SORT_BY_E2E_LATENCY_P50",
+                "MODEL_CATALOG_SORT_BY_THROUGHPUT_P50",
+                "MODEL_CATALOG_SORT_BY_TTFT_P50"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Sort direction. Defaults to descending when unspecified.",
+            "example": "SORT_DIRECTION_ASC",
+            "in": "query",
+            "name": "sort_direction",
+            "schema": {
+              "default": "SORT_DIRECTION_UNSPECIFIED",
+              "enum": [
+                "SORT_DIRECTION_UNSPECIFIED",
+                "SORT_DIRECTION_ASC",
+                "SORT_DIRECTION_DESC"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by model creator or developer, such as Meta or Google. Multiple values use OR semantics\nand match case-insensitively. Use `available_creators` in the response to discover valid options.",
+            "example": [
+              "Meta"
+            ],
+            "in": "query",
+            "name": "creator",
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiListModelCatalogV2Output"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "List Model Catalog V2",
+        "tags": [
+          "Agent Platform API"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/models/catalog_v2?page=1&per_page=20&search=llama&serving=MODEL_SERVING_SERVERLESS&sort_by=MODEL_CATALOG_SORT_BY_NAME&sort_direction=SORT_DIRECTION_ASC\""
+          }
+        ]
+      }
+    },
+    "/v2/gen-ai/models/catalog_v2/{id}": {
+      "get": {
+        "description": "Returns a V2 catalog card by catalog ID or model ID. Requires authentication.\nVisibility matches List Model Catalog V2.",
+        "operationId": "genai_get_model_catalog_card_v2",
+        "parameters": [
+          {
+            "description": "Catalog ID of the model. Use `model_id` instead to look up by the inference model ID.",
+            "example": "18bc9b8f-73c5-11f0-b074-4e013e2ddde4",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Inference model ID, such as `llama3.1-70b-instruct`. Alternative to the catalog ID in the path.",
+            "example": "llama3.1-70b-instruct",
+            "in": "query",
+            "name": "model_id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/apiGetModelCatalogCardV2Output"
+                }
+              }
+            },
+            "description": "A successful response.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "security": [
+          {
+            "bearer_auth": [
+              "genai:read"
+            ]
+          }
+        ],
+        "summary": "Get Model Catalog Card V2",
+        "tags": [
+          "Agent Platform API"
+        ],
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/gen-ai/models/catalog_v2/18bc9b8f-73c5-11f0-b074-4e013e2ddde4\""
+          }
+        ]
+      }
+    },
     "/v2/gen-ai/models/routers": {
       "get": {
         "description": "To list model routers, send a GET request to `/v2/gen-ai/models/routers`.",
@@ -79340,6 +79763,35 @@
           }
         }
       },
+      "harness_region": {
+        "type": "object",
+        "description": "One entry of the ListRegions catalog.",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "DO datacenter slug. Names the regional API host to call to work in this region — \"ric1\" means https://api-ric1.digitalocean.com. A request is placed in the region of the host that served it; the optional `region` field on a create is a check against that host, not a choice of region.",
+            "example": "ric1"
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "True for the region the region-less host, https://api.digitalocean.com, serves. Exactly one listed region is the default and every team sees it. Preselect it in a picker instead of hardcoding a slug.",
+            "example": true
+          }
+        }
+      },
+      "harness_regions_response": {
+        "type": "object",
+        "description": "Response for ListRegions.",
+        "properties": {
+          "regions": {
+            "type": "array",
+            "description": "Regions the team may place resources in, each on its own API host, sorted by slug.",
+            "items": {
+              "$ref": "#/components/schemas/harness_region"
+            }
+          }
+        }
+      },
       "create_session_config_request": {
         "type": "object",
         "additionalProperties": false,
@@ -93588,7 +94040,7 @@
       },
       "email_notification_config": {
         "type": "object",
-        "description": "Email notification channel configuration. Recipients must be verified team\nmember email addresses.\n",
+        "description": "Email notification channel configuration. Recipients must be team contact\nemails added and verified by a team owner. They do not need to be team\nmembers.\n",
         "required": [
           "to"
         ],
@@ -112301,6 +112753,576 @@
         "properties": {
           "data": {
             "$ref": "#/components/schemas/apiModelCatalogCard"
+          }
+        },
+        "type": "object"
+      },
+      "apiModelCatalogBadge": {
+        "default": "MODEL_CATALOG_BADGE_UNSPECIFIED",
+        "description": "Badge shown on a V2 catalog row.\n\n - MODEL_CATALOG_BADGE_FEATURED: Featured in the catalog.\n - MODEL_CATALOG_BADGE_NEW: Newly added.\n - MODEL_CATALOG_BADGE_PREVIEW: Preview.\n - MODEL_CATALOG_BADGE_DEPRECATING: Scheduled for deprecation.\n - MODEL_CATALOG_BADGE_INFERENCE_ROUTER: Inference Router preset.",
+        "enum": [
+          "MODEL_CATALOG_BADGE_UNSPECIFIED",
+          "MODEL_CATALOG_BADGE_FEATURED",
+          "MODEL_CATALOG_BADGE_NEW",
+          "MODEL_CATALOG_BADGE_PREVIEW",
+          "MODEL_CATALOG_BADGE_DEPRECATING",
+          "MODEL_CATALOG_BADGE_INFERENCE_ROUTER"
+        ],
+        "example": "MODEL_CATALOG_BADGE_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelModality": {
+        "default": "MODEL_MODALITY_UNSPECIFIED",
+        "description": "A kind of data a model accepts as input or produces as output.\n\n - MODEL_MODALITY_TEXT: plain text\n - MODEL_MODALITY_IMAGE: still images\n - MODEL_MODALITY_AUDIO: audio\n - MODEL_MODALITY_VIDEO: video\n - MODEL_MODALITY_EMBEDDING: embedding vectors\n - MODEL_MODALITY_RANKING: document ranking scores produced by reranking models\n - MODEL_MODALITY_DECISIONS: structured decisions produced by classification models",
+        "enum": [
+          "MODEL_MODALITY_UNSPECIFIED",
+          "MODEL_MODALITY_TEXT",
+          "MODEL_MODALITY_IMAGE",
+          "MODEL_MODALITY_AUDIO",
+          "MODEL_MODALITY_VIDEO",
+          "MODEL_MODALITY_EMBEDDING",
+          "MODEL_MODALITY_RANKING",
+          "MODEL_MODALITY_DECISIONS"
+        ],
+        "example": "MODEL_MODALITY_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelCatalogProduct": {
+        "default": "MODEL_CATALOG_PRODUCT_UNSPECIFIED",
+        "description": "Product that offers the model. Serving (serverless or dedicated) is separate.\n\n - MODEL_CATALOG_PRODUCT_EVALUATIONS_JUDGE: Model can judge evaluations.\n - MODEL_CATALOG_PRODUCT_HARNESS_RUNTIME: Model is enrolled for the harness runtime.\n - MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE: Model can be an evaluation or simulation candidate.",
+        "enum": [
+          "MODEL_CATALOG_PRODUCT_UNSPECIFIED",
+          "MODEL_CATALOG_PRODUCT_EVALUATIONS_JUDGE",
+          "MODEL_CATALOG_PRODUCT_HARNESS_RUNTIME",
+          "MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE"
+        ],
+        "example": "MODEL_CATALOG_PRODUCT_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelServing": {
+        "default": "MODEL_SERVING_UNSPECIFIED",
+        "description": "Where a V2 catalog model is served.\n\n - MODEL_SERVING_SERVERLESS: Serverless inference.\n - MODEL_SERVING_DEDICATED: Dedicated inference.",
+        "enum": [
+          "MODEL_SERVING_UNSPECIFIED",
+          "MODEL_SERVING_SERVERLESS",
+          "MODEL_SERVING_DEDICATED"
+        ],
+        "example": "MODEL_SERVING_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelCatalogSortByV2": {
+        "default": "MODEL_CATALOG_SORT_BY_CREATED_AT",
+        "description": "Field on which to sort V2 model catalog results.\n\n - MODEL_CATALOG_SORT_BY_CREATED_AT: Default: sort by creation date.\n - MODEL_CATALOG_SORT_BY_NAME: Sort by the model's display name (case-insensitive).\n - MODEL_CATALOG_SORT_BY_PRICE: Sort by input token price.\n - MODEL_CATALOG_SORT_BY_E2E_LATENCY_P50: Sort by canary end-to-end latency p50, in seconds. Lower is better. Rows without performance data sort after rows with data.\n - MODEL_CATALOG_SORT_BY_THROUGHPUT_P50: Sort by canary throughput p50, in tokens per second. Higher is better. Rows without performance data sort after rows with data.\n - MODEL_CATALOG_SORT_BY_TTFT_P50: Sort by canary time to first token p50, in seconds. Lower is better. Rows without performance data sort after rows with data.",
+        "enum": [
+          "MODEL_CATALOG_SORT_BY_CREATED_AT",
+          "MODEL_CATALOG_SORT_BY_NAME",
+          "MODEL_CATALOG_SORT_BY_PRICE",
+          "MODEL_CATALOG_SORT_BY_E2E_LATENCY_P50",
+          "MODEL_CATALOG_SORT_BY_THROUGHPUT_P50",
+          "MODEL_CATALOG_SORT_BY_TTFT_P50"
+        ],
+        "example": "MODEL_CATALOG_SORT_BY_CREATED_AT",
+        "type": "string"
+      },
+      "apiModelCatalogItemType": {
+        "default": "MODEL_CATALOG_ITEM_TYPE_UNSPECIFIED",
+        "description": "Whether a catalog row is a foundation model or an Inference Router preset.\n\n - MODEL_CATALOG_ITEM_TYPE_MODEL: A foundation or inference model.\n - MODEL_CATALOG_ITEM_TYPE_INFERENCE_ROUTER: An Inference Router preset.",
+        "enum": [
+          "MODEL_CATALOG_ITEM_TYPE_UNSPECIFIED",
+          "MODEL_CATALOG_ITEM_TYPE_MODEL",
+          "MODEL_CATALOG_ITEM_TYPE_INFERENCE_ROUTER"
+        ],
+        "example": "MODEL_CATALOG_ITEM_TYPE_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelLivelinessDay": {
+        "description": "One UTC day of a performance metric, merged across serving regions.\nPercentiles use the parent metric's unit.",
+        "properties": {
+          "day_ms": {
+            "description": "Start of the day (00:00 UTC) as Unix milliseconds.",
+            "example": 1758499200000,
+            "format": "double",
+            "type": "number"
+          },
+          "p50": {
+            "description": "Median value, rounded to 2 decimal places.",
+            "example": 0.42,
+            "format": "double",
+            "type": "number"
+          },
+          "p75": {
+            "description": "75th percentile value, rounded to 2 decimal places.",
+            "example": 0.61,
+            "format": "double",
+            "type": "number"
+          },
+          "p95": {
+            "description": "95th percentile value, rounded to 2 decimal places.",
+            "example": 1.9,
+            "format": "double",
+            "type": "number"
+          },
+          "partial": {
+            "description": "True while the day is still in progress; its values will keep changing.",
+            "example": true,
+            "type": "boolean"
+          },
+          "samples": {
+            "description": "Number of requests the percentiles were computed from.",
+            "example": 24,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiModelLivelinessMetric": {
+        "description": "One performance metric for a model: its daily series, oldest day first, and\nwhether it has data.",
+        "properties": {
+          "days": {
+            "description": "Daily points, oldest first. Empty when status is \"insufficient_data\".",
+            "items": {
+              "$ref": "#/components/schemas/apiModelLivelinessDay"
+            },
+            "type": "array"
+          },
+          "status": {
+            "description": "\"ok\" when days has data; \"insufficient_data\" when there are not enough\nrecent samples for this model.",
+            "example": "\"ok\"",
+            "type": "string"
+          },
+          "unit": {
+            "description": "Unit of the percentile values: \"s\" for ttft and e2e_latency, \"tok/s\" for\nthroughput.",
+            "example": "\"s\"",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiModelLiveliness": {
+        "description": "Performance statistics for a model, computed from canary traffic.\nPresent when the feature is enabled. Each metric (ttft, e2e_latency,\nthroughput) has its own status.",
+        "properties": {
+          "e2e_latency": {
+            "$ref": "#/components/schemas/apiModelLivelinessMetric"
+          },
+          "overall_status": {
+            "description": "Summary across metrics: \"ok\" when every metric has data, \"partial_data\"\nwhen some do and some do not, \"insufficient_data\" when none do.",
+            "example": "\"ok\"",
+            "type": "string"
+          },
+          "source": {
+            "description": "Traffic the statistics are computed from. Always \"canary\".",
+            "example": "\"canary\"",
+            "type": "string"
+          },
+          "throughput": {
+            "$ref": "#/components/schemas/apiModelLivelinessMetric"
+          },
+          "ttft": {
+            "$ref": "#/components/schemas/apiModelLivelinessMetric"
+          }
+        },
+        "type": "object"
+      },
+      "apiNumericRange": {
+        "description": "Numeric range with min, max, and default values for model tuning parameters.",
+        "properties": {
+          "default": {
+            "example": 123,
+            "format": "double",
+            "type": "number"
+          },
+          "max": {
+            "example": 123,
+            "format": "double",
+            "type": "number"
+          },
+          "min": {
+            "example": 123,
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "apiModelCatalogPerformance": {
+        "description": "Compact canary performance rollup for catalog browse and the catalog card.\nList Model Catalog V2 uses a rolling last-24-hour window (window_days is 1).\nGet Model Catalog Card V2 uses the sample-weighted mean of daily percentiles\nover the liveliness window, typically 7 days. The full daily series stays on\nliveliness. This is canary traffic, not live customer load.",
+        "properties": {
+          "e2e_latency_p50_seconds": {
+            "description": "End-to-end latency in seconds, p50.",
+            "example": 0.42,
+            "format": "double",
+            "type": "number"
+          },
+          "e2e_latency_p75_seconds": {
+            "description": "End-to-end latency in seconds, p75.",
+            "example": 0.9,
+            "format": "double",
+            "type": "number"
+          },
+          "e2e_latency_p95_seconds": {
+            "description": "End-to-end latency in seconds, p95.",
+            "example": 1.9,
+            "format": "double",
+            "type": "number"
+          },
+          "samples": {
+            "description": "Request samples across the window. Prefers end-to-end latency, then time to first token, then throughput.",
+            "example": 168,
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "description": "\"ok\" when time to first token, end-to-end latency, and throughput all\nhave data, \"partial_data\" when only some do, \"insufficient_data\" when\nnone do.",
+            "example": "\"ok\"",
+            "type": "string"
+          },
+          "throughput_p50_tok_per_s": {
+            "description": "Throughput in tokens per second, p50.",
+            "example": 48.5,
+            "format": "double",
+            "type": "number"
+          },
+          "throughput_p75_tok_per_s": {
+            "description": "Throughput in tokens per second, p75.",
+            "example": 60,
+            "format": "double",
+            "type": "number"
+          },
+          "throughput_p95_tok_per_s": {
+            "description": "Throughput in tokens per second, p95.",
+            "example": 72,
+            "format": "double",
+            "type": "number"
+          },
+          "ttft_p50_seconds": {
+            "description": "Time to first token in seconds, p50. Streaming canary probes only.",
+            "example": 0.18,
+            "format": "double",
+            "type": "number"
+          },
+          "ttft_p75_seconds": {
+            "description": "Time to first token in seconds, p75. Streaming canary probes only.",
+            "example": 0.3,
+            "format": "double",
+            "type": "number"
+          },
+          "ttft_p95_seconds": {
+            "description": "Time to first token in seconds, p95. Streaming canary probes only.",
+            "example": 0.55,
+            "format": "double",
+            "type": "number"
+          },
+          "window_days": {
+            "description": "Lookback window length in days. 1 is the rolling 24-hour list window.",
+            "example": 7,
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "apiModelSupportedEndpoint": {
+        "default": "MODEL_SUPPORTED_ENDPOINT_UNSPECIFIED",
+        "description": "An inference endpoint a model can be served on.\n\n - MODEL_SUPPORTED_ENDPOINT_CHAT_COMPLETIONS: OpenAI-compatible POST /v1/chat/completions\n - MODEL_SUPPORTED_ENDPOINT_COMPLETIONS: OpenAI-compatible POST /v1/completions\n - MODEL_SUPPORTED_ENDPOINT_EMBEDDINGS: OpenAI-compatible POST /v1/embeddings\n - MODEL_SUPPORTED_ENDPOINT_AUDIO_TRANSCRIPTIONS: POST /v1/audio/transcriptions\n - MODEL_SUPPORTED_ENDPOINT_AUDIO_SPEECH: POST /v1/audio/speech\n - MODEL_SUPPORTED_ENDPOINT_IMAGE_GENERATIONS: POST /v1/images/generations\n - MODEL_SUPPORTED_ENDPOINT_VIDEO_GENERATIONS: POST /v1/videos\n - MODEL_SUPPORTED_ENDPOINT_AUDIO_DIARIZATIONS: POST /v1/audio/diarizations\n - MODEL_SUPPORTED_ENDPOINT_ASYNC_INVOKE: POST /v1/async-invoke\n - MODEL_SUPPORTED_ENDPOINT_RERANKING: POST /v1/rerank\n - MODEL_SUPPORTED_ENDPOINT_SYSTEM_ONE: POST /v1/systemone\n - MODEL_SUPPORTED_ENDPOINT_RESPONSES: OpenAI-compatible POST /v1/responses",
+        "enum": [
+          "MODEL_SUPPORTED_ENDPOINT_UNSPECIFIED",
+          "MODEL_SUPPORTED_ENDPOINT_CHAT_COMPLETIONS",
+          "MODEL_SUPPORTED_ENDPOINT_COMPLETIONS",
+          "MODEL_SUPPORTED_ENDPOINT_EMBEDDINGS",
+          "MODEL_SUPPORTED_ENDPOINT_AUDIO_TRANSCRIPTIONS",
+          "MODEL_SUPPORTED_ENDPOINT_AUDIO_SPEECH",
+          "MODEL_SUPPORTED_ENDPOINT_IMAGE_GENERATIONS",
+          "MODEL_SUPPORTED_ENDPOINT_VIDEO_GENERATIONS",
+          "MODEL_SUPPORTED_ENDPOINT_AUDIO_DIARIZATIONS",
+          "MODEL_SUPPORTED_ENDPOINT_ASYNC_INVOKE",
+          "MODEL_SUPPORTED_ENDPOINT_RERANKING",
+          "MODEL_SUPPORTED_ENDPOINT_SYSTEM_ONE",
+          "MODEL_SUPPORTED_ENDPOINT_RESPONSES"
+        ],
+        "example": "MODEL_SUPPORTED_ENDPOINT_UNSPECIFIED",
+        "type": "string"
+      },
+      "apiModelCatalogEntryV2": {
+        "description": "Catalog row returned by List Model Catalog V2 and Get Model Catalog Card V2.\ndescription, code_snippets, pricing_detail, and liveliness are populated on\nthe card and empty on list rows. performance is populated on list rows and\nthe card when canary data is available.",
+        "properties": {
+          "badges": {
+            "example": [
+              "MODEL_CATALOG_BADGE_FEATURED"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogBadge"
+            },
+            "type": "array"
+          },
+          "capabilities": {
+            "example": [
+              "tool_calling"
+            ],
+            "items": {
+              "example": "tool_calling",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "code_snippets": {
+            "$ref": "#/components/schemas/apiCodeSnippets"
+          },
+          "context_window": {
+            "example": "128000",
+            "format": "int64",
+            "type": "string"
+          },
+          "created_at": {
+            "description": "RFC 3339 timestamp indicating when the model was added to the catalog.",
+            "example": "2021-01-01T00:00:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "creator": {
+            "description": "Model creator or developer, such as Meta, Anthropic, or OpenAI.",
+            "example": "\"Meta\"",
+            "type": "string"
+          },
+          "description": {
+            "description": "Full catalog description. Populated on Get Model Catalog Card V2.",
+            "example": "\"Claude Sonnet 4 is Anthropic's most capable model...\"",
+            "type": "string"
+          },
+          "huggingface_repo_id": {
+            "description": "Hugging Face repository ID the model is based on, when applicable.",
+            "example": "\"meta-llama/Llama-3.3-70B-Instruct\"",
+            "type": "string"
+          },
+          "id": {
+            "example": "\"506a3371-88d0-4047-9212-e2079497ac68\"",
+            "type": "string"
+          },
+          "input_modality": {
+            "example": [
+              "MODEL_MODALITY_TEXT"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelModality"
+            },
+            "type": "array"
+          },
+          "item_type": {
+            "$ref": "#/components/schemas/apiModelCatalogItemType"
+          },
+          "liveliness": {
+            "$ref": "#/components/schemas/apiModelLiveliness"
+          },
+          "max_output_tokens": {
+            "description": "Maximum number of output tokens the model can generate in one response.",
+            "example": "65536",
+            "format": "int64",
+            "type": "string"
+          },
+          "max_tokens": {
+            "$ref": "#/components/schemas/apiNumericRange"
+          },
+          "model_id": {
+            "description": "Model identifier used for inference API calls, such as llama3.1-70b-instruct.",
+            "example": "\"llama3.1-70b-instruct\"",
+            "type": "string"
+          },
+          "name": {
+            "example": "\"Llama 3.1 70B\"",
+            "type": "string"
+          },
+          "output_modality": {
+            "example": [
+              "MODEL_MODALITY_TEXT"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelModality"
+            },
+            "type": "array"
+          },
+          "parameter_count_in_billions": {
+            "description": "Parameter count in billions. For example, 70.0 means 70B.",
+            "example": 70,
+            "format": "float",
+            "type": "number"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/apiModelCatalogPerformance"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/apiModelPricing"
+          },
+          "pricing_detail": {
+            "$ref": "#/components/schemas/apiModelPricingDetail"
+          },
+          "products": {
+            "example": [
+              "MODEL_CATALOG_PRODUCT_EVALUATION_CANDIDATE"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogProduct"
+            },
+            "type": "array"
+          },
+          "provider": {
+            "$ref": "#/components/schemas/apiModelProvider"
+          },
+          "reasoning_efforts": {
+            "description": "Supported reasoning effort levels, such as low, medium, and high.",
+            "example": [
+              "low"
+            ],
+            "items": {
+              "example": "low",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scaled_pricing_enabled": {
+            "description": "True when this model's pricing varies over time.",
+            "example": true,
+            "type": "boolean"
+          },
+          "serving": {
+            "example": [
+              "MODEL_SERVING_SERVERLESS"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelServing"
+            },
+            "type": "array"
+          },
+          "short_description": {
+            "example": "\"Fast, efficient model for general tasks\"",
+            "type": "string"
+          },
+          "supported_endpoints": {
+            "description": "Inference endpoints this model serves, such as chat completions or responses.\nEmpty for Inference Router presets.",
+            "example": [
+              "MODEL_SUPPORTED_ENDPOINT_CHAT_COMPLETIONS"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/apiModelSupportedEndpoint"
+            },
+            "type": "array"
+          },
+          "supports_temperature": {
+            "description": "Whether the inference request schema includes a temperature field.",
+            "example": true,
+            "type": "boolean"
+          },
+          "temperature": {
+            "$ref": "#/components/schemas/apiNumericRange"
+          },
+          "thinking": {
+            "description": "Whether the model supports extended thinking.",
+            "example": true,
+            "type": "boolean"
+          },
+          "top_p": {
+            "$ref": "#/components/schemas/apiNumericRange"
+          },
+          "type": {
+            "description": "Catalog model type, such as chat or embedding.",
+            "example": "\"chat\"",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "apiListModelCatalogV2Output": {
+        "properties": {
+          "available_badges": {
+            "description": "Badge values present in the unfiltered catalog.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogBadge"
+            },
+            "type": "array"
+          },
+          "available_creators": {
+            "description": "Creator values the client can offer in the creator filter.",
+            "example": [
+              "Meta"
+            ],
+            "items": {
+              "example": "Meta",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "available_input_modalities": {
+            "description": "Modality values accepted by the input_modality filter.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelModality"
+            },
+            "type": "array"
+          },
+          "available_model_types": {
+            "description": "Model types present in the unfiltered catalog, such as chat or embedding.\nInformational only. V2 has no model_type request filter; browse by\ninput_modality, output_modality, or capabilities.",
+            "example": [
+              "chat"
+            ],
+            "items": {
+              "example": "chat",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "available_output_modalities": {
+            "description": "Modality values accepted by the output_modality filter.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelModality"
+            },
+            "type": "array"
+          },
+          "available_products": {
+            "description": "Product enrollment values present in the unfiltered catalog.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogProduct"
+            },
+            "type": "array"
+          },
+          "available_serving": {
+            "description": "Serving values present in the unfiltered catalog.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelServing"
+            },
+            "type": "array"
+          },
+          "available_sort_by": {
+            "description": "Sort fields the client can offer in the sort UI.",
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogSortByV2"
+            },
+            "type": "array"
+          },
+          "available_sort_directions": {
+            "description": "Sort directions the client can offer in the sort UI.",
+            "items": {
+              "$ref": "#/components/schemas/apiSortDirection"
+            },
+            "type": "array"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/apiModelCatalogEntryV2"
+            },
+            "type": "array"
+          },
+          "links": {
+            "$ref": "#/components/schemas/apiLinks"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/apiMeta"
+          }
+        },
+        "type": "object"
+      },
+      "apiGetModelCatalogCardV2Output": {
+        "description": "V2 catalog card. description, code_snippets, pricing_detail, and liveliness\nare populated on this response.",
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/apiModelCatalogEntryV2"
           }
         },
         "type": "object"
