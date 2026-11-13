@@ -8424,7 +8424,7 @@
       "post": {
         "operationId": "harness_create_provider_connection",
         "summary": "Create a provider connection for one actor.",
-        "description": "Creates, or resumes, the connection `{provider}` will use for `user_id`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. A pending connection includes an `authorization` object the user still has to complete. An active connection omits it. No token is returned. `github` is the provider served today.",
+        "description": "Creates the connection `{provider}` will use for `user_id`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. Each actor has at most one active, pending, or expired connection per provider. If `user_id` already has one, the request fails with `409`. Find that connection's id with `GET /v2/agents/auth/{provider}/connections?user_id=...`, then resume or restart it with `POST /v2/agents/auth/{provider}/connections/{connection_id}/reconnect`, which keeps its scopes. Revoked connections do not count toward the limit, and list responses omit them. If the only connection `user_id` has for `{provider}` is revoked, for example by `DELETE`, create starts it again under the same connection id, with the scopes in this request. To change a connection's scopes, delete it and then create it. A successful create returns the connection as `pending`, with an `authorization` object for the interactive step. No token is returned. `github` is the provider served today.",
         "tags": [
           "Harness Runtime"
         ],
@@ -8453,7 +8453,7 @@
         },
         "responses": {
           "200": {
-            "description": "The connection, plus authorization steps when it is still pending.",
+            "description": "The new connection, `pending`, with the authorization steps the user has to complete.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -8499,6 +8499,27 @@
           },
           "404": {
             "$ref": "#/components/responses/not_found"
+          },
+          "409": {
+            "description": "`user_id` already has an active, pending, or expired connection for `{provider}`. List the connections filtered by `user_id` to find its id, then reconnect it.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
           },
           "429": {
             "$ref": "#/components/responses/too_many_requests"
@@ -8784,7 +8805,7 @@
       "post": {
         "operationId": "harness_post_provider_connection_reconnect",
         "summary": "Start a fresh login for an existing connection.",
-        "description": "Begins the interactive step again for a connection that needs it. The response includes `authorization` while that step is outstanding. No token is returned.",
+        "description": "Resumes a pending connection's authorization, or starts a new one for an expired or revoked connection. The connection keeps its id, `user_id`, and scopes, so environments that use it keep working once it is active again. An active connection is returned unchanged. Only the member who owns the connection can reconnect it; for anyone else the response is `404`, the same as for an unknown connection. The response includes `authorization` while the interactive step is outstanding. No token is returned.",
         "tags": [
           "Harness Runtime"
         ],
