@@ -16569,8 +16569,8 @@
     "/v2/agents/triggers/by-session/{session_id}": {
       "get": {
         "operationId": "harness_get_trigger_by_session",
-        "summary": "GetTriggerBySession reverse-looks-up the trigger that produced or binds a session.",
-        "description": "Returns the trigger that produced (fresh) or binds (reuse) the given session. Resolves to the row even after the trigger is soft-deleted.",
+        "summary": "Get the newest trigger bound to a session, or the trigger of its newest execution.",
+        "description": "Returns the newest trigger whose bound session is this one. Deleted triggers are skipped. When none is bound, returns the trigger of the newest execution for this session, again skipping deleted triggers. A session can be bound to more than one trigger; only the newest is returned. 404 when neither lookup matches.",
         "tags": [
           "Harness Runtime"
         ],
@@ -16589,7 +16589,7 @@
         ],
         "responses": {
           "200": {
-            "description": "The trigger that produced (fresh) or binds (reuse) this session.",
+            "description": "The newest trigger bound to this session, or the trigger of its newest execution.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -45668,6 +45668,19 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/multiregistry_create"
+              },
+              "examples": {
+                "Registry with Insights logs": {
+                  "description": "Creates a registry and opts in to sending its logs to Insights.",
+                  "value": {
+                    "name": "example",
+                    "subscription_tier_slug": "basic",
+                    "region": "fra1",
+                    "insights": {
+                      "logs": true
+                    }
+                  }
+                }
               }
             }
           }
@@ -46721,6 +46734,19 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/registry_create"
+              },
+              "examples": {
+                "Registry with Insights logs": {
+                  "description": "Creates a registry and opts in to sending its logs to Insights.",
+                  "value": {
+                    "name": "example",
+                    "subscription_tier_slug": "basic",
+                    "region": "fra1",
+                    "insights": {
+                      "logs": true
+                    }
+                  }
+                }
               }
             }
           }
@@ -80352,8 +80378,8 @@
           },
           "pause_reason": {
             "type": "string",
-            "description": "Why this session is paused. Present only when status is SESSION_STATUS_PAUSED; omitted otherwise. Known values: manual (PauseSession RPC), idle (inactivity auto-pause), low_balance (prepay gate). Clients should treat an unrecognized value as an opaque reason string.",
-            "example": "example"
+            "description": "Why this session is paused. Present only when status is SESSION_STATUS_PAUSED; omitted otherwise. Known values: manual (the customer paused the session), idle (inactivity auto-pause), zero_balance (prepay gate; stored rows may still say low_balance), trigger (a reuse trigger paused the session after a firing). Clients should treat an unrecognized value as an opaque reason string.",
+            "example": "manual"
           },
           "idle_timeout_seconds": {
             "type": "integer",
@@ -82099,6 +82125,16 @@
             "type": "string",
             "description": "Populated once SendInput acks; correlation/audit only. May be empty.",
             "example": ""
+          },
+          "status_reason": {
+            "type": "string",
+            "description": "Why a running execution has not started its turn. Omitted when there is nothing to report. Known value: waiting_for_bound_session (a reuse firing is waiting for its bound session to pause; status stays running). Clients should treat an unrecognized value as an opaque string.",
+            "example": "waiting_for_bound_session"
+          },
+          "status_message": {
+            "type": "string",
+            "description": "Human-readable detail for status_reason. Omitted when status_reason is omitted.",
+            "example": "Waiting for the bound session to pause."
           },
           "failure_reason": {
             "type": "string",
@@ -102432,6 +102468,19 @@
           }
         ]
       },
+      "registry_insights_opt_in": {
+        "type": "object",
+        "nullable": true,
+        "writeOnly": true,
+        "description": "An object specifying the Insights telemetry that the customer opts in to for the container registry. This is only accepted when creating a registry and is not returned in responses. If the object is omitted, or if `logs` is not set, the registry is created with logs not enabled.",
+        "properties": {
+          "logs": {
+            "type": "boolean",
+            "description": "A boolean value indicating whether the registry's logs are sent to Insights. Set this to `true` to send the registry's logs to Insights. `false`, and omitting `insights` or `logs`, both create the registry with logs not enabled.",
+            "example": true
+          }
+        }
+      },
       "multiregistry_create": {
         "type": "object",
         "properties": {
@@ -102466,6 +102515,9 @@
             ],
             "example": "fra1",
             "description": "Slug of the region where registry data is stored. When not provided, a region will be selected."
+          },
+          "insights": {
+            "$ref": "#/components/schemas/registry_insights_opt_in"
           }
         },
         "required": [
@@ -102771,6 +102823,9 @@
             ],
             "example": "fra1",
             "description": "Slug of the region where registry data is stored. When not provided, a region will be selected."
+          },
+          "insights": {
+            "$ref": "#/components/schemas/registry_insights_opt_in"
           }
         },
         "required": [
