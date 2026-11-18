@@ -57,11 +57,11 @@
     },
     {
       "name": "Harness Runtime",
-      "description": "DigitalOcean Harness Runtime API under `/v2/agents`. An environment is a\nreusable configuration that defines what an agent needs to do work; starting\na session from an environment provisions an isolated sandbox. Define an\nenvironment with a YAML environment spec, or save it as an Environment Config\nand create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/agents/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/agents/templates`) manage team custom sandbox\ntemplates and their build history.\n\nTriggers (`/v2/agents/triggers`) fire an agent run on a webhook delivery or\ncron schedule, each firing recorded as an execution. The session event feed\n(`GET /v2/agents/sessions/{session_id}/events`) is a Server-Sent Events\nstream, and port-forward (`GET /v2/agents/sessions/{session_id}/port-forward/{port}`)\nopens a WebSocket tunnel to a guest port.\n\n`POST /v2/agents/sessions/{session_id}/cancel` stops the turn in flight.\n`GET /v2/agents/image-messages` lists sandbox-image notices on the team's\nsessions and checkpoints. `POST /v2/agents/auth/{provider}` starts the\ninteractive provider login a session uses; `github` is the provider served\ntoday. Connections for that login are under `/v2/agents/auth/{provider}/connections`.\n\nPersistent workspaces (`/v2/agents/workspaces`) are in public preview and are\ndescribed under Harness Runtime Workspaces [Public Preview]."
+      "description": "DigitalOcean Harness Runtime API under `/v2/harness-runtime`. An\nenvironment is a reusable configuration that defines what an agent needs\nto do work; starting a session from an environment provisions an isolated\nsandbox. Define an environment with a YAML environment spec, or save it as\nan Environment Config and create sessions from `{name, config_id}`.\n\nEnvironment Configs (`/v2/harness-runtime/configs`) are immutable team-scoped\nconfigurations. Soft-delete releases the active name while keeping\n`config_id` resolvable for existing sessions; clone copies a sanitized\nenvironment under a new name (credentials are never copied).\n\nCheckpoints capture live sandbox machine state for fork and in-place\nrollback. Templates (`/v2/harness-runtime/templates`) manage team custom\nsandbox templates and their build history.\n\nTriggers (`/v2/harness-runtime/triggers`) fire an agent run on a webhook\ndelivery or cron schedule, each firing recorded as an execution. The\nsession event feed (`GET /v2/harness-runtime/sessions/{session_id}/events`)\nis a Server-Sent Events stream, and port-forward\n(`GET /v2/harness-runtime/sessions/{session_id}/port-forward/{port}`) opens\na WebSocket tunnel to a guest port.\n\n`POST /v2/harness-runtime/sessions/{session_id}/cancel` stops the turn in flight.\n`GET /v2/harness-runtime/image-messages` lists sandbox-image notices on the team's\nsessions and checkpoints. `POST /v2/harness-runtime/auth/{provider}` starts the\ninteractive provider login a session uses; `github` is the provider served\ntoday. Connections for that login are under `/v2/harness-runtime/auth/{provider}/connections`.\n\nPersistent workspaces (`/v2/harness-runtime/workspaces`) are in public preview and are\ndescribed under Harness Runtime Workspaces [Public Preview]."
     },
     {
       "name": "Harness Runtime Workspaces [Public Preview]",
-      "description": "Persistent workspaces (`/v2/agents/workspaces`) are sets of files that outlive\na session. Attach one by passing `workspace_id` when you create a session from\nan Environment Config; it mounts at `/workspace`, a workspace is attached to one\nsession at a time, and its files are saved when the session is removed or\ncheckpointed. Fork and rollback are not available for a session with a\nworkspace. Persistent workspaces are in public preview, free during public\npreview, and enabled per team; requests from other teams return `403`."
+      "description": "Persistent workspaces (`/v2/harness-runtime/workspaces`) are sets of files that outlive\na session. Attach one by passing `workspace_id` when you create a session from\nan Environment Config; it mounts at `/workspace`, a workspace is attached to one\nsession at a time, and its files are saved when the session is removed or\ncheckpointed. Fork and rollback are not available for a session with a\nworkspace. Persistent workspaces are in public preview, free during public\npreview, and enabled per team; requests from other teams return `403`."
     },
     {
       "name": "Apps",
@@ -168,7 +168,7 @@
       "description": "[DigitalOcean Load Balancers](https://docs.digitalocean.com/products/networking/load-balancers/)\nprovide a way to distribute traffic across multiple Droplets. By sending\nrequests to the `/v2/load_balancers` endpoint, you can list, create, or\ndelete load balancers as well as add or remove Droplets, forwarding rules,\nand other configuration details."
     },
     {
-      "name": "MicroVMs [Public Preview]",
+      "name": "MicroVMs",
       "description": "[DigitalOcean MicroVMs](https://docs.digitalocean.com/products/microvms/)\nare lightweight virtual machines that run a `linux/amd64` container image\nin an isolated kernel. A MicroVM pauses automatically when it is idle and\nresumes on the next HTTP request, command, or console session, with its\nmemory, files, and processes intact. By sending requests to the\n`/v2/microvms` endpoints, you can create, list, update, pause, resume,\nand delete MicroVMs, run commands and open a console in them, upload and\ndownload files, add and remove ingress URLs, create access tokens scoped\nto one MicroVM, and create checkpoints to start new MicroVMs from a\nsaved state.\n\nEach MicroVM serves its HTTP port at\n`https://{microvm_id}.{region}.microvm.ondigitalocean.com`. Requests to\nthat endpoint require a token with the `microvm:access` scope."
     },
     {
@@ -333,7 +333,7 @@
         "Insights",
         "Kubernetes",
         "Load Balancers",
-        "MicroVMs [Public Preview]",
+        "MicroVMs",
         "Monitoring",
         "NFS",
         "NFS Actions",
@@ -8002,7 +8002,7 @@
         ]
       }
     },
-    "/v2/agents/auth/{provider}": {
+    "/v2/harness-runtime/auth/{provider}": {
       "post": {
         "operationId": "harness_create_provider_connect",
         "summary": "Start an interactive provider login for the team.",
@@ -8116,7 +8116,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"force_reconnect\":false}' \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"force_reconnect\":false}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}\"",
             "label": "cURL"
           }
         ],
@@ -8129,7 +8129,7 @@
         ]
       }
     },
-    "/v2/agents/auth/{provider}/poll": {
+    "/v2/harness-runtime/auth/{provider}/poll": {
       "get": {
         "operationId": "harness_get_provider_connect",
         "summary": "Check whether a provider login has finished.",
@@ -8244,7 +8244,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/poll?poll_url=https%3A%2F%2Fexample.invalid%2Fpoll\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/poll?poll_url=https%3A%2F%2Fexample.invalid%2Fpoll\"",
             "label": "cURL"
           }
         ],
@@ -8257,7 +8257,7 @@
         ]
       }
     },
-    "/v2/agents/auth/{provider}/connections": {
+    "/v2/harness-runtime/auth/{provider}/connections": {
       "get": {
         "operationId": "harness_list_provider_connections",
         "summary": "List the team's connections for a provider.",
@@ -8409,7 +8409,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/connections\"",
             "label": "cURL"
           }
         ],
@@ -8424,7 +8424,7 @@
       "post": {
         "operationId": "harness_create_provider_connection",
         "summary": "Create a provider connection for one actor.",
-        "description": "Creates the connection `{provider}` will use for `user_id`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. Each actor has at most one active, pending, or expired connection per provider. If `user_id` already has one, the request fails with `409`. Find that connection's id with `GET /v2/agents/auth/{provider}/connections?user_id=...`, then resume or restart it with `POST /v2/agents/auth/{provider}/connections/{connection_id}/reconnect`, which keeps its scopes. Revoked connections do not count toward the limit, and list responses omit them. If the only connection `user_id` has for `{provider}` is revoked, for example by `DELETE`, create starts it again under the same connection id, with the scopes in this request. To change a connection's scopes, delete it and then create it. A successful create returns the connection as `pending`, with an `authorization` object for the interactive step. No token is returned. `github` is the provider served today.",
+        "description": "Creates the connection `{provider}` will use for `user_id`. `user_id` is the actor identifier the connection acts for, not a DigitalOcean user id. Each actor has at most one active, pending, or expired connection per provider. If `user_id` already has one, the request fails with `409`. Find that connection's id with `GET /v2/harness-runtime/auth/{provider}/connections?user_id=...`, then resume or restart it with `POST /v2/harness-runtime/auth/{provider}/connections/{connection_id}/reconnect`, which keeps its scopes. Revoked connections do not count toward the limit, and list responses omit them. If the only connection `user_id` has for `{provider}` is revoked, for example by `DELETE`, create starts it again under the same connection id, with the scopes in this request. To change a connection's scopes, delete it and then create it. A successful create returns the connection as `pending`, with an `authorization` object for the interactive step. No token is returned. `github` is the provider served today.",
         "tags": [
           "Harness Runtime"
         ],
@@ -8555,7 +8555,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"user_id\":\"octocat\"}' \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"user_id\":\"octocat\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/connections\"",
             "label": "cURL"
           }
         ],
@@ -8568,7 +8568,7 @@
         ]
       }
     },
-    "/v2/agents/auth/{provider}/connections/{connection_id}": {
+    "/v2/harness-runtime/auth/{provider}/connections/{connection_id}": {
       "get": {
         "operationId": "harness_get_provider_connection",
         "summary": "Read one provider connection.",
@@ -8662,7 +8662,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/connections/{connection_id}\"",
             "label": "cURL"
           }
         ],
@@ -8788,7 +8788,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}\"",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/connections/{connection_id}\"",
             "label": "cURL"
           }
         ],
@@ -8801,7 +8801,7 @@
         ]
       }
     },
-    "/v2/agents/auth/{provider}/connections/{connection_id}/reconnect": {
+    "/v2/harness-runtime/auth/{provider}/connections/{connection_id}/reconnect": {
       "post": {
         "operationId": "harness_post_provider_connection_reconnect",
         "summary": "Start a fresh login for an existing connection.",
@@ -8895,7 +8895,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/auth/{provider}/connections/{connection_id}/reconnect\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/auth/{provider}/connections/{connection_id}/reconnect\"",
             "label": "cURL"
           }
         ],
@@ -8908,7 +8908,7 @@
         ]
       }
     },
-    "/v2/agents/image-messages": {
+    "/v2/harness-runtime/image-messages": {
       "get": {
         "operationId": "harness_list_image_messages",
         "summary": "List sandbox-image notices for the team.",
@@ -9061,7 +9061,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/image-messages\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/image-messages\"",
             "label": "cURL"
           }
         ],
@@ -9074,7 +9074,7 @@
         ]
       }
     },
-    "/v2/agents/configs": {
+    "/v2/harness-runtime/configs": {
       "get": {
         "operationId": "harness_list_configs",
         "summary": "List active Environment Configs for the caller's team.",
@@ -9181,7 +9181,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/configs\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs\"",
             "label": "cURL"
           }
         ],
@@ -9333,7 +9333,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"support-agent\",\"manifest_yaml\":\"apiVersion: agents.digitalocean.com/v1alpha1\\nkind: Agent\\nspec:\\n  runtime:\\n    adapter: opencode\\n\"}' \\\n  \"https://api.digitalocean.com/v2/agents/configs\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"support-agent\",\"manifest_yaml\":\"apiVersion: agents.digitalocean.com/v1alpha1\\nkind: Agent\\nspec:\\n  runtime:\\n    adapter: opencode\\n\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs\"",
             "label": "cURL"
           }
         ],
@@ -9346,7 +9346,7 @@
         ]
       }
     },
-    "/v2/agents/configs/{config_id}": {
+    "/v2/harness-runtime/configs/{config_id}": {
       "get": {
         "operationId": "harness_get_config",
         "summary": "Get an active Environment Config and its environment spec.",
@@ -9430,7 +9430,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/configs/019fb39c-14d9-7080-933e-b9b90e25acda\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs/019fb39c-14d9-7080-933e-b9b90e25acda\"",
             "label": "cURL"
           }
         ],
@@ -9539,7 +9539,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/configs/019fb39c-14d9-7080-933e-b9b90e25acda\"",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs/019fb39c-14d9-7080-933e-b9b90e25acda\"",
             "label": "cURL"
           }
         ],
@@ -9552,7 +9552,7 @@
         ]
       }
     },
-    "/v2/agents/configs/{config_id}/clone": {
+    "/v2/harness-runtime/configs/{config_id}/clone": {
       "post": {
         "operationId": "harness_create_config_clone",
         "summary": "Clone an Environment Config under a new name.",
@@ -9710,7 +9710,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"support-agent-v2\"}' \\\n  \"https://api.digitalocean.com/v2/agents/configs/{config_id}/clone\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"support-agent-v2\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs/{config_id}/clone\"",
             "label": "cURL"
           }
         ],
@@ -9723,11 +9723,11 @@
         ]
       }
     },
-    "/v2/agents/configs/{config_id}/sessions": {
+    "/v2/harness-runtime/configs/{config_id}/sessions": {
       "get": {
         "operationId": "harness_list_config_sessions",
         "summary": "List the sessions created from one Environment Config.",
-        "description": "Enumerates the caller's team sessions whose session was created from this durable Environment Config. Keyset-paginated on an opaque cursor, newest first, same shape and status semantics as GET /v2/agents/sessions.",
+        "description": "Enumerates the caller's team sessions whose session was created from this durable Environment Config. Keyset-paginated on an opaque cursor, newest first, same shape and status semantics as GET /v2/harness-runtime/sessions.",
         "tags": [
           "Harness Runtime"
         ],
@@ -9855,7 +9855,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/configs/019fb39c-14d9-7080-933e-b9b90e25acda/sessions\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/configs/019fb39c-14d9-7080-933e-b9b90e25acda/sessions\"",
             "label": "cURL"
           }
         ],
@@ -9930,7 +9930,7 @@
         ]
       }
     },
-    "/v2/agents/sessions": {
+    "/v2/harness-runtime/sessions": {
       "get": {
         "operationId": "harness_list_sessions",
         "summary": "ListSessions enumerates sessions for the caller's tenant.",
@@ -10061,7 +10061,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions\"",
             "label": "cURL"
           }
         ],
@@ -10335,7 +10335,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"demo-agent\",\"config_id\":\"019fb39c-14d9-7080-933e-b9b90e25acda\"}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"demo-agent\",\"config_id\":\"019fb39c-14d9-7080-933e-b9b90e25acda\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions\"",
             "label": "cURL"
           }
         ],
@@ -10348,7 +10348,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/policy/validate": {
+    "/v2/harness-runtime/sessions/policy/validate": {
       "post": {
         "operationId": "harness_validate_session_policy",
         "summary": "ValidatePolicy checks a manifest's tool-permission policy against the agent's capabilities without creating a session.",
@@ -10429,7 +10429,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/policy/validate\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/policy/validate\"",
             "label": "cURL"
           }
         ],
@@ -10442,7 +10442,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/sandbox/sizes": {
+    "/v2/harness-runtime/sessions/sandbox/sizes": {
       "get": {
         "operationId": "harness_list_session_sandbox_sizes",
         "summary": "ListSandboxSizes returns the customer-selectable sandbox (microVM) size catalog.",
@@ -10491,7 +10491,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/sandbox/sizes\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/sandbox/sizes\"",
             "label": "cURL"
           }
         ],
@@ -10504,7 +10504,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}": {
+    "/v2/harness-runtime/sessions/{session_id}": {
       "delete": {
         "operationId": "harness_delete_session",
         "summary": "DestroySession tears down the sandbox and marks the session DESTROYED.",
@@ -10612,7 +10612,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}\"",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}\"",
             "label": "cURL"
           }
         ],
@@ -10727,7 +10727,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}\"",
             "label": "cURL"
           }
         ],
@@ -10958,7 +10958,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"manifest_yaml\":\"tools:\\n  - do.actions:\\n      tools: [toolbelt:read-only@1]\\n\"}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}\"",
+            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"manifest_yaml\":\"tools:\\n  - do.actions:\\n      tools: [toolbelt:read-only@1]\\n\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}\"",
             "label": "cURL"
           }
         ],
@@ -10971,7 +10971,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/checkpoints": {
+    "/v2/harness-runtime/sessions/{session_id}/checkpoints": {
       "get": {
         "operationId": "harness_list_session_checkpoints",
         "summary": "ListCheckpoints enumerates a session's checkpoints, newest first.",
@@ -11119,7 +11119,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints\"",
             "label": "cURL"
           }
         ],
@@ -11308,7 +11308,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"label\":\"before-refactor\"}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"label\":\"before-refactor\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints\"",
             "label": "cURL"
           }
         ],
@@ -11321,7 +11321,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}": {
+    "/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}": {
       "get": {
         "operationId": "harness_get_session_checkpoint",
         "summary": "GetCheckpoint returns the current snapshot of a checkpoint.",
@@ -11436,7 +11436,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}\"",
             "label": "cURL"
           }
         ],
@@ -11562,7 +11562,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}\"",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}\"",
             "label": "cURL"
           }
         ],
@@ -11575,7 +11575,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages": {
+    "/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages": {
       "get": {
         "operationId": "harness_get_checkpoint_image_messages",
         "summary": "Read sandbox-image notices for one checkpoint.",
@@ -11725,7 +11725,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}/image-messages\"",
             "label": "cURL"
           }
         ],
@@ -11738,7 +11738,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/rollback": {
+    "/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}/rollback": {
       "post": {
         "operationId": "harness_revert_session_checkpoint",
         "summary": "RollbackToCheckpoint rewinds a session to a checkpoint.",
@@ -11916,7 +11916,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/checkpoints/{checkpoint_id}/rollback\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/checkpoints/{checkpoint_id}/rollback\"",
             "label": "cURL"
           }
         ],
@@ -11929,7 +11929,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/fork": {
+    "/v2/harness-runtime/sessions/{session_id}/fork": {
       "post": {
         "operationId": "harness_create_session_fork",
         "summary": "ForkSession creates child sessions from a checkpoint of this session.",
@@ -12107,7 +12107,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"count\":1}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/fork\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"count\":1}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/fork\"",
             "label": "cURL"
           }
         ],
@@ -12120,7 +12120,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/hitl/{request_id}": {
+    "/v2/harness-runtime/sessions/{session_id}/hitl/{request_id}": {
       "post": {
         "operationId": "harness_post_session_hitl",
         "summary": "ResolveHITL records the user's decision on a pending HITL request.",
@@ -12291,7 +12291,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/hitl/{request_id}\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/hitl/{request_id}\"",
             "label": "cURL"
           }
         ],
@@ -12304,7 +12304,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/cancel": {
+    "/v2/harness-runtime/sessions/{session_id}/cancel": {
       "post": {
         "operationId": "harness_cancel_session_turn",
         "summary": "Cancel the agent turn in flight.",
@@ -12481,7 +12481,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"run_id\":\"run_example\"}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/cancel\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"run_id\":\"run_example\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/cancel\"",
             "label": "cURL"
           }
         ],
@@ -12494,7 +12494,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/image-messages": {
+    "/v2/harness-runtime/sessions/{session_id}/image-messages": {
       "get": {
         "operationId": "harness_get_session_image_messages",
         "summary": "Read sandbox-image notices for one session.",
@@ -12633,7 +12633,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/image-messages\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/image-messages\"",
             "label": "cURL"
           }
         ],
@@ -12646,7 +12646,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/input": {
+    "/v2/harness-runtime/sessions/{session_id}/input": {
       "post": {
         "operationId": "harness_create_session_input",
         "summary": "SendInput delivers a user chat message into the session.",
@@ -12823,7 +12823,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/input\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/input\"",
             "label": "cURL"
           }
         ],
@@ -12836,7 +12836,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/pause": {
+    "/v2/harness-runtime/sessions/{session_id}/pause": {
       "post": {
         "operationId": "harness_post_session_pause",
         "summary": "PauseSession freezes the session's microVM sandbox.",
@@ -13007,7 +13007,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/pause\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/pause\"",
             "label": "cURL"
           }
         ],
@@ -13020,7 +13020,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/resume": {
+    "/v2/harness-runtime/sessions/{session_id}/resume": {
       "post": {
         "operationId": "harness_post_session_resume",
         "summary": "ResumeSession explicitly thaws a PAUSED session's microVM sandbox.",
@@ -13191,7 +13191,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/resume\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/resume\"",
             "label": "cURL"
           }
         ],
@@ -13204,11 +13204,11 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/sandbox/exec": {
+    "/v2/harness-runtime/sessions/{session_id}/sandbox/exec": {
       "post": {
         "operationId": "harness_post_session_sandbox_exec",
         "summary": "ExecInSandbox runs a one-shot command inside the session's sandbox.",
-        "description": "Runs `argv` directly in the guest (no shell). Stdout/stderr are buffered and capped at 1 MiB each;\ntruncation is indicated via response headers when present. A non-zero exit code is still HTTP 200.",
+        "description": "Runs `argv` directly in the guest (no shell). The default response is buffered JSON.\nStdout and stderr are capped at 1 MiB each; truncation is indicated via response headers when present.\nA non-zero exit code is still HTTP 200.\nWith Accept `text/event-stream` or `stream=1`, the response is an event stream of stdout, stderr, and exit.\nSet `keep_stdin_open` to leave the process stdin open. The stream then starts with `event: started` and an `exec_id`.\nLater bytes are POST `/v2/harness-runtime/sessions/{session_id}/sandbox/exec/{exec_id}/stdin`.\n`keep_stdin_open` without the event stream returns 400.\nIf the session cannot accept interactive stdin, the call returns 409 before any event-stream header.",
         "tags": [
           "Harness Runtime"
         ],
@@ -13259,7 +13259,7 @@
             }
           },
           "400": {
-            "description": "Invalid argv or request body.",
+            "description": "Invalid argv, env, or request body, or keep_stdin_open without an event stream.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -13328,7 +13328,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Session is not in a state that can run exec.",
+            "description": "Session is not in a state that can run exec, or interactive stdin is not available for this session.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -13382,7 +13382,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"argv\":[\"uname\",\"-a\"]}' \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/sandbox/exec\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"argv\":[\"uname\",\"-a\"]}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/sandbox/exec\"",
             "label": "cURL"
           }
         ],
@@ -13395,7 +13395,227 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/download": {
+    "/v2/harness-runtime/sessions/{session_id}/sandbox/exec/{exec_id}/stdin": {
+      "post": {
+        "operationId": "harness_post_session_sandbox_exec_stdin",
+        "summary": "Write one chunk of stdin to a command started with keep_stdin_open.",
+        "description": "`offset` is required and is the count of stdin bytes already accepted.\nAn equal offset appends. A lower offset retries and trims the overlap. A higher offset returns 409.\n`data` is base64. `eof` closes stdin. A write needs `data`, `eof`, or both. Each write is at most 1 MiB.\nThe exec id comes from the `started` event on the exec stream.\nAn unknown or finished exec returns 404.\nA closed stdin, an offset gap, or a session that cannot accept interactive stdin returns 409.",
+        "tags": [
+          "Harness Runtime"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "description": "The session UUID.",
+            "schema": {
+              "type": "string",
+              "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            },
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          {
+            "in": "path",
+            "name": "exec_id",
+            "required": true,
+            "description": "The exec id from the started event.",
+            "schema": {
+              "type": "string",
+              "example": "01932a6e-7b4c-7d2e-8f10-1a2b3c4d5e6f"
+            },
+            "example": "01932a6e-7b4c-7d2e-8f10-1a2b3c4d5e6f"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/write_exec_stdin_request"
+              }
+            }
+          },
+          "description": "Stdin bytes to append, or eof."
+        },
+        "responses": {
+          "200": {
+            "description": "The write was accepted. offset is the new count of stdin bytes accepted.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/write_exec_stdin_response"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, missing offset, bad base64, neither data nor eof, or more than 1 MiB.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "402": {
+            "description": "The team is blocked by the prepayment gate.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Session belongs to another team.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found, or the exec is unknown or already finished.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stdin is already closed, the offset skips ahead, the session cannot be operated on, or interactive stdin is not available for this session.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "This session is unavailable; contact support.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "bash",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"data\":\"aGVsbG8K\",\"offset\":0}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/sandbox/exec/{exec_id}/stdin\"",
+            "label": "cURL"
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "agent_harness_session:operate"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/harness-runtime/sessions/{session_id}/workspace/download": {
       "get": {
         "operationId": "harness_get_session_workspace_download",
         "summary": "Download a file or tar archive from the session's sandbox workspace.",
@@ -13628,7 +13848,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/download\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/download\"",
             "label": "cURL"
           }
         ],
@@ -13641,7 +13861,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/transfers": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/transfers": {
       "post": {
         "operationId": "harness_create_session_workspace_transfer",
         "summary": "Start a staged (large-file) workspace transfer.",
@@ -13943,7 +14163,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/transfers\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/transfers\"",
             "label": "cURL"
           }
         ],
@@ -13956,7 +14176,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}": {
       "get": {
         "operationId": "harness_get_session_workspace_transfer",
         "summary": "Get the status of a staged workspace transfer.",
@@ -14092,7 +14312,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}\"",
             "label": "cURL"
           }
         ],
@@ -14105,7 +14325,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/cancel": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/cancel": {
       "post": {
         "operationId": "harness_cancel_session_workspace_transfer",
         "summary": "Cancel a staged workspace transfer.",
@@ -14258,7 +14478,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/cancel\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/cancel\"",
             "label": "cURL"
           }
         ],
@@ -14271,7 +14491,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/commit": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/commit": {
       "post": {
         "operationId": "harness_commit_session_workspace_transfer",
         "summary": "Finalize a staged upload.",
@@ -14466,7 +14686,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/commit\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/commit\"",
             "label": "cURL"
           }
         ],
@@ -14479,7 +14699,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/part-upload-urls": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/part-upload-urls": {
       "post": {
         "operationId": "harness_create_session_workspace_part_upload_urls",
         "summary": "Mint presigned PUT URLs for one or more multipart upload parts.",
@@ -14681,7 +14901,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/transfers/{transfer_id}/part-upload-urls\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/transfers/{transfer_id}/part-upload-urls\"",
             "label": "cURL"
           }
         ],
@@ -14694,7 +14914,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/workspace/upload": {
+    "/v2/harness-runtime/sessions/{session_id}/workspace/upload": {
       "post": {
         "operationId": "harness_create_session_workspace_upload",
         "summary": "Upload a file or tar archive into the session's sandbox workspace.",
@@ -14991,7 +15211,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/workspace/upload\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/workspace/upload\"",
             "label": "cURL"
           }
         ],
@@ -15004,7 +15224,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/events": {
+    "/v2/harness-runtime/sessions/{session_id}/events": {
       "get": {
         "operationId": "harness_get_session_events",
         "summary": "StreamSessionEvents opens the session's Server-Sent Events feed.",
@@ -15229,7 +15449,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -N \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Accept: text/event-stream\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/events?replay_only=true\"",
+            "source": "curl -N \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Accept: text/event-stream\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/events?replay_only=true\"",
             "label": "cURL"
           }
         ],
@@ -15242,11 +15462,11 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/port-forward/{port}": {
+    "/v2/harness-runtime/sessions/{session_id}/port-forward/{port}": {
       "get": {
         "operationId": "harness_get_session_port_forward",
         "summary": "PortForwardSession opens a WebSocket tunnel to a guest TCP port.",
-        "description": "Upgrades the request to a WebSocket and bridges it to one TCP connection on the session sandbox's\nguest `port`. Binary frames carry the opaque byte stream in both directions; the server closes with\na descriptive WebSocket close code when the tunnel ends. This is the raw TCP tunnel; browser clients\nreaching the in-guest OpenHands Agent Server use the ingress URL\n(`GET /v2/agents/sessions/{session_id}/ingress`), which has replaced this bridge for them.\n\nWebSocket is not expressible in OpenAPI; this documents the GET that initiates the upgrade handshake\n(HTTP 101 Switching Protocols). The handler dials the guest before upgrading, so a PAUSED session is\nwoken and served rather than rejected. `port` must be between 1024 and 65535. A request without the\nWebSocket upgrade headers is answered 400 by the handshake layer.",
+        "description": "Upgrades the request to a WebSocket and bridges it to one TCP connection on the session sandbox's\nguest `port`. Binary frames carry the opaque byte stream in both directions; the server closes with\na descriptive WebSocket close code when the tunnel ends. This is the raw TCP tunnel; browser clients\nreaching the in-guest OpenHands Agent Server use the ingress URL\n(`GET /v2/harness-runtime/sessions/{session_id}/ingress`), which has replaced this bridge for them.\n\nWebSocket is not expressible in OpenAPI; this documents the GET that initiates the upgrade handshake\n(HTTP 101 Switching Protocols). The handler dials the guest before upgrading, so a PAUSED session is\nwoken and served rather than rejected. `port` must be between 1024 and 65535. A request without the\nWebSocket upgrade headers is answered 400 by the handshake layer.",
         "tags": [
           "Harness Runtime"
         ],
@@ -15437,7 +15657,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -i -N \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Connection: Upgrade\" \\\n  -H \"Upgrade: websocket\" \\\n  -H \"Sec-WebSocket-Version: 13\" \\\n  -H \"Sec-WebSocket-Key: $(openssl rand -base64 16)\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/port-forward/8000\"",
+            "source": "curl -i -N \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Connection: Upgrade\" \\\n  -H \"Upgrade: websocket\" \\\n  -H \"Sec-WebSocket-Version: 13\" \\\n  -H \"Sec-WebSocket-Key: $(openssl rand -base64 16)\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/port-forward/8000\"",
             "label": "cURL"
           }
         ],
@@ -15450,7 +15670,7 @@
         ]
       }
     },
-    "/v2/agents/sessions/{session_id}/ingress": {
+    "/v2/harness-runtime/sessions/{session_id}/ingress": {
       "get": {
         "operationId": "harness_get_session_ingress",
         "summary": "GetIngressURL returns the public HTTPS URL of the session's OpenHands Agent Server.",
@@ -15596,7 +15816,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/sessions/{session_id}/ingress\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/sessions/{session_id}/ingress\"",
             "label": "cURL"
           }
         ],
@@ -15609,7 +15829,7 @@
         ]
       }
     },
-    "/v2/agents/templates": {
+    "/v2/harness-runtime/templates": {
       "get": {
         "operationId": "harness_list_templates",
         "summary": "ListTeamTemplates returns the caller's team custom templates.",
@@ -15680,7 +15900,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/templates\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates\"",
             "label": "cURL"
           }
         ],
@@ -15790,7 +16010,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"my-template\",\"base_template\":\"coding-base\",\"source_oci_ref\":\"registry.example.com/team/image:tag\"}' \\\n  \"https://api.digitalocean.com/v2/agents/templates\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"my-template\",\"base_template\":\"coding-base\",\"source_oci_ref\":\"registry.example.com/team/image:tag\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates\"",
             "label": "cURL"
           }
         ],
@@ -15803,7 +16023,7 @@
         ]
       }
     },
-    "/v2/agents/templates/{template_id}": {
+    "/v2/harness-runtime/templates/{template_id}": {
       "get": {
         "operationId": "harness_get_template",
         "summary": "GetTemplate returns a team custom template by public id.",
@@ -15866,7 +16086,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/templates/{template_id}\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates/{template_id}\"",
             "label": "cURL"
           }
         ],
@@ -15972,7 +16192,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"source_oci_ref\":\"registry.example.com/team/image:v2\"}' \\\n  \"https://api.digitalocean.com/v2/agents/templates/{template_id}\"",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"source_oci_ref\":\"registry.example.com/team/image:v2\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates/{template_id}\"",
             "label": "cURL"
           }
         ],
@@ -16046,7 +16266,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/templates/{template_id}\"",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates/{template_id}\"",
             "label": "cURL"
           }
         ],
@@ -16059,7 +16279,7 @@
         ]
       }
     },
-    "/v2/agents/templates/{template_id}/builds": {
+    "/v2/harness-runtime/templates/{template_id}/builds": {
       "get": {
         "operationId": "harness_list_template_builds",
         "summary": "ListTemplateBuilds returns build history for a template.",
@@ -16145,7 +16365,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/templates/{template_id}/builds\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates/{template_id}/builds\"",
             "label": "cURL"
           }
         ],
@@ -16158,7 +16378,7 @@
         ]
       }
     },
-    "/v2/agents/templates/{template_id}/builds/{build_id}": {
+    "/v2/harness-runtime/templates/{template_id}/builds/{build_id}": {
       "get": {
         "operationId": "harness_get_template_build",
         "summary": "GetTemplateBuild returns a single template build.",
@@ -16233,7 +16453,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/templates/{template_id}/builds/{build_id}\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/templates/{template_id}/builds/{build_id}\"",
             "label": "cURL"
           }
         ],
@@ -16246,7 +16466,7 @@
         ]
       }
     },
-    "/v2/agents/triggers": {
+    "/v2/harness-runtime/triggers": {
       "get": {
         "operationId": "harness_list_triggers",
         "summary": "ListTriggers enumerates the calling team's triggers.",
@@ -16359,7 +16579,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers?page_size=50\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers?page_size=50\"",
             "label": "cURL"
           }
         ],
@@ -16553,7 +16773,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"kind\":\"webhook\",\"name\":\"nightly-deploy-check\",\"session_mode\":\"fresh\",\"prompt_template\":\"Review the latest push.\",\"output\":{\"mode\":\"none\"},\"session_template\":\"...\",\"webhook\":{\"provider\":\"github\"}}' \\\n  \"https://api.digitalocean.com/v2/agents/triggers\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"kind\":\"webhook\",\"name\":\"nightly-deploy-check\",\"session_mode\":\"fresh\",\"prompt_template\":\"Review the latest push.\",\"output\":{\"mode\":\"none\"},\"session_template\":\"...\",\"webhook\":{\"provider\":\"github\"}}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers\"",
             "label": "cURL"
           }
         ],
@@ -16566,7 +16786,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/by-session/{session_id}": {
+    "/v2/harness-runtime/triggers/by-session/{session_id}": {
       "get": {
         "operationId": "harness_get_trigger_by_session",
         "summary": "Get the newest trigger bound to a session, or the trigger of its newest execution.",
@@ -16628,7 +16848,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/by-session/{session_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/by-session/{session_id}\"",
             "label": "cURL"
           }
         ],
@@ -16641,7 +16861,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/reusable-sessions": {
+    "/v2/harness-runtime/triggers/reusable-sessions": {
       "get": {
         "operationId": "harness_list_reusable_sessions",
         "summary": "ListReusableSessions lists the team's PAUSED sessions for the reuse picker.",
@@ -16713,7 +16933,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/reusable-sessions?page_size=50\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/reusable-sessions?page_size=50\"",
             "label": "cURL"
           }
         ],
@@ -16726,7 +16946,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}": {
+    "/v2/harness-runtime/triggers/{trigger_id}": {
       "get": {
         "operationId": "harness_get_trigger",
         "summary": "GetTrigger returns a single trigger by id.",
@@ -16788,7 +17008,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}\"",
             "label": "cURL"
           }
         ],
@@ -16998,7 +17218,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"status\":\"paused\"}' \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}\"",
+            "source": "curl -X PATCH \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"status\":\"paused\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}\"",
             "label": "cURL"
           }
         ],
@@ -17064,7 +17284,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}\"",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}\"",
             "label": "cURL"
           }
         ],
@@ -17077,7 +17297,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}/executions": {
+    "/v2/harness-runtime/triggers/{trigger_id}/executions": {
       "get": {
         "operationId": "harness_list_trigger_executions",
         "summary": "ListTriggerExecutions returns a trigger's execution history.",
@@ -17173,7 +17393,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}/executions?page_size=50\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}/executions?page_size=50\"",
             "label": "cURL"
           }
         ],
@@ -17186,7 +17406,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}/executions/{execution_id}": {
+    "/v2/harness-runtime/triggers/{trigger_id}/executions/{execution_id}": {
       "get": {
         "operationId": "harness_get_trigger_execution",
         "summary": "GetTriggerExecution returns a single execution, including its payload.",
@@ -17259,7 +17479,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}/executions/{execution_id}\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}/executions/{execution_id}\"",
             "label": "cURL"
           }
         ],
@@ -17272,11 +17492,11 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}/executions/{execution_id}/cancel": {
+    "/v2/harness-runtime/triggers/{trigger_id}/executions/{execution_id}/cancel": {
       "post": {
         "operationId": "harness_cancel_trigger_execution",
         "summary": "CancelExecution ends a running execution and frees the trigger's in-flight slot.",
-        "description": "Fails the execution and frees the trigger's in-flight slot. A fresh-mode session is destroyed outright. A reuse-mode session is only paused, not stopped - harness has no run-interrupt call, so the agent's turn may still be in flight server-side; this frees the queue, not necessarily the agent's work. A non-running execution is a no-op that still returns 200.",
+        "description": "Fails the execution and frees the trigger's in-flight slot or session lock. A fresh-mode session is destroyed. In reuse mode the agent's current turn is cancelled first, and the execution is ended only once the agent confirms the turn is over; until then it stays running and keeps its lock (see 409 and 503). The failure reason names the cancelling user. A non-running execution is a no-op that still returns 200.",
         "tags": [
           "Harness Runtime"
         ],
@@ -17344,7 +17564,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Execution has not started a run yet (the worker's dispatch is still in flight); retry shortly, or pass force=true.",
+            "description": "Execution has not started a run yet (the worker's dispatch is still in flight); retry shortly, or pass force=true. Also returned in reuse mode when the agent cannot interrupt its turn. The run is still in progress and the execution stays running.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -17370,6 +17590,27 @@
           "500": {
             "$ref": "#/components/responses/server_error"
           },
+          "503": {
+            "description": "Reuse mode. The agent did not confirm the cancel (timeout, or the agent could not be reached). The run may still be in progress and the execution stays running. Retry.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                }
+              }
+            }
+          },
           "default": {
             "$ref": "#/components/responses/unexpected_error"
           }
@@ -17377,7 +17618,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}/executions/{execution_id}/cancel\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}/executions/{execution_id}/cancel\"",
             "label": "cURL"
           }
         ],
@@ -17390,7 +17631,7 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}/rotate-secret": {
+    "/v2/harness-runtime/triggers/{trigger_id}/rotate-secret": {
       "post": {
         "operationId": "harness_post_trigger_rotate_secret",
         "summary": "RotateTriggerSecret issues a new webhook secret.",
@@ -17506,7 +17747,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}/rotate-secret?grace_period_seconds=300\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}/rotate-secret?grace_period_seconds=300\"",
             "label": "cURL"
           }
         ],
@@ -17519,11 +17760,11 @@
         ]
       }
     },
-    "/v2/agents/triggers/{trigger_id}/webhook": {
+    "/v2/harness-runtime/triggers/{trigger_id}/webhook": {
       "post": {
         "operationId": "harness_post_trigger_webhook",
         "summary": "ReceiveTriggerWebhook accepts a signed delivery from an external system.",
-        "description": "The one public, un-team-authenticated endpoint. There is NO DO bearer token: the caller is the\ncustomer's external system. Authentication is the per-trigger HMAC secret, verified on every\ndelivery; edge rate-limiting is mandatory.\n\nThe request body is the provider's RAW body, forwarded verbatim (the HMAC is computed over the exact\nbytes received); Content-Type is provider-defined and passed through. The signature header depends on\nthe trigger's provider:\n  - github: `X-Hub-Signature-256: sha256=<hex>` (HMAC-SHA256 of the raw body)\n  - gitlab: `X-Gitlab-Token: <token>` (plaintext token equality; GitLab does not sign)\n  - custom: `X-DigitalOcean-Signature: t=<unix>,v1=<hex>` (HMAC-SHA256 of `{unix}.{raw body}`;\n    `do-signature` is also accepted as a transitional alias)\n\nOn success (including a provider retry that dedupes to an existing firing) it returns 202 with the\nexecution_id. A delivery to a paused trigger returns 202 with no body and queues nothing (deliberately\nnot 409, so providers do not auto-disable the webhook after repeated non-2xx).",
+        "description": "The one public, un-team-authenticated endpoint. There is NO DO bearer token: the caller is the\ncustomer's external system. Authentication is the per-trigger HMAC secret, verified on every\ndelivery; edge rate-limiting is mandatory.\n\nThe request body is the provider's RAW body, forwarded verbatim (the HMAC is computed over the exact\nbytes received); Content-Type is provider-defined and passed through. The signature header depends on\nthe trigger's provider:\n  - github: `X-Hub-Signature-256: sha256=<hex>` (HMAC-SHA256 of the raw body)\n  - gitlab: `X-Gitlab-Token: <token>` (plaintext token equality; GitLab does not sign)\n  - custom: `X-DigitalOcean-Signature: t=<unix>,v1=<hex>` (HMAC-SHA256 of `{unix}.{raw body}`;\n    `do-signature` is also accepted as a transitional alias)\n\nOn success (including a provider retry that dedupes to an existing firing) it returns 202 with the\nexecution_id. A delivery to a paused trigger returns 202 with no body and queues nothing (deliberately\nnot 409, so providers do not auto-disable the webhook after repeated non-2xx).\n\nBoth `/v2/agents/triggers/{trigger_id}/webhook` and\n`/v2/harness-runtime/triggers/{trigger_id}/webhook` are accepted and keep working\nindefinitely. Paste the `webhook_url` returned on the trigger into the external system\nunchanged.",
         "tags": [
           "Harness Runtime"
         ],
@@ -17632,14 +17873,14 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-DigitalOcean-Signature: t=1700000000,v1=<hmac-sha256-hex>\" \\\n  -d '{\"event\":\"push\",\"ref\":\"refs/heads/main\"}' \\\n  \"https://api.digitalocean.com/v2/agents/triggers/{trigger_id}/webhook\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-DigitalOcean-Signature: t=1700000000,v1=<hmac-sha256-hex>\" \\\n  -d '{\"event\":\"push\",\"ref\":\"refs/heads/main\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/triggers/{trigger_id}/webhook\"",
             "label": "cURL"
           }
         ],
         "security": []
       }
     },
-    "/v2/agents/webhook-providers": {
+    "/v2/harness-runtime/webhook-providers": {
       "get": {
         "operationId": "harness_list_webhook_providers",
         "summary": "ListWebhookProviders lists supported webhook providers for the create-trigger UI.",
@@ -17685,7 +17926,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/webhook-providers\"",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/webhook-providers\"",
             "label": "cURL"
           }
         ],
@@ -17698,7 +17939,7 @@
         ]
       }
     },
-    "/v2/agents/workspaces": {
+    "/v2/harness-runtime/workspaces": {
       "get": {
         "operationId": "harness_list_workspaces",
         "summary": "List the team's persistent workspaces.",
@@ -17864,7 +18105,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces?state=AVAILABLE\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/workspaces?state=AVAILABLE\"",
             "label": "cURL"
           }
         ],
@@ -18092,7 +18333,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Idempotency-Key: 7f9c2ba4-e88f-4c2a-9d1e-0b6a1f3c5d21\" \\\n  -d '{\"size_limit_gib\":10,\"name\":\"notes\"}' \\\n  \"https://api.digitalocean.com/v2/agents/workspaces\"",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -H \"Idempotency-Key: 7f9c2ba4-e88f-4c2a-9d1e-0b6a1f3c5d21\" \\\n  -d '{\"size_limit_gib\":10,\"name\":\"notes\"}' \\\n  \"https://api.digitalocean.com/v2/harness-runtime/workspaces\"",
             "label": "cURL"
           }
         ],
@@ -18105,7 +18346,7 @@
         ]
       }
     },
-    "/v2/agents/workspaces/{workspace_id}": {
+    "/v2/harness-runtime/workspaces/{workspace_id}": {
       "get": {
         "operationId": "harness_get_workspace",
         "summary": "Get a persistent workspace.",
@@ -18230,7 +18471,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
+            "source": "curl -X GET \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
             "label": "cURL"
           }
         ],
@@ -18380,7 +18621,7 @@
         "x-codeSamples": [
           {
             "lang": "bash",
-            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/agents/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
+            "source": "curl -X DELETE \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/harness-runtime/workspaces/019a2f4e-8c1d-7b3a-9e5f-2d6c8a1b4e70\"",
             "label": "cURL"
           }
         ],
@@ -38323,7 +38564,7 @@
         "summary": "List all MicroVMs",
         "description": "To list all of the MicroVMs on your team, send a GET request to `/v2/microvms`.\n\nThe `region`, `name`, and `tag_name` filters combine with AND.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38378,7 +38619,7 @@
         "summary": "Create a MicroVM",
         "description": "To create a MicroVM, send a POST request to `/v2/microvms`.\n\n`name` and `source` are required. Set `source.oci_ref` to create the MicroVM from a\n`linux/amd64` container image, or `source.checkpoint_id` to create it from a checkpoint.\nWith `oci_ref`, `region` and `size` are also required.\n\nA MicroVM created from an image is returned with `state` set to `creating`. Poll\n`GET /v2/microvms/{microvm_id}` until `state` is `running`. A MicroVM created from a\ncheckpoint is usually returned already `running`.\n\nAll settings are fixed at creation. There is no update endpoint.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "requestBody": {
           "required": true,
@@ -38484,7 +38725,7 @@
         "summary": "List MicroVM options",
         "description": "To list the default region, sizes, prices, account limits, and features available to\nyour team, send a GET request to `/v2/microvms/options`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "responses": {
           "200": {
@@ -38524,7 +38765,7 @@
         "summary": "List checkpoints",
         "description": "To list your team's checkpoints, newest first, send a GET request to\n`/v2/microvms/checkpoints`. To list one MicroVM's checkpoints, add the `microvm_id` query\nparameter.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38575,7 +38816,7 @@
         "summary": "Retrieve a checkpoint",
         "description": "To show information about a checkpoint, send a GET request to\n`/v2/microvms/checkpoints/{checkpoint_id}`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38621,7 +38862,7 @@
         "summary": "Delete a checkpoint",
         "description": "To delete a checkpoint, send a DELETE request to `/v2/microvms/checkpoints/{checkpoint_id}`.\nYou can no longer create MicroVMs from a deleted checkpoint.\n\nThe request returns HTTP 400 while the checkpoint is still being captured. A successful\nrequest returns a `204 No Content` status code.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38672,7 +38913,7 @@
         "summary": "Retrieve a MicroVM",
         "description": "To show information about a MicroVM, send a GET request to `/v2/microvms/{microvm_id}`.\n\nThe endpoint is in the `urls` entry with `default` set to `true`. Its `hostname` is empty\nand its `status` is `PENDING` until provisioning finishes.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38718,7 +38959,7 @@
         "summary": "Delete a MicroVM",
         "description": "To delete a MicroVM and the data on its disk, send a DELETE request to\n`/v2/microvms/{microvm_id}`. The MicroVM's checkpoints are not deleted.\n\nA successful request returns a `204 No Content` status code.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38764,7 +39005,7 @@
         "summary": "Update a MicroVM",
         "description": "To change a MicroVM's name or tags, send a PATCH request to\n`/v2/microvms/{microvm_id}`.\n\nThe MicroVM must be running or paused. Omitted fields keep their current\nvalue. Every other field is fixed at create; sending one (for example\n`size` or `region`) is rejected with a `400` status code, and changing it\nmeans creating a new MicroVM.\n\n`tags` replaces the whole tag set: tags not in the list are removed, and an\nempty list removes every tag.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38828,7 +39069,7 @@
         "summary": "Add a URL to a MicroVM",
         "description": "To add a public URL to a MicroVM, send a POST request to\n`/v2/microvms/{microvm_id}/urls`.\n\nThe URL routes to `port`, which must be one of the ports declared at create;\nthe MicroVM's port set cannot change. The call returns once the URL is\nrecorded; its `status` is `PENDING` until the route is published.\n\nThe MicroVM must be running or paused. A MicroVM can have at most 10 URLs,\nthe default one included.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38889,7 +39130,7 @@
         "summary": "Remove a URL from a MicroVM",
         "description": "To remove a public URL from a MicroVM, send a DELETE request to\n`/v2/microvms/{microvm_id}/urls/{url_id}`. The URL stops serving traffic.\nThe system default URL cannot be removed.\n\nA successful request returns a `204 No Content` status code.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -38943,7 +39184,7 @@
         "summary": "Create an access token for a MicroVM",
         "description": "To create an API token that grants access to the public endpoint of one\nMicroVM only, send a POST request to\n`/v2/microvms/{microvm_id}/access_tokens`.\n\nThe token value is returned once, in this response. Save it; list never\nreturns it. To recover a lost token, revoke it and create a new one.\n\nThe token works on every URL of the MicroVM: the default URL and any extra\nURL added with POST `/v2/microvms/{microvm_id}/urls`. This token does not\nrestrict team tokens: team members with `microvm:access` keep their access\nto the MicroVM. A MicroVM can have at most 10 live access tokens. Deleting\nthe MicroVM revokes its tokens.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39005,7 +39246,7 @@
         "summary": "List the access tokens of a MicroVM",
         "description": "To list the live access tokens of a MicroVM, send a GET request to\n`/v2/microvms/{microvm_id}/access_tokens`. Tokens are returned oldest first.\nToken values are never returned. The `id` of an entry revokes the token\nwith DELETE `/v2/microvms/{microvm_id}/access_tokens/{token_id}`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39056,7 +39297,7 @@
         "summary": "Revoke an access token of a MicroVM",
         "description": "To revoke an access token, send a DELETE request to\n`/v2/microvms/{microvm_id}/access_tokens/{token_id}`. The token stops\nworking at the edge right away and drops out of the list. Revoke is\npermanent; a revoked token cannot be restored.\n\nA successful request returns a `204 No Content` status code.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39107,7 +39348,7 @@
         "summary": "Pause a MicroVM",
         "description": "To pause a MicroVM, send a POST request to `/v2/microvms/{microvm_id}/pause`.\n\nPausing suspends the MicroVM's processes and preserves its memory, files, and processes.\nA paused MicroVM incurs storage charges only. The request returns when the change\ncompletes. Pausing a MicroVM that is already paused succeeds. The request returns HTTP 400\nwhen the MicroVM is `creating`, `terminated`, or `failed`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39158,7 +39399,7 @@
         "summary": "Resume a MicroVM",
         "description": "To resume a paused MicroVM, send a POST request to `/v2/microvms/{microvm_id}/resume`.\n\nThe request returns when the change completes. Resuming a MicroVM that is already running\nsucceeds. The request returns HTTP 400 when the MicroVM is `creating`, `terminated`, or\n`failed`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39209,7 +39450,7 @@
         "summary": "Run a command in a MicroVM",
         "description": "To run a command in a MicroVM's workload container, send a POST request to\n`/v2/microvms/{microvm_id}/exec`.\n\n`argv` runs directly, not through a shell, with standard input closed. If the MicroVM is\npaused and auto-resume is on, the request resumes it and waits until it is running.\n\nA command has 60 seconds to finish. Your team can run 32 commands at once and 60 commands\nper minute. Rejected requests count toward the per-minute limit.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39295,7 +39536,7 @@
         "summary": "Open a console in a MicroVM",
         "description": "To open an interactive `/bin/sh` console in a MicroVM's workload container, open a\nWebSocket connection to `wss://api.digitalocean.com/v2/microvms/{microvm_id}/console`.\n\nSend the API token in the `Authorization` header of the handshake. Browsers cannot set this\nheader, so you cannot open the console from browser JavaScript. The image must include\n`/bin/sh`. A MicroVM can have four consoles open at a time. If the MicroVM is paused and\nauto-resume is on, opening a console resumes it.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39352,7 +39593,7 @@
         "summary": "Upload a file to a MicroVM",
         "description": "To write a file into a MicroVM's workload container, send a PUT request to\n`/v2/microvms/{microvm_id}/files?path=<absolute path>` with the raw file content as the\nrequest body and a `Content-Type` of `application/octet-stream`.\n\nThe file replaces any existing regular file at `path` atomically. The parent directory\nmust already exist. The request must carry a `Content-Length` header; chunked bodies are\nrejected. A body of up to 64 MiB is accepted, and a `Content-Length` of `0` writes an empty\nfile. Pass `sha256` to have the API verify the content before it replaces the target.\n\nYour team needs the `file_transfer` feature. Check `GET /v2/microvms/options`. If the MicroVM\nis paused and auto-resume is on, the request resumes it.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39449,7 +39690,7 @@
         "summary": "Download a file from a MicroVM",
         "description": "To read a file from a MicroVM's workload container, send a GET request to\n`/v2/microvms/{microvm_id}/files?path=<absolute path>`.\n\nThe response body is the raw file content with a `Content-Type` of\n`application/octet-stream`. The `Content-Length` and `X-Checksum-Sha256` headers describe the\nfile as it was when the transfer began. Only regular files of up to 64 MiB can be downloaded.\nA MicroVM serves up to 4 downloads at a time.\n\nYour team needs the `file_transfer` feature. Check `GET /v2/microvms/options`. If the MicroVM\nis paused and auto-resume is on, the request resumes it.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -39518,7 +39759,7 @@
         "summary": "Create a checkpoint of a MicroVM",
         "description": "To create a checkpoint of a running or paused MicroVM, send a POST request to\n`/v2/microvms/{microvm_id}/checkpoints`.\n\nThe capture runs in the background and does not change the MicroVM's state. Poll\n`GET /v2/microvms/checkpoints/{checkpoint_id}` until `status` is `CHECKPOINT_AVAILABLE`.\n",
         "tags": [
-          "MicroVMs [Public Preview]"
+          "MicroVMs"
         ],
         "parameters": [
           {
@@ -79583,7 +79824,7 @@
                   },
                   "sizeSlug": {
                     "type": "string",
-                    "description": "Requested sandbox size (catalog: GET /v2/agents/sessions/sandbox/sizes). Empty means the service default.",
+                    "description": "Requested sandbox size (catalog: GET /v2/harness-runtime/sessions/sandbox/sizes). Empty means the service default.",
                     "example": "example"
                   },
                   "mounts": {
@@ -80373,7 +80614,7 @@
           },
           "resume_on_topoff": {
             "type": "boolean",
-            "description": "Session consents to being resumed automatically when the team's prepayment balance is restored after a low-balance pause. Defaults to false at create time; may be toggled later via PATCH /v2/agents/sessions/{session_id} (resume_on_topoff only). Only a session paused with reason low_balance whose latest run did not complete is ever resumed automatically - a session the customer paused themselves, or one that idled out, stays paused regardless. Not an environment-spec field, and forks do not inherit it. Omitted when false.",
+            "description": "Session consents to being resumed automatically when the team's prepayment balance is restored after a low-balance pause. Defaults to false at create time; may be toggled later via PATCH /v2/harness-runtime/sessions/{session_id} (resume_on_topoff only). Only a session paused with reason low_balance whose latest run did not complete is ever resumed automatically - a session the customer paused themselves, or one that idled out, stays paused regardless. Not an environment-spec field, and forks do not inherit it. Omitted when false.",
             "example": false
           },
           "pause_reason": {
@@ -80617,7 +80858,7 @@
       },
       "validation_result": {
         "type": "object",
-        "description": "Response of POST /v2/agents/sessions/policy/validate: per-rule verdicts for the (agent, version). The same shape is persisted per session in session_policies.verdicts.",
+        "description": "Response of POST /v2/harness-runtime/sessions/policy/validate: per-rule verdicts for the (agent, version). The same shape is persisted per session in session_policies.verdicts.",
         "properties": {
           "agent": {
             "type": "string",
@@ -80747,7 +80988,7 @@
             "example": "tools:\n  - do.actions:\n      tools: [toolbelt:read-only@1]\n"
           }
         },
-        "description": "PATCH body for /v2/agents/sessions/{session_id}. Either toggle the session-scoped `resume_on_topoff` consent, or change the live config with `manifest_yaml`; the two cannot be combined in one request. At least one property must be present; {} is 400. Unknown top-level keys are rejected with 400."
+        "description": "PATCH body for /v2/harness-runtime/sessions/{session_id}. Either toggle the session-scoped `resume_on_topoff` consent, or change the live config with `manifest_yaml`; the two cannot be combined in one request. At least one property must be present; {} is 400. Unknown top-level keys are rejected with 400."
       },
       "patch_session_response": {
         "type": "object",
@@ -81059,11 +81300,28 @@
             "description": "Working directory inside the sandbox. Empty uses the sandbox default (/workspace); not restricted to the workspace root.",
             "example": "/workspace"
           },
+          "env": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Optional environment variables for this command only; nothing is stored on the session and values are not logged, but any process in the sandbox can read them. For credentials the platform holds, use `spec.secrets`. Keys must match `[A-Z][A-Z0-9_]*` and must not be platform-reserved keys (the same rule as `spec.env`). At most 64 entries, keys up to 256 bytes, values up to 64 KiB.",
+            "example": {
+              "LOG_LEVEL": "debug",
+              "API_BASE_URL": "https://api.example.com",
+              "API_KEY": "your-api-key"
+            }
+          },
           "stdin": {
             "type": "string",
             "format": "byte",
-            "description": "Optional base64 stdin payload, delivered in full and then closed so the process sees EOF. One-shot only — there is no streaming stdin on this endpoint.",
+            "description": "Optional base64 stdin payload. Without keep_stdin_open it is delivered in full and then closed so the process sees EOF. With keep_stdin_open it is the optional first chunk. Later bytes use POST /v2/harness-runtime/sessions/{session_id}/sandbox/exec/{exec_id}/stdin.",
             "example": ""
+          },
+          "keep_stdin_open": {
+            "type": "boolean",
+            "description": "Leave the process stdin open. Requires an event-stream response (Accept text/event-stream, or stream=1). The stream starts with event started and an exec_id. A buffered request with this set returns 400.",
+            "example": false
           },
           "timeout_seconds": {
             "type": "integer",
@@ -81100,6 +81358,42 @@
             "format": "int64",
             "description": "Wall-clock duration the guest reported for the command.",
             "example": 12
+          }
+        }
+      },
+      "write_exec_stdin_request": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64 stdin bytes to append. Omit on an eof-only write.",
+            "example": "aGVsbG8K"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Required. Count of stdin bytes already accepted. An equal offset appends. A lower offset retries and trims the overlap. A higher offset returns 409.",
+            "example": 0
+          },
+          "eof": {
+            "type": "boolean",
+            "description": "Close stdin after this write. A later write, or a second eof, returns 409.",
+            "example": false
+          }
+        },
+        "required": [
+          "offset"
+        ]
+      },
+      "write_exec_stdin_response": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Count of stdin bytes accepted after this write.",
+            "example": 6
           }
         }
       },
@@ -81762,7 +82056,7 @@
           },
           "webhook_url": {
             "type": "string",
-            "description": "The Payload URL to configure in the external system.",
+            "description": "The Payload URL to configure in the external system. The service returns the `/v2/agents` spelling. Paste that value unchanged.",
             "example": "https://api.digitalocean.com/v2/agents/triggers/b1a0.../webhook"
           }
         }
@@ -110300,6 +110594,11 @@
             "example": 123,
             "format": "double",
             "type": "number"
+          },
+          "passed": {
+            "description": "Whether the score met the metric's success threshold. Set for model\nevaluation results only, and only when status is COMPLETED; omitted\nfor skipped or failed metrics.",
+            "example": true,
+            "type": "boolean"
           },
           "reasoning": {
             "description": "Reasoning of the metric result.",
