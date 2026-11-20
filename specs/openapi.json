@@ -10853,8 +10853,8 @@
       },
       "patch": {
         "operationId": "harness_update_session",
-        "summary": "PatchSession updates an existing session (session-scoped settings or live config).",
-        "description": "Partial update of an existing session. Send exactly one of: `resume_on_topoff` (session-scoped consent), or `manifest_yaml` (live config update of `tools`, `env` and `secrets`). The two cannot be combined, and `{}` is 400. With `manifest_yaml`, absent sections are untouched; `model` and `permissions` return 501. A config update that changes something returns 202 with outcome ACCEPTED and the session in SESSION_STATUS_UPDATING (update state APPLYING): poll GET on the session every 2-5 seconds until the status leaves UPDATING, then read `session.update` (APPLIED, APPLIED_RESTARTED or FAILED). A tools-only update usually finishes in seconds; env and secret changes restart the agent and can take about two minutes. A manifest that changes nothing returns 200 with outcome UNCHANGED. Terminal sessions (DESTROYED, FAILED) cannot be patched.",
+        "summary": "Update a session's settings.",
+        "description": "Updates the settings of an existing session. Changes apply to this session only; the agent\nconfig the session was created from is not modified.\n\nEach request makes one of two kinds of update, and the two can't be combined:\n\n- **Session preferences**: set `resume_on_topoff`. Applied immediately; returns `200`.\n- **Session settings**: set `manifest_yaml` to a partial manifest that holds only the sections\n  to change. Applied in the background; returns `202`.\n\nAn empty body (`{}`) returns `400`.\n\n### Updatable session settings\n\n| Section | What it changes | Agent restart |\n| --- | --- | --- |\n| `tools` | The session's Action Gateway tools (`do.actions` entries). Custom MCP servers can't be changed. | No |\n| `env` | Environment variables (name and value). | Yes |\n| `env.HARNESS_INFERENCE_MODEL` | The model, for sessions that use DigitalOcean Serverless Inference. | Yes |\n| `secrets` | Plain secrets (name and value). | Yes |\n\nSections you omit are not changed. Each section you include replaces that section in full; see\n`manifest_yaml` for the exact rules.\n\nThe only way to change a session's model is to set `HARNESS_INFERENCE_MODEL` in `env`. This\nworks only for sessions that were created with a DigitalOcean Serverless Inference model;\nsessions that use a third-party model provider can't change their model. A top-level `model`\nsection returns `400`.\n\nThe following can't be changed on an existing session: custom MCP servers (`422`), egress rules,\nGitHub OAuth connections, URL-bound secrets, platform-managed model keys, and `permissions`\n(`400`). To use a different custom MCP server, create a new session.\n\n### Tracking an update\n\n1. A request that changes the session settings returns `202` with `outcome` set to `ACCEPTED`.\n   The session status becomes `SESSION_STATUS_UPDATING`.\n2. Poll [`GET /v2/harness-runtime/sessions/{session_id}`](#operation/harness_get_session)\n   every 2 to 5 seconds until the status is `SESSION_STATUS_READY`, or `SESSION_STATUS_PAUSED`\n   if the session was paused when you sent the update. The session returns to that status\n   whether the update succeeded or failed.\n3. Read `session.update.state`:\n   - `APPLIED`: the update is live.\n   - `APPLIED_RESTARTED`: the update is live and the agent was restarted to apply it.\n   - `FAILED`: the update did not take effect. `session.update.detail` explains why, and\n     `session.update.reverted` is `true` if the previous settings were restored.\n\nTool updates usually finish within a few seconds. Updates to `env` (including the model) or\n`secrets` restart the agent and can take up to about two minutes.\n\nIf the request matches the session's current settings, it returns `200` with `outcome` set to\n`UNCHANGED` and nothing is applied.\n\n### Versioning\n\nEach accepted update is recorded with its own `update_id` and the manifest hashes before and\nafter the change (`session.update.previous_hash` and `session.update.manifest_hash`). When an\nupdate fails, the session is rolled back to its previous settings and `session.update.reverted`\nis `true`. Once a session's settings differ from its agent config, the session reports\n`config_drifted: true`, `config_diff` lists the changed entries, and `manifest` holds the\nsettings the session now runs with (without secret values).\n\n### Requirements\n\n- The session status must be `SESSION_STATUS_READY`, `SESSION_STATUS_DETACHED`, or\n  `SESSION_STATUS_PAUSED`. A paused session is resumed to apply the update and paused again\n  afterwards, unless it was paused for zero balance. Any other status returns `409`, including\n  `SESSION_STATUS_PROVISIONING`, `SESSION_STATUS_UPDATING`, a session paused for zero balance,\n  and a destroyed or failed session. A locked session returns `423`.\n- The session must be idle: no agent turn running and no approval pending (`409`).\n- Session settings updates must be enabled for your team.\n- Not every agent runtime supports every section. An unsupported change returns `409`.",
         "tags": [
           "Harness Runtime"
         ],
@@ -10880,11 +10880,11 @@
               }
             }
           },
-          "description": "PATCH body: either resume_on_topoff or manifest_yaml (not both)."
+          "description": "Set either `resume_on_topoff` or `manifest_yaml`, not both."
         },
         "responses": {
           "200": {
-            "description": "Updated session snapshot, or outcome UNCHANGED when a manifest changes nothing.",
+            "description": "The session was updated (`resume_on_topoff`), or the requested session settings match the current ones and nothing was applied (`outcome` is `UNCHANGED`).",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10905,7 +10905,7 @@
             }
           },
           "202": {
-            "description": "Config update accepted and applying; the session is SESSION_STATUS_UPDATING. Poll the session until the status changes.",
+            "description": "The session settings update was accepted and is being applied. The session status is `SESSION_STATUS_UPDATING`. Poll the session until the status is `SESSION_STATUS_READY`, or `SESSION_STATUS_PAUSED` if the session was paused when you sent the update, then read `session.update` to see whether the update was applied.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10926,7 +10926,7 @@
             }
           },
           "400": {
-            "description": "Malformed body, invalid YAML, unknown field or manifest section, invalid values, both properties set, or no recognized patchable properties.",
+            "description": "The request is invalid. For example: the body is empty or not valid JSON, `manifest_yaml` is not valid YAML, a field or manifest section is not recognized, a value is invalid, or both `resume_on_topoff` and `manifest_yaml` are set. A top-level `model` section (set `env.HARNESS_INFERENCE_MODEL` instead) and a `permissions` section (can't be changed on an existing session) also return `400`.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10950,7 +10950,7 @@
             "$ref": "#/components/responses/unauthorized"
           },
           "403": {
-            "description": "The caller holds no access grant on the session, or the team is not enrolled in the config-update feature (manifest_yaml only).",
+            "description": "You don't have access to this session, or session settings updates are not enabled for your team (`manifest_yaml` only).",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10974,7 +10974,7 @@
             "$ref": "#/components/responses/not_found"
           },
           "409": {
-            "description": "Session is in a terminal state, not running, paused for zero balance, already updating, busy, or does not support the change (for example env and secrets on a non-hermes session). The message says which.",
+            "description": "The session can't be updated right now. For example, it is still provisioning, already updating, running an agent turn, waiting on an approval, paused for zero balance, or destroyed, or its agent runtime doesn't support the change. The error message gives the reason.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -10995,7 +10995,7 @@
             }
           },
           "422": {
-            "description": "The change needs a new session (requires_new_session).",
+            "description": "The change can only be made by creating a new session. For example: adding, removing, or changing a custom MCP server in `tools`, changing a reserved platform key or a secret that is not a plain value (such as a URL-bound or OAuth secret), or adding, removing, or changing `HARNESS_INFERENCE_MODEL` on a session that doesn't use DigitalOcean Serverless Inference.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -11016,7 +11016,7 @@
             }
           },
           "423": {
-            "description": "This session is unavailable; contact support.",
+            "description": "The session is unavailable. Contact support.",
             "headers": {
               "ratelimit-limit": {
                 "$ref": "#/components/headers/ratelimit-limit"
@@ -11041,27 +11041,6 @@
           },
           "500": {
             "$ref": "#/components/responses/server_error"
-          },
-          "501": {
-            "description": "`model` or `permissions` sent in manifest_yaml; not supported yet.",
-            "headers": {
-              "ratelimit-limit": {
-                "$ref": "#/components/headers/ratelimit-limit"
-              },
-              "ratelimit-remaining": {
-                "$ref": "#/components/headers/ratelimit-remaining"
-              },
-              "ratelimit-reset": {
-                "$ref": "#/components/headers/ratelimit-reset"
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/error"
-                }
-              }
-            }
           },
           "default": {
             "$ref": "#/components/responses/unexpected_error"
@@ -49945,7 +49924,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:create"
+              "secret:create"
             ]
           }
         ]
@@ -50002,7 +49981,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:read"
+              "secret:read"
             ]
           }
         ]
@@ -50095,7 +50074,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:update"
+              "secret:update"
             ]
           }
         ]
@@ -50153,7 +50132,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:delete"
+              "secret:delete"
             ]
           }
         ]
@@ -50210,92 +50189,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:read"
-            ]
-          }
-        ]
-      }
-    },
-    "/v2/security/secrets/{secret}/versions/{version}/revert": {
-      "post": {
-        "operationId": "security_revert_secret",
-        "summary": "Revert Secret",
-        "description": "To revert a secret to a prior version, send a POST request to\n`/v2/security/secrets/{secret}/versions/{version}/revert`.\n\n`region` is required. `current_version` must be the secret's current version.\nIf it does not match, the request returns a `409` response. A successful\nrevert creates a new version with the contents of the target version.",
-        "tags": [
-          "Security"
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/secret"
-          },
-          {
-            "$ref": "#/components/parameters/secret_version"
-          },
-          {
-            "$ref": "#/components/parameters/secret_region"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "current_version"
-                ],
-                "properties": {
-                  "current_version": {
-                    "type": "integer",
-                    "format": "int32",
-                    "minimum": 1,
-                    "example": 3,
-                    "description": "The current version of the secret. Used to reject the request if the secret changed."
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "$ref": "#/components/responses/create_secret"
-          },
-          "400": {
-            "$ref": "#/components/responses/bad_request"
-          },
-          "401": {
-            "$ref": "#/components/responses/unauthorized"
-          },
-          "403": {
-            "$ref": "#/components/responses/forbidden"
-          },
-          "404": {
-            "$ref": "#/components/responses/not_found"
-          },
-          "409": {
-            "$ref": "#/components/responses/conflict"
-          },
-          "429": {
-            "$ref": "#/components/responses/too_many_requests"
-          },
-          "500": {
-            "$ref": "#/components/responses/server_error"
-          },
-          "default": {
-            "$ref": "#/components/responses/unexpected_error"
-          }
-        },
-        "x-codeSamples": [
-          {
-            "lang": "cURL",
-            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"current_version\":3}' \\\n  \"https://api.digitalocean.com/v2/security/secrets/my-database-password/versions/1/revert?region=nyc3\""
-          }
-        ],
-        "security": [
-          {
-            "bearer_auth": [
-              "security:update"
+              "secret:read"
             ]
           }
         ]
@@ -50355,7 +50249,7 @@
         "security": [
           {
             "bearer_auth": [
-              "security:create"
+              "secret:update"
             ]
           }
         ]
@@ -72838,18 +72732,6 @@
         },
         "example": "nyc3"
       },
-      "secret_version": {
-        "in": "path",
-        "name": "version",
-        "description": "The target version to revert to. Reverting creates a new version with the contents of this version.",
-        "required": true,
-        "schema": {
-          "type": "integer",
-          "format": "int32",
-          "minimum": 1
-        },
-        "example": 1
-      },
       "cpu_minimum": {
         "in": "query",
         "name": "cpu_minimum",
@@ -80588,7 +80470,7 @@
           "SESSION_STATUS_LOCKED"
         ],
         "default": "SESSION_STATUS_UNSPECIFIED",
-        "description": "SessionStatus is the lifecycle state of the sandbox + agent pair. SESSION_STATUS_ALL is a ListSessions status-filter value only -- no session is ever actually in this status. SESSION_STATUS_LOCKED is reserved for internal use and never appears in an end-user-facing response. SESSION_STATUS_UPDATING is reported while a live config update (PATCH with `manifest_yaml`) is being applied; poll the session until it leaves this status.",
+        "description": "SessionStatus is the lifecycle state of the sandbox + agent pair. SESSION_STATUS_ALL is a ListSessions status-filter value only -- no session is ever actually in this status. SESSION_STATUS_LOCKED is reserved for internal use and never appears in an end-user-facing response. SESSION_STATUS_UPDATING is reported while a session settings update (PATCH with `manifest_yaml`) is being applied; poll the session until it leaves this status.",
         "example": "SESSION_STATUS_UNSPECIFIED"
       },
       "session_config_update_state": {
@@ -80599,12 +80481,12 @@
           "APPLIED_RESTARTED",
           "FAILED"
         ],
-        "description": "State of a live config update. APPLIED_RESTARTED means the agent was restarted to apply it (env and secret changes). FAILED means the update did not take effect; see `reverted` and `detail`.",
+        "description": "State of a session settings update. `APPLYING`: in progress. `APPLIED`: live. `APPLIED_RESTARTED`: live, and the agent was restarted to apply it (`env` and `secrets` changes). `FAILED`: the update did not take effect; see `reverted` and `detail`.",
         "example": "APPLIED"
       },
       "session_config_section_changes": {
         "type": "object",
-        "description": "Keys touched in one manifest section.",
+        "description": "Names of the entries added, removed, or changed in one manifest section.",
         "properties": {
           "added": {
             "type": "array",
@@ -80637,7 +80519,7 @@
       },
       "session_config_changes": {
         "type": "object",
-        "description": "Changes per manifest section. Never contains secret values.",
+        "description": "Changes made in each manifest section. Secret values are never included.",
         "properties": {
           "tools": {
             "$ref": "#/components/schemas/session_config_section_changes"
@@ -80652,7 +80534,7 @@
       },
       "session_config_update": {
         "type": "object",
-        "description": "One live config update (or automatic rollback) of a session.",
+        "description": "The most recent session settings update to the session, or the automatic rollback of a failed one.",
         "properties": {
           "update_id": {
             "type": "string",
@@ -81160,16 +81042,16 @@
         "properties": {
           "resume_on_topoff": {
             "type": "boolean",
-            "description": "When present, sets whether this session opts in to automatic resumption when the team's prepayment balance is restored after a low-balance pause. Session-scoped consent, not config-scoped. Omitted properties are not modified. Cannot be combined with `manifest_yaml`.",
+            "description": "Whether this session resumes automatically after it is paused for low balance and your team's prepaid balance is topped up. Applies to this session only. Can't be combined with `manifest_yaml`.",
             "example": false
           },
           "manifest_yaml": {
             "type": "string",
-            "description": "A partial manifest, as YAML, holding only the sections to change: `tools`, `env`, `secrets`. Absent sections are untouched; any other top-level key is 400, and `model` / `permissions` return 501. `tools` is the full replacement list (`tools: []` detaches every MCP server; `tools: null` is 400). `env` and `secrets` are full sets: a key left out is removed. A secret value is a string (set or rotate) or `{}` (keep the current value); per-key `null` is 400. Platform and framework keys and non-plain secrets must be sent back unchanged, or the request is 422. Cannot be combined with `resume_on_topoff`. Requires the team to be enrolled in the config-update feature (403 otherwise).",
+            "description": "A partial agent manifest, as a YAML string, that holds only the sections to change. Can't\nbe combined with `resume_on_topoff`. Requires session settings updates to be enabled for\nyour team (`403` otherwise).\n\nSupported sections are `tools`, `env`, and `secrets`. Sections you omit are not changed.\nAny other top-level key returns `400`, including `model` (to change the model, set\n`HARNESS_INFERENCE_MODEL` in `env`) and `permissions` (can't be changed on an existing\nsession).\n\nEach section you include replaces that section in full:\n\n- `tools`: the complete list of tools for the session. Only Action Gateway tools\n  (`do.actions` entries) can be added, removed, or changed. Custom MCP servers can't be\n  changed on an existing session: include the session's current custom MCP servers\n  exactly as they are. Adding, removing, or changing one returns `422`. To remove all Action Gateway tools from a session that has no custom\n  MCP servers, send `tools: []`. `tools: null` returns `400`.\n- `env`: the complete set of environment variables, as name-value pairs. A variable you\n  leave out is removed. `env: {}` removes all variables; `env: null` returns `400`.\n- `secrets`: the complete set of secrets, as name-value pairs. A secret you leave out is\n  removed. For each secret, set the value to a string to add or rotate it, or to `{}` to\n  keep its current value. A `null` value returns `400`.\n\n**Changing the model.** The only way to change a session's model is through `env`. Set\n`HARNESS_INFERENCE_MODEL` to a DigitalOcean Serverless Inference model ID, or to\n`router:<name>` for an inference router. This works\nonly on sessions created with `HARNESS_INFERENCE_MODEL` set and without their own\ninference endpoint. Adding, removing, or changing the key on any other session, or moving\na session to its own endpoint, returns `422`. A malformed value (empty, multi-line, or over\n256 bytes) returns `400`. Whether the model exists is not checked when you send the\nrequest; an unknown model fails on the agent's next turn.\n\n**Reserved keys.** `HARNESS_INFERENCE_API_KEY` and `HARNESS_INFERENCE_BASE_URL` are\nmanaged by the platform: include them with their current values, or the request returns\n`422`. Framework keys can't be changed either (`422`). Secrets that are not plain values\n(such as URL-bound or OAuth secrets) can't be changed on an existing session (`422`).\n\nExample that changes the model, keeps one secret, and rotates another. Because each\nsection is a full replacement, the example assumes the session has no other env\nvariables or secrets:\n\n```yaml\nenv:\n  HARNESS_INFERENCE_MODEL: llama3.3-70b-instruct\n  LOG_LEVEL: info\nsecrets:\n  GITHUB_TOKEN: {}\n  JIRA_API_TOKEN: new-token-value\n```",
             "example": "tools:\n  - do.actions:\n      tools: [toolbelt:read-only@1]\n"
           }
         },
-        "description": "PATCH body for /v2/harness-runtime/sessions/{session_id}. Either toggle the session-scoped `resume_on_topoff` consent, or change the live config with `manifest_yaml`; the two cannot be combined in one request. At least one property must be present; {} is 400. Unknown top-level keys are rejected with 400."
+        "description": "Request body for updating a session. Set either `resume_on_topoff` to change a session preference, or `manifest_yaml` to change the session settings, not both. At least one property is required, so `{}` returns `400`. Unknown properties return `400`."
       },
       "patch_session_response": {
         "type": "object",
@@ -81183,7 +81065,7 @@
               "ACCEPTED",
               "UNCHANGED"
             ],
-            "description": "Present for `manifest_yaml` patches. ACCEPTED (HTTP 202): the update is applying and the session status is SESSION_STATUS_UPDATING; poll GET until the status leaves UPDATING, then read `session.update`. UNCHANGED (HTTP 200): the manifest changes nothing and nothing was recorded.",
+            "description": "Returned for `manifest_yaml` requests. `ACCEPTED` (HTTP 202): the update is being applied and the session status is `SESSION_STATUS_UPDATING`. Poll the session until the status changes, then read `session.update`. `UNCHANGED` (HTTP 200): the requested settings match the current ones, so nothing was applied.",
             "example": "ACCEPTED"
           },
           "warnings": {
@@ -81191,7 +81073,7 @@
             "items": {
               "type": "string"
             },
-            "description": "Non-fatal notes about the update."
+            "description": "Warnings about the update that did not stop it from being accepted."
           }
         }
       },
