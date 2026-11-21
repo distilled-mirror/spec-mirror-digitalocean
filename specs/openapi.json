@@ -169,7 +169,7 @@
     },
     {
       "name": "MicroVMs",
-      "description": "[DigitalOcean MicroVMs](https://docs.digitalocean.com/products/microvms/)\nare lightweight virtual machines that run a `linux/amd64` container image\nin an isolated kernel. A MicroVM pauses automatically when it is idle and\nresumes on the next HTTP request, command, or console session, with its\nmemory, files, and processes intact. By sending requests to the\n`/v2/microvms` endpoints, you can create, list, update, pause, resume,\nand delete MicroVMs, run commands and open a console in them, upload and\ndownload files, add and remove ingress URLs, create access tokens scoped\nto one MicroVM, and create checkpoints to start new MicroVMs from a\nsaved state.\n\nEach MicroVM serves its HTTP port at\n`https://{microvm_id}.{region}.microvm.ondigitalocean.com`. Requests to\nthat endpoint require a token with the `microvm:access` scope."
+      "description": "[DigitalOcean MicroVMs](https://docs.digitalocean.com/products/microvms/)\nare lightweight virtual machines that run a `linux/amd64` container image\nin an isolated kernel. A MicroVM pauses automatically when it is idle and\nresumes on the next HTTP request, command, or console session, with its\nmemory, files, and processes intact. By sending requests to the\n`/v2/microvms` endpoints, you can create, list, update, pause, resume,\nand delete MicroVMs, run commands and open a console in them, forward\nports to them, upload and download files, add and remove ingress URLs,\ncreate access tokens scoped\nto one MicroVM, and create checkpoints to start new MicroVMs from a\nsaved state.\n\nEach MicroVM serves its HTTP port at\n`https://{microvm_id}.{region}.microvm.ondigitalocean.com`. Requests to\nthat endpoint require a token with the `microvm:access` scope."
     },
     {
       "name": "Monitoring",
@@ -39636,6 +39636,63 @@
         ]
       }
     },
+    "/v2/microvms/{microvm_id}/port_forward": {
+      "get": {
+        "operationId": "microvms_get_port_forward",
+        "summary": "Forward a port to a MicroVM",
+        "description": "To open a TCP connection to a port inside a MicroVM, open a WebSocket connection to\n`wss://api.digitalocean.com/v2/microvms/{microvm_id}/port_forward?port={port}`. The\nconnection goes to `127.0.0.1:{port}` in the MicroVM, so the port does not need to be\npublic.\n\nOne WebSocket carries one TCP connection. To forward a local port, open a new WebSocket\nfor each local connection.\n\nSend the API token in the `Authorization` header of the handshake. Browsers cannot set this\nheader, so you cannot open a port forward from browser JavaScript. Requires the\n`port_forward` feature. If the MicroVM is paused and auto-resume is on, opening a port\nforward resumes it.\n",
+        "tags": [
+          "MicroVMs"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/microvm_id"
+          },
+          {
+            "$ref": "#/components/parameters/port_forward_port"
+          }
+        ],
+        "responses": {
+          "101": {
+            "$ref": "#/components/responses/port_forward_upgrade"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "WebSocket",
+            "source": "printf 'GET / HTTP/1.0\\r\\n\\r\\n' | websocat -b \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"wss://api.digitalocean.com/v2/microvms/01a0ef1a-d873-793d-ae6a-5dd6239be62a/port_forward?port=80\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "microvm:update"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/microvms/{microvm_id}/files": {
       "put": {
         "operationId": "microvms_upload_file",
@@ -72123,6 +72180,18 @@
         },
         "example": 80
       },
+      "port_forward_port": {
+        "in": "query",
+        "name": "port",
+        "required": true,
+        "description": "The TCP port to connect to inside the MicroVM. Port 50051 is reserved and cannot be forwarded.",
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "example": 8080
+      },
       "file_path": {
         "in": "query",
         "name": "path",
@@ -100445,7 +100514,7 @@
           },
           "features": {
             "type": "array",
-            "description": "Features and whether they are enabled for your team. `exec_pty` gates `exec` and `console`; `file_transfer` gates `files`; `egress_policy` gates `egress_policy` on create; `egress_credentials` gates `egress_policy.credentials` (requires `egress_policy`, and only in regions that support credential injection).",
+            "description": "Features and whether they are enabled for your team. `exec_pty` gates `exec` and `console`; `port_forward` gates `port_forward`; `file_transfer` gates `files`; `egress_policy` gates `egress_policy` on create; `egress_credentials` gates `egress_policy.credentials` (requires `egress_policy`, and only in regions that support credential injection).",
             "items": {
               "type": "object",
               "properties": {
@@ -132062,6 +132131,18 @@
                   "code": "FAILED_PRECONDITION",
                   "message": "checkpoint 01a11cd5-25dd-790f-a77c-3677f24bca85 is still being captured; retry delete once the capture completes"
                 }
+              },
+              "Invalid Port": {
+                "value": {
+                  "code": "INVALID_ARGUMENT",
+                  "message": "port must be an integer in 1..65535"
+                }
+              },
+              "Reserved Port": {
+                "value": {
+                  "code": "INVALID_ARGUMENT",
+                  "message": "port 50051 is reserved"
+                }
               }
             }
           }
@@ -132694,6 +132775,20 @@
       },
       "console_upgrade": {
         "description": "The connection is upgraded to a WebSocket. Binary frames from the client are terminal input, and text frames are resize messages such as `{\"resize\":{\"rows\":40,\"cols\":120}}`. Binary frames from the server are terminal output with `stdout` and `stderr` combined. Text frames from the server are control messages: `{\"status\":{\"state\":\"resuming\"}}` while a paused MicroVM resumes, `{\"error\":{\"code\":\"...\",\"message\":\"...\"}}` when the console fails to connect or start (with `code` set to `dial_failed`, `start_failed`, or `agent_error`), and `{\"exit\":{\"code\":0}}` when the shell exits. The server sends a ping every 30 seconds. A console closes after 4 hours, or after 30 minutes with no input and no output. A message larger than 1 MiB closes the console with WebSocket code 1009.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        }
+      },
+      "port_forward_upgrade": {
+        "description": "The connection is upgraded to a WebSocket. Binary frames in both directions are the raw bytes of the TCP connection. Text frames from the server are control messages: `{\"status\":{\"state\":\"connected\"}}` when the connection to the port is open, and `{\"error\":{\"code\":\"...\",\"message\":\"...\"}}` when it fails (with `code` set to `dial_failed`, `start_failed`, or `agent_error`, for example when nothing listens on the port). The server closes the WebSocket after an error, or when the program in the MicroVM closes the connection. Text frames from the client are ignored. The server sends a ping every 30 seconds and closes a port forward whose client stops answering. A port forward closes after 4 hours. A message larger than 1 MiB closes the port forward with WebSocket code 1009.",
         "headers": {
           "ratelimit-limit": {
             "$ref": "#/components/headers/ratelimit-limit"
