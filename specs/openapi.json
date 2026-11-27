@@ -10712,7 +10712,36 @@
             }
           },
           "429": {
-            "$ref": "#/components/responses/too_many_requests"
+            "description": "The API rate limit has been exceeded, or the removal was refused because the session holds a persistent workspace and the team already has too many workspaces being saved. In the second case nothing changed and the session keeps running. Repeat the same request after the number of seconds in the Retry-After header. A session without a workspace is never refused for this reason.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              },
+              "Retry-After": {
+                "description": "Seconds to wait before repeating the request.",
+                "schema": {
+                  "type": "integer"
+                },
+                "example": 30
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error"
+                },
+                "example": {
+                  "id": "too_many_requests",
+                  "message": "too many of this team's workspaces are being saved; wait about 30 seconds and retry the removal"
+                }
+              }
+            }
           },
           "500": {
             "$ref": "#/components/responses/server_error"
