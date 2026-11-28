@@ -220,6 +220,10 @@
       "description": "Reserved IPv6 actions requests are made on the actions endpoint of a specific\nreserved IPv6.\n\nAn action object is returned. These objects hold the current status of the\nrequested action."
     },
     {
+      "name": "Sandboxes",
+      "description": "Sandboxes are isolated microVMs that run your code. By sending requests\nto the `/v2/sandboxes` endpoints, you can create, list, retrieve, pause,\nresume, and delete sandboxes; start, list, signal, write stdin to, and\nattach to commands inside a sandbox; and create, list, update, and delete\nteam custom templates and poll their builds."
+    },
+    {
       "name": "Security",
       "description": "Security endpoints for CSPM scans, scan findings, settings, and Secrets Manager."
     },
@@ -346,6 +350,7 @@
         "Reserved IPs",
         "Reserved IPv6",
         "Reserved IPv6 Actions",
+        "Sandboxes",
         "Security",
         "Signals",
         "Sizes",
@@ -49311,6 +49316,1206 @@
         ]
       }
     },
+    "/v2/sandboxes": {
+      "get": {
+        "operationId": "sandboxes_list",
+        "summary": "List Sandboxes",
+        "description": "List the sandboxes of your team. When more results exist, the response\ncarries a token for the next page.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_page_token"
+          },
+          {
+            "$ref": "#/components/parameters/state"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/all_sandboxes"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request-2"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes?page_size=50\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sandboxes_create",
+        "summary": "Create a Sandbox",
+        "description": "Create a sandbox from a template. A successful create responds `201 Created`,\nwith `Location` set to the new sandbox.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sandbox_create"
+              },
+              "examples": {
+                "Create Sandbox": {
+                  "value": {
+                    "template": "base",
+                    "size_slug": "s-1vcpu-2gb",
+                    "allow_internet_access": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox"
+          },
+          "201": {
+            "$ref": "#/components/responses/sandbox_created"
+          },
+          "400": {
+            "description": "The body is not valid JSON, or it contains an unknown field.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "description": "Template not found.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                },
+                "example": {
+                  "id": "not_found",
+                  "message": "Template not found.",
+                  "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+                }
+              }
+            }
+          },
+          "409": {
+            "$ref": "#/components/responses/errors_conflict-2"
+          },
+          "422": {
+            "$ref": "#/components/responses/errors_unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests_team_limit"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"template\":\"base\",\"size_slug\":\"s-1vcpu-2gb\"}' \\\n  \"https://api.digitalocean.com/v2/sandboxes\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/templates": {
+      "get": {
+        "operationId": "sandboxes_list_templates",
+        "summary": "List Templates",
+        "description": "List your team's custom templates. Global base templates are not included;\npass them by name on sandbox create.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_page_token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/all_templates"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates?page_size=50\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sandboxes_create_template",
+        "summary": "Create a Template",
+        "description": "Create a team custom template by rebasing a customer OCI image onto an\naccepted base template. Kicks an asynchronous build; poll get template /\nlist template builds. CPU and memory are chosen at sandbox create via\n`size_slug`, not at build time. There is no fluent build-step DSL or\nDockerfile API.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/template_create"
+              },
+              "examples": {
+                "Create Template": {
+                  "value": {
+                    "name": "my-custom-template",
+                    "base_template": "coding-base",
+                    "source_oci_ref": "registry.digitalocean.com/my-team/my-image:v1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/template"
+          },
+          "201": {
+            "$ref": "#/components/responses/template_created"
+          },
+          "400": {
+            "description": "The body is not valid JSON, or it contains an unknown field.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "409": {
+            "$ref": "#/components/responses/errors_conflict-2"
+          },
+          "422": {
+            "$ref": "#/components/responses/errors_unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"name\":\"my-custom-template\",\"base_template\":\"coding-base\",\"source_oci_ref\":\"registry.digitalocean.com/my-team/my-image:v1\"}' \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:create"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/templates/{template_id}": {
+      "get": {
+        "operationId": "sandboxes_get_template",
+        "summary": "Retrieve a Template",
+        "description": "Retrieve a team custom template by ID. The template must belong to your team.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/template_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/template"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates/$TEMPLATE_ID\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:read"
+            ]
+          }
+        ]
+      },
+      "put": {
+        "operationId": "sandboxes_update_template",
+        "summary": "Update a Template",
+        "description": "Update a team custom template's `base_template` and/or `source_oci_ref` and\nkick a new build. Omitted fields keep their previous values.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/template_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/template_update"
+              },
+              "examples": {
+                "Update Template": {
+                  "value": {
+                    "source_oci_ref": "registry.digitalocean.com/my-team/my-image:v2"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/template"
+          },
+          "400": {
+            "description": "The body is not valid JSON, or it contains an unknown field.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "409": {
+            "$ref": "#/components/responses/errors_conflict-2"
+          },
+          "422": {
+            "$ref": "#/components/responses/errors_unprocessable_entity"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X PUT \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"source_oci_ref\":\"registry.digitalocean.com/my-team/my-image:v2\"}' \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates/$TEMPLATE_ID\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:update"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "sandboxes_delete_template",
+        "summary": "Delete a Template",
+        "description": "Delete a team custom template.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/template_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates/$TEMPLATE_ID\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/templates/{template_id}/builds": {
+      "get": {
+        "operationId": "sandboxes_list_template_builds",
+        "summary": "List Template Builds",
+        "description": "List builds for a team custom template.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/template_id"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_page_size"
+          },
+          {
+            "$ref": "#/components/parameters/parameters_page_token"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/all_template_builds"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates/$TEMPLATE_ID/builds?page_size=50\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/templates/{template_id}/builds/{build_id}": {
+      "get": {
+        "operationId": "sandboxes_get_template_build",
+        "summary": "Retrieve a Template Build",
+        "description": "Retrieve a build for a team custom template.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/template_id"
+          },
+          {
+            "$ref": "#/components/parameters/build_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/template_build"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/templates/$TEMPLATE_ID/builds/$BUILD_ID\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox_templates:read"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}": {
+      "get": {
+        "operationId": "sandboxes_get",
+        "summary": "Retrieve an Existing Sandbox",
+        "description": "Retrieve details about an existing sandbox by its ID. The sandbox must belong\nto your team.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:read"
+            ]
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "sandboxes_delete",
+        "summary": "Delete a Sandbox",
+        "description": "Delete a sandbox.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X DELETE \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:delete"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/pause": {
+      "post": {
+        "operationId": "sandboxes_post_pause",
+        "summary": "Pause a Sandbox",
+        "description": "Pause a running sandbox. Resume it to use it again. An ephemeral sandbox\ncannot be paused.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox"
+          },
+          "400": {
+            "description": "The sandbox cannot be paused in its current state.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                },
+                "example": {
+                  "id": "bad_request",
+                  "message": "The sandbox cannot be paused in its current state.",
+                  "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/pause\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/resume": {
+      "post": {
+        "operationId": "sandboxes_post_resume",
+        "summary": "Resume a Sandbox",
+        "description": "Resume a paused sandbox. Resuming a running sandbox changes nothing.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox"
+          },
+          "400": {
+            "description": "The sandbox cannot be resumed in its current state.",
+            "headers": {
+              "ratelimit-limit": {
+                "$ref": "#/components/headers/ratelimit-limit"
+              },
+              "ratelimit-remaining": {
+                "$ref": "#/components/headers/ratelimit-remaining"
+              },
+              "ratelimit-reset": {
+                "$ref": "#/components/headers/ratelimit-reset"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/error-2"
+                },
+                "example": {
+                  "id": "bad_request",
+                  "message": "The sandbox cannot be resumed in its current state.",
+                  "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/resume\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/commands": {
+      "get": {
+        "operationId": "sandboxes_list_commands",
+        "summary": "List Sandbox Commands",
+        "description": "List running commands. Returns `pid`, `cmd`, and `cwd` only.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/all_sandbox_commands"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/commands\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:read"
+            ]
+          }
+        ]
+      },
+      "post": {
+        "operationId": "sandboxes_create_command",
+        "summary": "Start a Sandbox Command",
+        "description": "Start a command and return its `pid`. The process keeps running after this\ncall returns. Use the attach stream to read output.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sandbox_command_start"
+              },
+              "examples": {
+                "Start Bash": {
+                  "value": {
+                    "cmd": "bash",
+                    "args": [
+                      "-lc",
+                      "echo hello"
+                    ],
+                    "cwd": "/workspace"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox_command_started"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request-2"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"cmd\":\"bash\",\"args\":[\"-lc\",\"echo hello\"],\"cwd\":\"/workspace\"}' \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/commands\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/commands/{pid}/signal": {
+      "post": {
+        "operationId": "sandboxes_post_commands_signal",
+        "summary": "Signal a Sandbox Command",
+        "description": "Send `SIGTERM` or `SIGKILL` by `pid`. Defaults to `SIGTERM`.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          },
+          {
+            "$ref": "#/components/parameters/pid"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sandbox_command_signal_request"
+              },
+              "examples": {
+                "SIGTERM": {
+                  "value": {
+                    "signal": "SANDBOX_COMMAND_SIGNAL_SIGTERM"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/deleted"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request-2"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"signal\":\"SANDBOX_COMMAND_SIGNAL_SIGTERM\"}' \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/commands/42/signal\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/commands/{pid}/stdin": {
+      "post": {
+        "operationId": "sandboxes_post_commands_stdin",
+        "summary": "Write Sandbox Command Stdin",
+        "description": "Write stdin to a command started with `stdin=true`. Set `eof` to close.\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          },
+          {
+            "$ref": "#/components/parameters/pid"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/sandbox_command_stdin"
+              },
+              "examples": {
+                "Write And Close": {
+                  "value": {
+                    "data": "aGVsbG8K",
+                    "eof": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox_command_stdin_written"
+          },
+          "400": {
+            "$ref": "#/components/responses/errors_bad_request-2"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X POST \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  -d '{\"data\":\"aGVsbG8K\",\"eof\":true}' \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/commands/42/stdin\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:update"
+            ]
+          }
+        ]
+      }
+    },
+    "/v2/sandboxes/{sandbox_id}/commands/{pid}/stream": {
+      "get": {
+        "operationId": "sandboxes_get_commands_stream",
+        "summary": "Attach to a Sandbox Command",
+        "description": "Stream output from a running command by `pid`. Unknown or exited pids return\n`404`. Each streamed chunk is a JSON object with either `result` (a command\nevent) or `error` (a stream transport error).\n",
+        "tags": [
+          "Sandboxes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/sandbox_id"
+          },
+          {
+            "$ref": "#/components/parameters/pid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/sandbox_command_stream"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/errors_forbidden-2"
+          },
+          "404": {
+            "$ref": "#/components/responses/errors_not_found-2"
+          },
+          "429": {
+            "$ref": "#/components/responses/too_many_requests"
+          },
+          "500": {
+            "$ref": "#/components/responses/server_error"
+          },
+          "default": {
+            "$ref": "#/components/responses/unexpected_error"
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "cURL",
+            "source": "curl -X GET \\\n  -H \"Content-Type: application/json\" \\\n  -H \"Authorization: Bearer $DIGITALOCEAN_TOKEN\" \\\n  \"https://api.digitalocean.com/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a/commands/42/stream\""
+          }
+        ],
+        "security": [
+          {
+            "bearer_auth": [
+              "sandbox:read"
+            ]
+          }
+        ]
+      }
+    },
     "/v2/security/scans": {
       "get": {
         "operationId": "security_list_scans",
@@ -72791,6 +73996,80 @@
           "minimum": 1
         },
         "example": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+      },
+      "parameters_page_size": {
+        "in": "query",
+        "name": "page_size",
+        "required": false,
+        "description": "The maximum number of sandboxes to return.",
+        "schema": {
+          "type": "integer",
+          "format": "int32",
+          "example": 50
+        },
+        "example": 50
+      },
+      "parameters_page_token": {
+        "in": "query",
+        "name": "page_token",
+        "required": false,
+        "description": "The `next_page_token` of the previous page. Empty starts from the beginning.",
+        "schema": {
+          "type": "string",
+          "example": ""
+        },
+        "example": ""
+      },
+      "state": {
+        "in": "query",
+        "name": "state",
+        "required": false,
+        "description": "Return only sandboxes in this state. When unset, return sandboxes in any state.",
+        "schema": {
+          "$ref": "#/components/schemas/sandbox_state"
+        },
+        "example": "SANDBOX_STATE_RUNNING"
+      },
+      "template_id": {
+        "in": "path",
+        "name": "template_id",
+        "description": "The unique ID of the template.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "11111111-2222-4333-8444-555555555555"
+      },
+      "build_id": {
+        "in": "path",
+        "name": "build_id",
+        "description": "The unique ID of the template build.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "22222222-3333-4444-8555-666666666666"
+      },
+      "sandbox_id": {
+        "in": "path",
+        "name": "sandbox_id",
+        "description": "The unique ID of the sandbox.",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "example": "01a0ef1a-d873-793d-ae6a-5dd6239be62a"
+      },
+      "pid": {
+        "in": "path",
+        "name": "pid",
+        "description": "The process ID of the command in the sandbox.",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "example": 42
       },
       "scan_id": {
         "in": "path",
@@ -104045,6 +105324,552 @@
             "format": "date-time",
             "description": "Time when the allocation was assigned",
             "example": "2025-06-25T12:00:00Z"
+          }
+        }
+      },
+      "sandbox_state": {
+        "type": "string",
+        "description": "The state of a sandbox. Destroying, destroyed, and failed sandboxes are not returned.\n- `SANDBOX_STATE_RUNNING`: The sandbox is ready to use. - `SANDBOX_STATE_PAUSED`: The sandbox is paused. - `SANDBOX_STATE_CREATING`: The sandbox is still being created and cannot be\n  used yet. CreateSandbox answers only after the sandbox is running, so only\n  a concurrent get or list sees this state.",
+        "enum": [
+          "SANDBOX_STATE_UNSPECIFIED",
+          "SANDBOX_STATE_RUNNING",
+          "SANDBOX_STATE_PAUSED",
+          "SANDBOX_STATE_CREATING"
+        ],
+        "default": "SANDBOX_STATE_UNSPECIFIED",
+        "example": "SANDBOX_STATE_RUNNING"
+      },
+      "sandbox": {
+        "type": "object",
+        "description": "A sandbox.",
+        "required": [
+          "sandbox_id",
+          "template",
+          "state",
+          "created_at"
+        ],
+        "properties": {
+          "sandbox_id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The ID of the sandbox.",
+            "example": "01a0ef1a-d873-793d-ae6a-5dd6239be62a"
+          },
+          "template": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The name of the template the sandbox was created from.",
+            "example": "base"
+          },
+          "state": {
+            "$ref": "#/components/schemas/sandbox_state"
+          },
+          "size_slug": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The size of the sandbox, as a size slug.",
+            "example": "s-1vcpu-2gb"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "The time the sandbox was created, in ISO 8601 format.",
+            "example": "2026-11-20T12:00:00Z"
+          }
+        }
+      },
+      "error-2": {
+        "type": "object",
+        "description": "The DigitalOcean-standard error body (`id`, `message`, `request_id`). The gateway builds it from the gRPC status.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A short, stable ID for the error, for example `not_found`.",
+            "example": "not_found"
+          },
+          "message": {
+            "type": "string",
+            "description": "A message that explains the error.",
+            "example": "Sandbox not found for your team."
+          },
+          "request_id": {
+            "type": "string",
+            "description": "The ID of the request. Give it to support when you report a problem.",
+            "example": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+          }
+        },
+        "required": [
+          "id",
+          "message"
+        ]
+      },
+      "sandbox_create": {
+        "type": "object",
+        "description": "The body of a create-sandbox request.",
+        "required": [
+          "template",
+          "size_slug"
+        ],
+        "properties": {
+          "template": {
+            "type": "string",
+            "description": "The name of the template to create the sandbox from.",
+            "example": "base"
+          },
+          "size_slug": {
+            "type": "string",
+            "description": "The size of the sandbox, as a size slug. It must be an enabled size.",
+            "example": "s-1vcpu-2gb"
+          },
+          "allow_internet_access": {
+            "type": "boolean",
+            "description": "Let the sandbox reach the internet. When unset or true, egress is unrestricted. When false, the sandbox can reach only the platform file-transfer host. Allow-lists of hosts and IPs are not part of this contract yet.",
+            "example": true
+          },
+          "env_vars": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Environment variables for the sandbox. The values are secrets.",
+            "example": {
+              "MY_KEY": "my-value"
+            }
+          }
+        }
+      },
+      "image_source": {
+        "type": "object",
+        "description": "Identifies a customer OCI image. Auth for private DOCR images is resolved server-side from the caller's team.",
+        "properties": {
+          "registry": {
+            "type": "string",
+            "example": "registry.digitalocean.com"
+          },
+          "repository": {
+            "type": "string",
+            "example": "my-team/my-image"
+          },
+          "tag": {
+            "type": "string",
+            "example": "v1"
+          },
+          "digest": {
+            "type": "string",
+            "description": "When set, preferred over tag for pulls.",
+            "example": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+          }
+        }
+      },
+      "template_spec": {
+        "type": "object",
+        "description": "The configuration returned on template and build resources.",
+        "properties": {
+          "base_template": {
+            "type": "string",
+            "description": "Accepted base template key (for example `coding-base`).",
+            "example": "coding-base"
+          },
+          "image": {
+            "$ref": "#/components/schemas/image_source"
+          }
+        }
+      },
+      "template_status": {
+        "type": "string",
+        "description": "The product status of a team custom template.",
+        "enum": [
+          "TEMPLATE_STATUS_UNSPECIFIED",
+          "TEMPLATE_STATUS_PENDING",
+          "TEMPLATE_STATUS_BUILDING",
+          "TEMPLATE_STATUS_READY",
+          "TEMPLATE_STATUS_FAILED"
+        ],
+        "default": "TEMPLATE_STATUS_UNSPECIFIED",
+        "example": "TEMPLATE_STATUS_READY"
+      },
+      "template": {
+        "type": "object",
+        "description": "A team custom sandbox template.",
+        "required": [
+          "template_id",
+          "name",
+          "status"
+        ],
+        "properties": {
+          "template_id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The unique ID of the template.",
+            "example": "11111111-2222-4333-8444-555555555555"
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The template name.",
+            "example": "my-custom-template"
+          },
+          "spec": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/template_spec"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/template_status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "The time the template was created, in ISO 8601 format.",
+            "example": "2026-11-20T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "The time the template was last updated, in ISO 8601 format.",
+            "example": "2026-11-20T12:05:00Z"
+          }
+        }
+      },
+      "template_create": {
+        "type": "object",
+        "description": "The body of a create-template request.",
+        "required": [
+          "name",
+          "base_template",
+          "source_oci_ref"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Template name. Must not collide with a global base template name.",
+            "example": "my-custom-template"
+          },
+          "base_template": {
+            "type": "string",
+            "description": "Accepted base template key to rebase onto (for example `coding-base`).",
+            "example": "coding-base"
+          },
+          "source_oci_ref": {
+            "type": "string",
+            "description": "Customer OCI image reference (`registry/repository:tag` or `@digest`). Equivalent to E2B `fromImage`; parsed into an image source server-side.",
+            "example": "registry.digitalocean.com/my-team/my-image:v1"
+          }
+        }
+      },
+      "template_update": {
+        "type": "object",
+        "description": "The body of an update-template request. Omitted fields keep their previous values. The template ID is taken from the path.",
+        "properties": {
+          "base_template": {
+            "type": "string",
+            "description": "When set, replaces the stored base template for the next build.",
+            "example": "coding-base"
+          },
+          "source_oci_ref": {
+            "type": "string",
+            "description": "When set, replaces the customer image for the next build.",
+            "example": "registry.digitalocean.com/my-team/my-image:v2"
+          }
+        }
+      },
+      "template_build_status": {
+        "type": "string",
+        "description": "The status of a single rebase build.",
+        "enum": [
+          "TEMPLATE_BUILD_STATUS_UNSPECIFIED",
+          "TEMPLATE_BUILD_STATUS_PENDING",
+          "TEMPLATE_BUILD_STATUS_BUILDING",
+          "TEMPLATE_BUILD_STATUS_SUCCEEDED",
+          "TEMPLATE_BUILD_STATUS_FAILED"
+        ],
+        "default": "TEMPLATE_BUILD_STATUS_UNSPECIFIED",
+        "example": "TEMPLATE_BUILD_STATUS_SUCCEEDED"
+      },
+      "template_build": {
+        "type": "object",
+        "description": "One rebase of a customer image onto a base template.",
+        "required": [
+          "build_id",
+          "template_id",
+          "status"
+        ],
+        "properties": {
+          "build_id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The unique ID of the build.",
+            "example": "22222222-3333-4444-8555-666666666666"
+          },
+          "template_id": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The unique ID of the template.",
+            "example": "11111111-2222-4333-8444-555555555555"
+          },
+          "name": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The template name at the time of the build.",
+            "example": "my-custom-template"
+          },
+          "spec": {
+            "readOnly": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/template_spec"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/template_build_status"
+          },
+          "error": {
+            "type": "string",
+            "readOnly": true,
+            "description": "An error message when the build failed.",
+            "example": ""
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "The time the build was created, in ISO 8601 format.",
+            "example": "2026-11-20T12:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "description": "The time the build was last updated, in ISO 8601 format.",
+            "example": "2026-11-20T12:05:00Z"
+          }
+        }
+      },
+      "sandbox_command": {
+        "type": "object",
+        "description": "A command running in a sandbox.",
+        "required": [
+          "pid",
+          "cmd"
+        ],
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "format": "int64",
+            "readOnly": true,
+            "description": "The process ID of the command.",
+            "example": 42
+          },
+          "cmd": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The executable that was started.",
+            "example": "bash"
+          },
+          "cwd": {
+            "type": "string",
+            "readOnly": true,
+            "description": "The working directory of the command.",
+            "example": "/workspace"
+          }
+        }
+      },
+      "sandbox_command_start": {
+        "type": "object",
+        "description": "The body of a start-sandbox-command request.",
+        "required": [
+          "cmd"
+        ],
+        "properties": {
+          "cmd": {
+            "type": "string",
+            "description": "Executable (not a shell string). Use `cmd=\"bash\"`, `args=[\"-lc\", \"...\"]` for a shell.",
+            "example": "bash"
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arguments passed to the executable.",
+            "example": [
+              "-lc",
+              "echo hello"
+            ]
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for the command.",
+            "example": "/workspace"
+          },
+          "env_vars": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Environment variables for the command.",
+            "example": {
+              "MY_KEY": "my-value"
+            }
+          },
+          "stdin": {
+            "type": "boolean",
+            "description": "When true, leave stdin open for later writes.",
+            "example": false
+          },
+          "timeout_seconds": {
+            "type": "string",
+            "format": "int64",
+            "description": "Zero means no timeout. Encoded as a string per protobuf JSON.",
+            "example": "0"
+          }
+        }
+      },
+      "sandbox_command_signal": {
+        "type": "string",
+        "description": "Signal to send to a sandbox command. Defaults to SIGTERM when unset.",
+        "enum": [
+          "SANDBOX_COMMAND_SIGNAL_UNSPECIFIED",
+          "SANDBOX_COMMAND_SIGNAL_SIGTERM",
+          "SANDBOX_COMMAND_SIGNAL_SIGKILL"
+        ],
+        "default": "SANDBOX_COMMAND_SIGNAL_UNSPECIFIED",
+        "example": "SANDBOX_COMMAND_SIGNAL_SIGTERM"
+      },
+      "sandbox_command_signal_request": {
+        "type": "object",
+        "description": "The body of a signal-sandbox-command request.",
+        "properties": {
+          "signal": {
+            "$ref": "#/components/schemas/sandbox_command_signal"
+          }
+        }
+      },
+      "sandbox_command_stdin": {
+        "type": "object",
+        "description": "The body of a write-sandbox-command-stdin request.",
+        "properties": {
+          "data": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded stdin bytes.",
+            "example": "aGVsbG8K"
+          },
+          "eof": {
+            "type": "boolean",
+            "description": "When true, close stdin after writing.",
+            "example": true
+          }
+        }
+      },
+      "sandbox_command_started": {
+        "type": "object",
+        "properties": {
+          "pid": {
+            "type": "integer",
+            "format": "int64",
+            "description": "The process ID of the started command.",
+            "example": 42
+          }
+        }
+      },
+      "sandbox_command_exit": {
+        "type": "object",
+        "properties": {
+          "exit_code": {
+            "type": "integer",
+            "format": "int32",
+            "description": "The process exit code.",
+            "example": 0
+          },
+          "status": {
+            "type": "string",
+            "description": "A short status string for the exit.",
+            "example": "exited"
+          },
+          "error": {
+            "type": "string",
+            "description": "An error message when the process failed abnormally.",
+            "example": ""
+          }
+        }
+      },
+      "sandbox_command_keepalive": {
+        "type": "object",
+        "description": "An empty keepalive event on the attach stream."
+      },
+      "sandbox_command_event": {
+        "type": "object",
+        "description": "One event on the attach stream. Exactly one of the fields is set per event.",
+        "properties": {
+          "started": {
+            "$ref": "#/components/schemas/sandbox_command_started"
+          },
+          "stdout": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded stdout chunk.",
+            "example": "aGVsbG8K"
+          },
+          "stderr": {
+            "type": "string",
+            "format": "byte",
+            "description": "Base64-encoded stderr chunk.",
+            "example": ""
+          },
+          "exit": {
+            "$ref": "#/components/schemas/sandbox_command_exit"
+          },
+          "keepalive": {
+            "$ref": "#/components/schemas/sandbox_command_keepalive"
+          }
+        }
+      },
+      "stream_error": {
+        "type": "object",
+        "description": "A streaming transport error from the gateway.",
+        "properties": {
+          "grpc_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 5
+          },
+          "http_code": {
+            "type": "integer",
+            "format": "int32",
+            "example": 404
+          },
+          "message": {
+            "type": "string",
+            "example": "not found"
+          },
+          "http_status": {
+            "type": "string",
+            "example": "Not Found"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type_url": {
+                  "type": "string",
+                  "example": "type.googleapis.com/google.rpc.Status"
+                },
+                "value": {
+                  "type": "string",
+                  "format": "byte",
+                  "example": ""
+                }
+              }
+            }
           }
         }
       },
@@ -136411,6 +138236,734 @@
                   "$ref": "#/components/schemas/meta"
                 }
               ]
+            }
+          }
+        }
+      },
+      "all_sandboxes": {
+        "description": "The response is a JSON object with a `sandboxes` array and an optional `next_page_token` for cursor pagination.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sandboxes": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/sandbox"
+                  }
+                },
+                "next_page_token": {
+                  "type": "string",
+                  "description": "The token for the next page. Empty on the last page.",
+                  "example": ""
+                }
+              }
+            },
+            "examples": {
+              "Sandboxes Page": {
+                "value": {
+                  "sandboxes": [
+                    {
+                      "sandbox_id": "01a0ef1a-d873-793d-ae6a-5dd6239be62a",
+                      "template": "base",
+                      "state": "SANDBOX_STATE_RUNNING",
+                      "size_slug": "s-1vcpu-2gb",
+                      "created_at": "2026-11-20T12:00:00Z"
+                    }
+                  ],
+                  "next_page_token": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors_bad_request-2": {
+        "description": "The request is not valid, or the sandbox cannot be changed in its current state.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "bad_request",
+              "message": "The sandbox cannot be paused in its current state.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "errors_forbidden-2": {
+        "description": "The caller does not have the required permission.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "forbidden",
+              "message": "You do not have permission to perform this action.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "sandbox": {
+        "description": "The response is a JSON object with a `sandbox` key holding the sandbox.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sandbox": {
+                  "$ref": "#/components/schemas/sandbox"
+                }
+              }
+            },
+            "examples": {
+              "Running Sandbox": {
+                "value": {
+                  "sandbox": {
+                    "sandbox_id": "01a0ef1a-d873-793d-ae6a-5dd6239be62a",
+                    "template": "base",
+                    "state": "SANDBOX_STATE_RUNNING",
+                    "size_slug": "s-1vcpu-2gb",
+                    "created_at": "2026-11-20T12:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "sandbox_created": {
+        "description": "The sandbox was created and is running. `Location` is set to the new sandbox.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          },
+          "Location": {
+            "description": "The URL of the newly created sandbox.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "/v2/sandboxes/01a0ef1a-d873-793d-ae6a-5dd6239be62a"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "sandbox": {
+                  "$ref": "#/components/schemas/sandbox"
+                }
+              }
+            },
+            "examples": {
+              "Created Sandbox": {
+                "value": {
+                  "sandbox": {
+                    "sandbox_id": "01a0ef1a-d873-793d-ae6a-5dd6239be62a",
+                    "template": "base",
+                    "state": "SANDBOX_STATE_RUNNING",
+                    "size_slug": "s-1vcpu-2gb",
+                    "created_at": "2026-11-20T12:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors_conflict-2": {
+        "description": "The request is valid, and this team cannot be given a sandbox right now.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "conflict",
+              "message": "The request could not be completed due to a conflict.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "errors_unprocessable_entity": {
+        "description": "A field is missing or not acceptable.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "unprocessable_entity",
+              "message": "A field is missing or not acceptable.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "too_many_requests_team_limit": {
+        "description": "The team is at its sandbox limit.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "too_many_requests",
+              "message": "The team is at its sandbox limit.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "all_templates": {
+        "description": "The response is a JSON object with a `templates` array and an optional `next_page_token` for cursor pagination.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "templates": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/template"
+                  }
+                },
+                "next_page_token": {
+                  "type": "string",
+                  "description": "The token for the next page. Empty on the last page.",
+                  "example": ""
+                }
+              }
+            },
+            "examples": {
+              "Templates Page": {
+                "value": {
+                  "templates": [
+                    {
+                      "template_id": "11111111-2222-4333-8444-555555555555",
+                      "name": "my-custom-template",
+                      "status": "TEMPLATE_STATUS_READY",
+                      "spec": {
+                        "base_template": "coding-base",
+                        "image": {
+                          "registry": "registry.digitalocean.com",
+                          "repository": "my-team/my-image",
+                          "tag": "v1"
+                        }
+                      },
+                      "created_at": "2026-11-20T12:00:00Z",
+                      "updated_at": "2026-11-20T12:05:00Z"
+                    }
+                  ],
+                  "next_page_token": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "template": {
+        "description": "A successful response with a single template.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "template": {
+                  "$ref": "#/components/schemas/template"
+                }
+              }
+            },
+            "examples": {
+              "Template": {
+                "value": {
+                  "template": {
+                    "template_id": "11111111-2222-4333-8444-555555555555",
+                    "name": "my-custom-template",
+                    "status": "TEMPLATE_STATUS_READY",
+                    "spec": {
+                      "base_template": "coding-base",
+                      "image": {
+                        "registry": "registry.digitalocean.com",
+                        "repository": "my-team/my-image",
+                        "tag": "v1"
+                      }
+                    },
+                    "created_at": "2026-11-20T12:00:00Z",
+                    "updated_at": "2026-11-20T12:05:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "template_created": {
+        "description": "The template was accepted and a build was started. `Location` may be set to the new template.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          },
+          "Location": {
+            "description": "The URL of the newly created template.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "/v2/sandboxes/templates/11111111-2222-4333-8444-555555555555"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "template": {
+                  "$ref": "#/components/schemas/template"
+                }
+              }
+            },
+            "examples": {
+              "Created Template": {
+                "value": {
+                  "template": {
+                    "template_id": "11111111-2222-4333-8444-555555555555",
+                    "name": "my-custom-template",
+                    "status": "TEMPLATE_STATUS_PENDING",
+                    "spec": {
+                      "base_template": "coding-base",
+                      "image": {
+                        "registry": "registry.digitalocean.com",
+                        "repository": "my-team/my-image",
+                        "tag": "v1"
+                      }
+                    },
+                    "created_at": "2026-11-20T12:00:00Z",
+                    "updated_at": "2026-11-20T12:00:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "errors_not_found-2": {
+        "description": "The requested sandbox or template was not found for your team.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/error-2"
+            },
+            "example": {
+              "id": "not_found",
+              "message": "Sandbox not found for your team.",
+              "request_id": "4851a473-1621-42ea-b2f9-5071c0ea8414"
+            }
+          }
+        }
+      },
+      "deleted": {
+        "description": "The sandbox was deleted. The response body is empty.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            }
+          }
+        }
+      },
+      "all_template_builds": {
+        "description": "The response is a JSON object with a `builds` array and an optional `next_page_token` for cursor pagination.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "builds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/template_build"
+                  }
+                },
+                "next_page_token": {
+                  "type": "string",
+                  "description": "The token for the next page. Empty on the last page.",
+                  "example": ""
+                }
+              }
+            },
+            "examples": {
+              "Template Builds Page": {
+                "value": {
+                  "builds": [
+                    {
+                      "build_id": "22222222-3333-4444-8555-666666666666",
+                      "template_id": "11111111-2222-4333-8444-555555555555",
+                      "name": "my-custom-template",
+                      "status": "TEMPLATE_BUILD_STATUS_SUCCEEDED",
+                      "spec": {
+                        "base_template": "coding-base",
+                        "image": {
+                          "registry": "registry.digitalocean.com",
+                          "repository": "my-team/my-image",
+                          "tag": "v1"
+                        }
+                      },
+                      "created_at": "2026-11-20T12:00:00Z",
+                      "updated_at": "2026-11-20T12:05:00Z"
+                    }
+                  ],
+                  "next_page_token": ""
+                }
+              }
+            }
+          }
+        }
+      },
+      "template_build": {
+        "description": "A successful response with a single template build.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "build": {
+                  "$ref": "#/components/schemas/template_build"
+                }
+              }
+            },
+            "examples": {
+              "Template Build": {
+                "value": {
+                  "build": {
+                    "build_id": "22222222-3333-4444-8555-666666666666",
+                    "template_id": "11111111-2222-4333-8444-555555555555",
+                    "name": "my-custom-template",
+                    "status": "TEMPLATE_BUILD_STATUS_SUCCEEDED",
+                    "spec": {
+                      "base_template": "coding-base",
+                      "image": {
+                        "registry": "registry.digitalocean.com",
+                        "repository": "my-team/my-image",
+                        "tag": "v1"
+                      }
+                    },
+                    "created_at": "2026-11-20T12:00:00Z",
+                    "updated_at": "2026-11-20T12:05:00Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "all_sandbox_commands": {
+        "description": "The response is a JSON object with a `commands` array of running commands.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "commands": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/sandbox_command"
+                  }
+                }
+              }
+            },
+            "examples": {
+              "Commands List": {
+                "value": {
+                  "commands": [
+                    {
+                      "pid": 42,
+                      "cmd": "bash",
+                      "cwd": "/workspace"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "sandbox_command_started": {
+        "description": "The command was started. The process keeps running after this call returns.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "int64",
+                  "description": "The process ID of the started command."
+                }
+              }
+            },
+            "examples": {
+              "Started Command": {
+                "value": {
+                  "pid": 42
+                }
+              }
+            }
+          }
+        }
+      },
+      "sandbox_command_stdin_written": {
+        "description": "Stdin was written to the command.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object"
+            },
+            "examples": {
+              "Stdin Written": {
+                "value": {}
+              }
+            }
+          }
+        }
+      },
+      "sandbox_command_stream": {
+        "description": "A streaming response of command events. Each chunk is a JSON object with either `result` (a sandbox command event) or `error` (a stream transport error), matching the grpc-gateway stream envelope.",
+        "headers": {
+          "ratelimit-limit": {
+            "$ref": "#/components/headers/ratelimit-limit"
+          },
+          "ratelimit-remaining": {
+            "$ref": "#/components/headers/ratelimit-remaining"
+          },
+          "ratelimit-reset": {
+            "$ref": "#/components/headers/ratelimit-reset"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/components/schemas/sandbox_command_event"
+                },
+                "error": {
+                  "$ref": "#/components/schemas/stream_error"
+                }
+              }
+            },
+            "examples": {
+              "Started Event": {
+                "value": {
+                  "result": {
+                    "started": {
+                      "pid": 42
+                    }
+                  }
+                }
+              },
+              "Stdout Event": {
+                "value": {
+                  "result": {
+                    "stdout": "aGVsbG8K"
+                  }
+                }
+              }
             }
           }
         }
